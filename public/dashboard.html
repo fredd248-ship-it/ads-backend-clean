@@ -104,7 +104,7 @@ body {
   width: 320px;
 }
 
-input, select {
+input {
   width: 100%;
   padding: 8px;
   margin-top: 8px;
@@ -135,13 +135,13 @@ button {
 
 <h2>Dashboard</h2>
 
-<div class="add-btn" onclick="openModal()">+ New Decision</div>
+<div class="add-btn" onclick="openModal()">+ Create Decision</div>
 
 <div id="content">Loading...</div>
 
 </div>
 
-<!-- ✅ MODAL -->
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <h3>Create Decision</h3>
@@ -149,6 +149,8 @@ button {
     <input id="title" placeholder="Title">
     <input id="category" placeholder="Category">
     <input id="cost" type="number" placeholder="Cost">
+    <input id="emotion" type="number" placeholder="Emotion (1-10)">
+    <input id="timePressure" type="number" placeholder="Time Pressure (1-10)">
 
     <button onclick="createDecision()">Create</button>
     <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
@@ -167,7 +169,6 @@ if (!token || token === "null" || token === "undefined") {
 
 /* LOAD */
 async function load(){
-
   try {
     const res = await fetch(API + "/decisions", {
       headers:{ Authorization:"Bearer "+token }
@@ -181,7 +182,6 @@ async function load(){
         <div class="empty">
           <h3>No decisions yet</h3>
           <div>Create your first decision</div>
-          <div class="cta" onclick="openModal()">Create Decision</div>
         </div>
       `;
       return;
@@ -193,7 +193,9 @@ async function load(){
       html += `
         <div class="card">
           <strong>${d.title}</strong><br>
-          Category: ${d.category || "—"}
+          Category: ${d.category || "—"}<br>
+          Emotion: ${d.emotion || "—"}<br>
+          Time Pressure: ${d.timePressure || "—"}
         </div>
       `;
     });
@@ -220,6 +222,8 @@ async function createDecision(){
   const title = document.getElementById("title").value.trim();
   const category = document.getElementById("category").value.trim();
   const cost = Number(document.getElementById("cost").value);
+  const emotion = Number(document.getElementById("emotion").value);
+  const timePressure = Number(document.getElementById("timePressure").value);
 
   if (!title){
     alert("Title required");
@@ -232,7 +236,7 @@ async function createDecision(){
       "Content-Type":"application/json",
       Authorization:"Bearer "+token
     },
-    body: JSON.stringify({ title, category, cost })
+    body: JSON.stringify({ title, category, cost, emotion, timePressure })
   });
 
   closeModal();

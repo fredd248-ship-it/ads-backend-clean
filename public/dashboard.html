@@ -6,63 +6,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #f5f7fb;
-}
+body { margin:0; font-family:Arial; background:#f5f7fb; }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px;
-  font-weight: bold;
+  display:flex;
+  justify-content:space-between;
+  padding:16px;
+  font-weight:bold;
 }
 
-.how {
-  color: #4f46e5;
-  cursor: pointer;
-}
-
-.container {
-  padding: 16px;
-}
+.container { padding:16px; }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 10px;
+  background:white;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:10px;
 }
 
-.empty {
-  text-align: center;
-  margin-top: 60px;
-}
+.empty { text-align:center; margin-top:60px; }
 
-/* FLOAT BUTTON */
 .fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background: #4f46e5;
-  color: white;
-  border-radius: 50%;
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:56px;
+  height:56px;
+  background:#4f46e5;
+  color:white;
+  border-radius:50%;
+  font-size:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
 }
 
-/* MODAL */
 .modal {
-  display: none;
-  position: fixed;
+  display:none;
+  position:fixed;
   top:0;left:0;width:100%;height:100%;
-  background: rgba(0,0,0,0.4);
+  background:rgba(0,0,0,0.4);
   justify-content:center;
   align-items:center;
 }
@@ -78,11 +62,6 @@ input, select {
   width:100%;
   padding:10px;
   margin-top:10px;
-}
-
-.slider-label {
-  margin-top:12px;
-  font-size:14px;
 }
 
 button {
@@ -102,49 +81,38 @@ button {
 
 <div class="header">
   <div>Decisions</div>
-  <div class="how" onclick="goHow()">How It Works</div>
 </div>
 
-<div class="container" id="content">
-Loading...
-</div>
+<div class="container" id="content">Loading...</div>
 
-<!-- FAB -->
 <div class="fab" onclick="openModal()">+</div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
     <h3>Create Decision</h3>
 
     <input id="title" placeholder="Title">
-    <input id="description" placeholder="Description">
 
     <select id="category">
-      <option>Lifestyle</option>
-      <option>Subscription</option>
-      <option>Vehicle</option>
-      <option>Home</option>
-      <option>Electronics</option>
-      <option>Pets</option>
-      <option>Career</option>
-      <option>Investment</option>
       <option>Home Office</option>
-      <option>Other</option>
+      <option>Travel</option>
+      <option>Relationship</option>
+      <option>Job</option>
+      <option>Lawn and Garden</option>
+      <option>Electronics</option>
+      <option>Home</option>
+      <option>Outdoors and Patio</option>
+      <option>Vehicle</option>
+      <option>Moving</option>
+      <option>Work</option>
+      <option>Business</option>
+      <option>Tools</option>
+      <option>Clothing</option>
+      <option>Decor</option>
     </select>
 
     <input id="cost" placeholder="Cost (optional)">
-
-    <div class="slider-label">
-      Emotional Weight: <span id="emotionVal">5</span>
-    </div>
-    <input type="range" min="0" max="10" value="5" id="emotion">
-
-    <div class="slider-label">
-      Time Pressure: <span id="timeVal">5</span>
-    </div>
-    <input type="range" min="0" max="10" value="5" id="timePressure">
 
     <button onclick="createDecision()">Create</button>
     <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
@@ -157,10 +125,6 @@ Loading...
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* SLIDERS */
-emotion.oninput = e => emotionVal.innerText = e.target.value;
-timePressure.oninput = e => timeVal.innerText = e.target.value;
-
 /* LOAD */
 async function load(){
   try {
@@ -169,6 +133,11 @@ async function load(){
     });
 
     const data = await res.json();
+
+    if (!data.success){
+      content.innerText = "Error loading data";
+      return;
+    }
 
     if (!data.data.length){
       content.innerHTML = "<div class='empty'>No decisions yet</div>";
@@ -196,14 +165,9 @@ async function createDecision(){
 
   const payload = {
     title: title.value,
-    description: description.value,
     category: category.value,
-    cost: cost.value ? Number(cost.value) : null,
-    emotionalWeight: Number(emotion.value),
-    timePressure: Number(timePressure.value)
+    cost: cost.value ? Number(cost.value) : null
   };
-
-  console.log("SENDING:", payload);
 
   const res = await fetch(API + "/decisions", {
     method:"POST",
@@ -215,7 +179,6 @@ async function createDecision(){
   });
 
   const data = await res.json();
-  console.log("RESPONSE:", data);
 
   if (!data.success){
     alert("Save failed");
@@ -225,9 +188,6 @@ async function createDecision(){
   closeModal();
   load();
 }
-
-/* NAV */
-function goHow(){ window.location.href="how-it-works.html"; }
 
 load();
 

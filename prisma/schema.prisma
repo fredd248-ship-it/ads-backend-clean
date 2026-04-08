@@ -8,8 +8,15 @@ datasource db {
 }
 
 model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+}
+
+model Decision {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
+  title     String
+  category  String?
+  cost      Float?
   createdAt DateTime @default(now())
 }

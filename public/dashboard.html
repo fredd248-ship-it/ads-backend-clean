@@ -52,13 +52,22 @@ body {
   cursor: pointer;
 }
 
+.add-btn {
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: #10b981;
+  color: white;
+  border-radius: 8px;
+  display: inline-block;
+  cursor: pointer;
+}
+
 .card {
   background: white;
   border-radius: 12px;
   padding: 16px;
   margin-top: 14px;
   border: 1px solid rgba(0,0,0,0.05);
-  cursor: pointer;
 }
 
 .empty {
@@ -126,16 +135,30 @@ button {
 
 <h2>Dashboard</h2>
 
+<div class="add-btn" onclick="openModal()">+ New Decision</div>
+
 <div id="content">Loading...</div>
 
 </div>
 
+<!-- ✅ MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Create Decision</h3>
+
+    <input id="title" placeholder="Title">
+    <input id="category" placeholder="Category">
+    <input id="cost" type="number" placeholder="Cost">
+
+    <button onclick="createDecision()">Create</button>
+    <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
+  </div>
+</div>
+
 <script>
 
-/* BACKEND */
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
-/* 🔧 FIXED AUTH CHECK */
 const token = localStorage.getItem("ads_token");
 if (!token || token === "null" || token === "undefined") {
   window.location.href = "login.html";
@@ -158,6 +181,7 @@ async function load(){
         <div class="empty">
           <h3>No decisions yet</h3>
           <div>Create your first decision</div>
+          <div class="cta" onclick="openModal()">Create Decision</div>
         </div>
       `;
       return;
@@ -179,6 +203,40 @@ async function load(){
   } catch {
     document.getElementById("content").innerText = "Error loading data";
   }
+}
+
+/* MODAL */
+function openModal(){
+  document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+/* CREATE */
+async function createDecision(){
+
+  const title = document.getElementById("title").value.trim();
+  const category = document.getElementById("category").value.trim();
+  const cost = Number(document.getElementById("cost").value);
+
+  if (!title){
+    alert("Title required");
+    return;
+  }
+
+  await fetch(API + "/decisions", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({ title, category, cost })
+  });
+
+  closeModal();
+  load();
 }
 
 /* NAV */

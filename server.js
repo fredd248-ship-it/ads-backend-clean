@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const app = express();
 
-/* 🔧 CRITICAL FIX — CORS */
+/* CORS */
 app.use(cors({
   origin: [
     "http://localhost:3000",
@@ -18,9 +18,14 @@ app.use(express.json());
 
 /* ROUTES */
 const authRoutes = require("./routes/auth");
-app.use("/api/v1/auth", authRoutes);
+const decisionRoutes = require("./routes/decisions");
+const insightsRoutes = require("./routes/insights");
 
-/* TEST ROUTE */
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/decisions", decisionRoutes);
+app.use("/api/v1/insights", insightsRoutes);
+
+/* HEALTH CHECK */
 app.get("/", (req, res) => {
   res.send("API running");
 });

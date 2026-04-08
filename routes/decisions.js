@@ -9,7 +9,7 @@ router.get("/", async (req, res) => {
   try {
 
     const decisions = await prisma.decision.findMany({
-      include: { evaluations: true }
+      orderBy: { createdAt: "desc" }
     });
 
     return res.json({

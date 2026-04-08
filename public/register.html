@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Create Account</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 320px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 14px;
+  border-radius: 8px;
+  border: none;
+  background: #10b981;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.hint {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Create Account</h2>
+
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <div class="hint">
+    Password must be at least 6 characters and include a number.
+  </div>
+
+  <button onclick="register()">Create Account</button>
+
+  <div class="error" id="error"></div>
+</div>
+
+<script>
+
+/* ✅ FIXED API */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 AUTO REDIRECT IF LOGGED IN */
+const existing = localStorage.getItem("ads_token");
+if (existing && existing !== "undefined" && existing !== "null") {
+  window.location.href = "dashboard.html";
+}
+
+/* VALIDATION */
+function isValidEmail(email){
+  return /\S+@\S+\.\S+/.test(email);
+}
+
+function isValidPassword(password){
+  if (password.length < 6) return false;
+  if (!/[A-Za-z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+  return true;
+}
+
+/* REGISTER */
+async function register(){
+
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const password = document.getElementById("password").value.trim();
+
+  const errorBox = document.getElementById("error");
+  errorBox.innerText = "";
+
+  if (!email || !password){
+    errorBox.innerText = "Email and password required";
+    return;
+  }
+
+  if (!isValidEmail(email)){
+    errorBox.innerText = "Enter a valid email address";
+    return;
+  }
+
+  if (!isValidPassword(password)){
+    errorBox.innerText = "Password must be 6+ characters and include a number";
+    return;
+  }
+
+  try {
+
+    const res = await fetch(API + "/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!data.success){
+      if (data.error === "User already exists"){
+        errorBox.innerText = "Email already registered";
+        return;
+      }
+
+      errorBox.innerText = data.error || "Registration failed";
+      return;
+    }
+
+    const token = data.token || data.data?.token;
+
+    if (!token){
+      errorBox.innerText = "Registration failed";
+      return;
+    }
+
+    /* AUTO LOGIN */
+    localStorage.setItem("ads_token", token);
+
+    window.location.href = "dashboard.html";
+
+  } catch (err){
+    console.error(err);
+    errorBox.innerText = "Server error";
+  }
+}
+
+</script>
+
+</body>
+</html>

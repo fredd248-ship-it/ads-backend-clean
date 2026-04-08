@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Insights</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
+
+.sidebar {
+  width:220px; background:#eef2ff; height:100vh;
+  padding:20px 10px; border-right:1px solid #d1d5db;
+  display:flex; flex-direction:column; justify-content:center;
+}
+
+.nav-item {
+  padding:14px; margin-bottom:10px; border-radius:10px;
+  text-align:center; cursor:pointer; color:#3730a3;
+}
+.nav-item:hover { background:#c7d2fe; }
+.active { background:#4f46e5; color:white; }
+
+.main { flex:1; padding:20px; max-width:900px; margin:auto; }
+
+.card {
+  background:white; border-radius:12px;
+  padding:16px; margin-top:14px;
+  border:1px solid rgba(0,0,0,0.05);
+}
+
+.section-title { font-weight:bold; margin-top:20px; }
+
+.good { background:#bbf7d0; }
+.bad { background:#fecaca; }
+.neutral { background:#fde68a; }
+
+.big { font-weight:bold; }
+.small { font-size:13px; color:#555; }
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item active">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+<h2>Insights</h2>
+<div id="content">Loading...</div>
+</div>
+
+<script>
+
+/* ✅ FIXED BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 FIXED AUTH */
+function token(){ return localStorage.getItem("ads_token"); }
+
+const t = token();
+if (!t || t === "null" || t === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+function avg(arr){
+  return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+}
+
+function variance(arr){
+  if(!arr.length) return 0;
+  const mean = arr.reduce((a,b)=>a+b,0)/arr.length;
+  return arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/arr.length;
+}
+
+async function load(){
+
+  const container = document.getElementById("content");
+
+  try {
+
+    /* FETCH INSIGHTS */
+    const res = await fetch(API+"/insights",{
+      headers:{ Authorization:"Bearer "+t }
+    });
+    const data = await res.json();
+
+    /* FETCH DECISIONS */
+    const res2 = await fetch(API+"/decisions",{
+      headers:{ Authorization:"Bearer "+t }
+    });
+    const d2 = await res2.json();
+
+    let html = "";
+
+    /* OVERVIEW */
+    html += `
+      <div class="section-title">Overview</div>
+      <div class="card neutral">
+        Total: ${data.totalDecisions ?? 0}<br>
+        Evaluated: ${data.evaluatedDecisions ?? 0}
+      </div>
+    `;
+
+    /* CATEGORY INTELLIGENCE */
+    if (data.categoryInsights?.length){
+
+      html += `<div class="section-title">Category Intelligence</div>`;
+
+      data.categoryInsights.forEach(c => {
+
+        const sat = Math.round(10 - (c.averageRegretScore ?? 0));
+
+        let performance="Moderate", color="neutral";
+        if(sat>=7){ performance="Strong"; color="good"; }
+        else if(sat<=3){ performance="Weak"; color="bad"; }
+
+        let scores=[];
+
+        d2.data?.forEach(d=>{
+          if(d.category===c.category){
+            d.evaluations?.forEach(e=>{
+              scores.push(10 - e.regretScore);
+            });
+          }
+        });
+
+        let stability="Variable";
+        const v=variance(scores);
+        if(v<2) stability="Stable";
+        else if(v>6) stability="Unstable";
+
+        let risk="Normal";
+        if(scores.length>=3){
+          const a=avg(scores);
+          if(a<=4) risk="Poor outcomes";
+          if(a>=8) risk="Strong outcomes";
+        }
+
+        html += `
+          <div class="card ${color}">
+            <div class="big">${c.category}</div>
+            <div>${performance} performance</div>
+            <div class="small">${stability} outcomes</div>
+            <div class="small">${risk}</div>
+            <div class="small">${c.decisionCount} decisions</div>
+          </div>
+        `;
+      });
+    }
+
+    container.innerHTML = html;
+
+  } catch(err){
+    console.error(err);
+    container.innerHTML="Error loading insights";
+  }
+}
+
+/* NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

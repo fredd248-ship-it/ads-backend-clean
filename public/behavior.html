@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Behavior Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  box-sizing: border-box;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #3730a3;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+
+.active {
+  background: #4f46e5;
+  color: white;
+  font-weight: bold;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+ul { padding-left: 20px; }
+
+.tag {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.good { background: #bbf7d0; color: #065f46; }
+.warn { background: #fde68a; color: #92400e; }
+.bad { background: #fecaca; color: #7f1d1d; }
+
+.error {
+  text-align: center;
+  margin-top: 40px;
+  color: red;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Decisions</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item active">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2>Behavior Report</h2>
+  <div id="content"></div>
+</div>
+
+<script>
+
+/* ✅ FIXED BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* AUTH */
+const token = localStorage.getItem("ads_token");
+
+if (!token || token === "null" || token === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+function getTagClass(text) {
+  const t = text.toLowerCase();
+  if (t.includes("improv") || t.includes("strong")) return "good";
+  if (t.includes("unstable") || t.includes("risk")) return "warn";
+  if (t.includes("declin") || t.includes("poor")) return "bad";
+  return "warn";
+}
+
+function avg(arr){
+  if(!arr.length) return 0;
+  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+}
+
+async function load() {
+
+  const container = document.getElementById("content");
+  container.innerHTML = "Loading...";
+
+  try {
+
+    const res = await fetch(API + "/insights", {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const data = await res.json();
+
+    if (!data || !data.behaviorReport) {
+      container.innerHTML = "<div class='error'>Invalid data</div>";
+      throw new Error("API CONTRACT VIOLATION");
+    }
+
+    const b = data.behaviorReport;
+
+    let html = `
+      <div class="card"><strong>Decision Profile</strong><br>${b.decisionProfile}</div>
+      <div class="card"><strong>Coaching Summary</strong><br>${b.coachingSummary}</div>
+      <div class="card"><strong>Current Blind Spot</strong><br>
+        <span class="tag ${getTagClass(b.currentBlindSpot)}">Focus Area</span><br>
+        ${b.currentBlindSpot}
+      </div>
+      <div class="card"><strong>Best Next Habit</strong><br>${b.bestNextHabit}</div>
+      <div class="card"><strong>Strengths</strong>
+        <ul>${b.strengths.map(s => `<li>${s}</li>`).join("")}</ul>
+      </div>
+      <div class="card"><strong>Risk Areas</strong>
+        <ul>${b.riskAreas.map(r => `<li>${r}</li>`).join("")}</ul>
+      </div>
+      <div class="card"><strong>Recommended Adjustments</strong>
+        <ul>${b.recommendedAdjustments.map(a => `<li>${a}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    const res2 = await fetch(API + "/decisions", {
+      headers: { Authorization: "Bearer " + token }
+    });
+
+    const d2 = await res2.json();
+
+    let highTime=[], lowTime=[], highEmotion=[], lowEmotion=[], highHigh=[];
+
+    d2.data?.forEach(d=>{
+      d.evaluations?.forEach(e=>{
+        const sat = 10 - e.regretScore;
+
+        if(d.timePressure >= 7) highTime.push(sat);
+        else lowTime.push(sat);
+
+        if(d.emotionalWeight >= 7) highEmotion.push(sat);
+        else lowEmotion.push(sat);
+
+        if(d.timePressure >= 7 && d.emotionalWeight >= 7){
+          highHigh.push(sat);
+        }
+      });
+    });
+
+    const ht=avg(highTime), lt=avg(lowTime);
+    const he=avg(highEmotion), le=avg(lowEmotion);
+    const hh=avg(highHigh);
+
+    html += `<div class="section-title">Real-Time Decision Coaching</div>`;
+
+    html += `
+      <div class="card ${ht > lt ? 'good':'bad'}">
+        <strong>${ht > lt ? "Use time pressure to your advantage" : "Avoid rushed decisions"}</strong><br>
+        ${ht > lt ? "You perform better when acting quickly." : "Your outcomes improve when you slow down."}
+      </div>
+    `;
+
+    html += `
+      <div class="card ${he > le ? 'good':'bad'}">
+        <strong>${he > le ? "Trust your instincts" : "Control emotional influence"}</strong><br>
+        ${he > le ? "Emotion is helping your decision quality." : "Emotion is reducing your outcomes."}
+      </div>
+    `;
+
+    html += `
+      <div class="card ${hh >= 7 ? 'good' : hh <= 4 ? 'bad' : 'warn'}">
+        <strong>${
+          hh >= 7
+          ? "High pressure + emotion is a strength"
+          : hh <= 4
+          ? "Avoid high-pressure emotional decisions"
+          : "Mixed results under pressure"
+        }</strong><br>
+        Average outcome score: ${hh}/10
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = "<div class='error'>Failed to load</div>";
+  }
+}
+
+/* NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

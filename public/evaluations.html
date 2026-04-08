@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Evaluations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title { font-weight: bold; }
+
+.eval-btn {
+  background: #4f46e5;
+  color: white;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.tag {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.low { background: #fde68a; }
+.medium { background: #bfdbfe; }
+.high { background: #bbf7d0; }
+
+.small {
+  font-size: 13px;
+  color: #555;
+  margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item active">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+<h2>Evaluations</h2>
+<div id="list"></div>
+</div>
+
+<script>
+
+/* ✅ FIXED BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 FIXED AUTH */
+function token(){
+  return localStorage.getItem("ads_token");
+}
+
+const t = token();
+if(!t || t === "null" || t === "undefined"){
+  window.location.href="login.html";
+  throw new Error("STOP");
+}
+
+/* LOAD */
+async function load(){
+
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+t }
+  });
+
+  const data = await res.json();
+  const container = document.getElementById("list");
+  container.innerHTML = "";
+
+  data.data.forEach(d => {
+
+    if(!d.evaluations || d.evaluations.length === 0) return;
+
+    const count = d.evaluations.length;
+    const latest = d.evaluations[d.evaluations.length - 1];
+
+    let usageClass = "";
+    if(latest.frequencyOfUse === "Low") usageClass = "low";
+    if(latest.frequencyOfUse === "Medium") usageClass = "medium";
+    if(latest.frequencyOfUse === "High") usageClass = "high";
+
+    const satisfaction = 10 - latest.regretScore;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="row">
+        <div class="title">${d.title}</div>
+        <button class="eval-btn" onclick="goHistoryPage(event, '${d.id}')">
+          Times Evaluated (${count})
+        </button>
+      </div>
+
+      <div class="small">Latest satisfaction: ${satisfaction}/10</div>
+      <div class="tag ${usageClass}">${latest.frequencyOfUse} Use</div>
+    `;
+
+    /* 🔧 FIXED ROUTE */
+    card.onclick = () => {
+      window.location.href = "evaluate.html?id=" + d.id;
+    };
+
+    container.appendChild(card);
+
+  });
+
+}
+
+/* 🔧 FIXED ROUTE */
+function goHistoryPage(e, id){
+  e.stopPropagation();
+  window.location.href = "evaluation-history.html?id=" + id;
+}
+
+/* NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

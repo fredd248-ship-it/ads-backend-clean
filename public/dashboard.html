@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+  position: relative;
+}
+
+.top-link {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #4f46e5;
+  cursor: pointer;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.empty {
+  text-align: center;
+  margin-top: 60px;
+}
+
+.cta {
+  margin-top: 15px;
+  padding: 12px 18px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 8px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item active">Dashboard</div>
+</div>
+
+<div class="main">
+
+<div class="top-link" onclick="goHow()">How It Works</div>
+
+<h2>Dashboard</h2>
+
+<div id="content">Loading...</div>
+
+</div>
+
+<script>
+
+/* BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 FIXED AUTH CHECK */
+const token = localStorage.getItem("ads_token");
+if (!token || token === "null" || token === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+/* LOAD */
+async function load(){
+
+  try {
+    const res = await fetch(API + "/decisions", {
+      headers:{ Authorization:"Bearer "+token }
+    });
+
+    const data = await res.json();
+    const container = document.getElementById("content");
+
+    if (!data.success || !data.data.length){
+      container.innerHTML = `
+        <div class="empty">
+          <h3>No decisions yet</h3>
+          <div>Create your first decision</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+
+    data.data.forEach(d => {
+      html += `
+        <div class="card">
+          <strong>${d.title}</strong><br>
+          Category: ${d.category || "—"}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+  } catch {
+    document.getElementById("content").innerText = "Error loading data";
+  }
+}
+
+/* NAV */
+function goHow(){ window.location.href = "how-it-works.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

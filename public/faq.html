@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FAQ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+
+.card {
+  background: #fff9e6;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e0c97f;
+  cursor: pointer;
+}
+
+.question {
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.answer {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  display: none;
+}
+
+.icon { font-size: 18px; }
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2>FAQ</h2>
+  <div id="faqList"></div>
+</div>
+
+<script>
+
+/* 🔧 FIXED AUTH */
+const token = localStorage.getItem("ads_token");
+if (!token || token === "null" || token === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+/* 🔧 FIXED NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+/* FAQ DATA */
+const faqs = [
+  {
+    q: "Why did my score drop?",
+    a: "Scores reflect outcomes, not intentions. A drop usually means the result did not match expectations, often due to emotional decisions, time pressure, or low follow-through."
+  },
+  {
+    q: "What does impulse risk mean?",
+    a: "Impulse risk indicates a pattern where decisions made under high emotion and pressure tend to produce worse outcomes."
+  },
+  {
+    q: "Is ADS judging me?",
+    a: "No. ADS reflects patterns objectively. The goal is awareness, not criticism."
+  },
+  {
+    q: "Can I trust the insights?",
+    a: "Insights are based on your own inputs and outcomes, but require consistent and honest evaluations."
+  },
+  {
+    q: "Why track decisions at all?",
+    a: "Tracking creates a reliable record that reveals patterns memory cannot."
+  }
+];
+
+/* RENDER */
+const container = document.getElementById("faqList");
+
+faqs.forEach(item => {
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <div class="question">
+      <span>${item.q}</span>
+      <span class="icon">▼</span>
+    </div>
+    <div class="answer">${item.a}</div>
+  `;
+
+  card.onclick = () => {
+    const answer = card.querySelector(".answer");
+    const icon = card.querySelector(".icon");
+
+    const isOpen = answer.style.display === "block";
+
+    answer.style.display = isOpen ? "none" : "block";
+    icon.textContent = isOpen ? "▼" : "▲";
+  };
+
+  container.appendChild(card);
+});
+
+</script>
+
+</body>
+</html>

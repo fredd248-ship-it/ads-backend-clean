@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Evaluation History</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.tag {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.low { background: #fde68a; }
+.medium { background: #bfdbfe; }
+.high { background: #bbf7d0; }
+
+.do { background: #fef3c7; }
+.not-do { background: #fecaca; }
+
+.small {
+  font-size: 13px;
+  color: #555;
+  margin-top: 6px;
+}
+
+.title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item active">Evaluation History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2 id="title">Loading...</h2>
+  <div id="list"></div>
+</div>
+
+<script>
+
+/* ✅ FIXED BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 FIXED AUTH */
+function token(){
+  return localStorage.getItem("ads_token");
+}
+
+const t = token();
+if(!t || t === "null" || t === "undefined"){
+  window.location.href="login.html";
+  throw new Error("STOP");
+}
+
+/* GET ID */
+const params = new URLSearchParams(window.location.search);
+const decisionId = params.get("id");
+
+if(!decisionId){
+  document.getElementById("title").innerText = "Invalid decision";
+}
+
+/* LOAD */
+async function load(){
+
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+t }
+  });
+
+  const data = await res.json();
+
+  const decision = data.data.find(d => d.id == decisionId);
+
+  if(!decision){
+    document.getElementById("title").innerText = "Decision not found";
+    return;
+  }
+
+  document.getElementById("title").innerText = decision.title;
+
+  const container = document.getElementById("list");
+  container.innerHTML = "";
+
+  if(!decision.evaluations || decision.evaluations.length === 0){
+    container.innerHTML = "<div class='card'>No evaluations yet</div>";
+    return;
+  }
+
+  const sorted = decision.evaluations.slice().reverse();
+
+  sorted.forEach(e => {
+
+    const satisfaction = 10 - e.regretScore;
+
+    let usageClass = "";
+    if(e.frequencyOfUse === "Low") usageClass = "low";
+    if(e.frequencyOfUse === "Medium") usageClass = "medium";
+    if(e.frequencyOfUse === "High") usageClass = "high";
+
+    const doClass = e.wouldBuyAgain ? "do" : "not-do";
+    const doText = e.wouldBuyAgain ? "Would Do" : "Would Not Do";
+
+    const date = new Date(e.createdAt).toLocaleDateString();
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="title">Satisfaction: ${satisfaction}/10</div>
+
+      <div>
+        <span class="tag ${usageClass}">${e.frequencyOfUse} Use</span>
+        <span class="tag ${doClass}">${doText}</span>
+      </div>
+
+      <div class="small">Date: ${date}</div>
+    `;
+
+    container.appendChild(card);
+
+  });
+
+}
+
+/* NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

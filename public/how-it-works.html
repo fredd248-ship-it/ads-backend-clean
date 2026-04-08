@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>How It Works</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.button {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+  <div class="nav-item active">How It Works</div>
+</div>
+
+<div class="main">
+
+<h2>How It Works</h2>
+
+<div class="card">
+  <div class="section-title">Purpose</div>
+  <div>
+    ADS helps you track decisions, evaluate real outcomes, and identify patterns in how you make choices over time.
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">How Decisions Work</div>
+  <div>
+    1. Create a decision<br>
+    2. Use or experience the outcome<br>
+    3. Evaluate it later<br>
+    4. Let the system detect patterns
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Evaluation</div>
+  <div>
+    Each decision is evaluated based on satisfaction, frequency of use, and whether you would make the same decision again.
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Insights</div>
+  <div>
+    The system analyzes your decisions over time to highlight patterns such as consistency, impulse risk, and overall decision quality.
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Categories</div>
+  <div>
+    Decisions are grouped into categories to help you understand patterns across different areas of your life.
+  </div>
+
+  <button class="button" onclick="goCategories()">
+    View All Categories
+  </button>
+</div>
+
+</div>
+
+<script>
+
+/* 🔧 FIXED AUTH */
+const token = localStorage.getItem("ads_token");
+
+if (!token || token === "null" || token === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+/* 🔧 FIXED NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+/* 🔧 FIXED CATEGORY LINK */
+function goCategories(){
+  window.location.href = "categories.html";
+}
+
+</script>
+
+</body>
+</html>

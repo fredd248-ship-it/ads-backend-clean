@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Categories</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover {
+  background: #c7d2fe;
+}
+
+.active {
+  background: #4f46e5;
+  color: white;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 10px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Decisions</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+  <div class="nav-item active">Categories</div>
+</div>
+
+<div class="main">
+
+<h2>Categories</h2>
+
+<div class="card">Home Office</div>
+<div class="card">Travel</div>
+<div class="card">Relationship</div>
+<div class="card">Job</div>
+<div class="card">Lawn and Garden</div>
+<div class="card">Electronics</div>
+<div class="card">Home</div>
+<div class="card">Outdoors and Patio</div>
+<div class="card">Vehicle</div>
+<div class="card">Moving</div>
+<div class="card">Work</div>
+<div class="card">Business</div>
+<div class="card">Tools</div>
+<div class="card">Clothing</div>
+<div class="card">Decor</div>
+
+</div>
+
+<script>
+
+const token = localStorage.getItem("ads_token");
+
+if (!token) {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+/* ✅ FIXED NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+</script>
+
+</body>
+</html>

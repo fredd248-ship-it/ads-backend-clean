@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>About ADS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #eef2ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #3730a3;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active { background: #4f46e5; color: white; }
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+
+/* CARD */
+.card {
+  background: #fff9e6;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid #e0c97f;
+}
+
+.title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2>About ADS</h2>
+
+  <div class="card">
+    <div class="title">What is ADS?</div>
+    <div class="text">
+      Adaptive Decision System (ADS) is a tool designed to help you evaluate your decisions over time.
+      Instead of focusing on intentions, ADS tracks outcomes and identifies patterns in your behavior.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Why It Exists</div>
+    <div class="text">
+      Most decisions feel right in the moment but are only understood in hindsight.
+      ADS exists to close that gap by showing how emotional weight, time pressure, and follow-through
+      affect real outcomes.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">How It Works</div>
+    <div class="text">
+      You record decisions, evaluate them later, and ADS analyzes the results.
+      The system detects patterns such as impulsive behavior, inconsistency, and repeated mistakes,
+      then translates them into simple, actionable insights.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">What Makes It Different</div>
+    <div class="text">
+      ADS does not predict your future or tell you what to do.
+      It reflects your actual behavior back to you using structured data.
+      Every insight is based on your own decisions, not assumptions or generic advice.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">What This Is Not</div>
+    <div class="text">
+      ADS is not financial, medical, or professional advice.
+      It is not a replacement for judgment.
+      It is a feedback system designed to help you recognize patterns and improve decision quality over time.
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+/* AUTH */
+const token = localStorage.getItem("ads_token");
+
+if (!token) {
+  window.location.href = "login.html"; // ✅ FIXED
+}
+
+/* NAV */
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS History</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background: #e0e7ff;
+  height: 100vh;
+  padding: 20px 10px;
+  box-sizing: border-box;
+  border-right: 1px solid #c7d2fe;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #312e81;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+.active {
+  background: #4338ca;
+  color: white;
+  font-weight: bold;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.section-title {
+  font-weight: bold;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metric {
+  background: #c7d2fe;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.metric-title {
+  font-size: 12px;
+  color: #555;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.btn {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #4338ca;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.error {
+  text-align: center;
+  margin-top: 40px;
+  color: red;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Decisions</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item active">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+
+  <h2>History</h2>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+
+/* ✅ FIXED BACKEND */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+
+/* 🔧 FIXED AUTH */
+function token() {
+  return localStorage.getItem("ads_token");
+}
+
+const t = token();
+if (!t || t === "null" || t === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+/* LOAD DATA */
+async function load() {
+
+  const container = document.getElementById("content");
+  container.innerHTML = "Loading...";
+
+  try {
+    const res = await fetch(API + "/insights", {
+      headers: {
+        Authorization: "Bearer " + t
+      }
+    });
+
+    const data = await res.json();
+
+    if (
+      !data ||
+      typeof data.totalDecisions !== "number" ||
+      typeof data.evaluatedDecisions !== "number" ||
+      !data.insightSummary ||
+      !data.behaviorReport
+    ) {
+      container.innerHTML = "<div class='error'>Invalid data</div>";
+      throw new Error("API CONTRACT VIOLATION");
+    }
+
+    const total = data.totalDecisions;
+    const evaluated = data.evaluatedDecisions;
+
+    const evalRate = total > 0
+      ? Math.round((evaluated / total) * 100)
+      : 0;
+
+    container.innerHTML = `
+
+      <div class="section-title">Overview</div>
+
+      <div class="grid">
+        <div class="metric">
+          <div class="metric-title">Total Decisions</div>
+          <div class="metric-value">${total}</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-title">Evaluated</div>
+          <div class="metric-value">${evaluated}</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-title">Evaluation Rate</div>
+          <div class="metric-value">${evalRate}%</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-title">Pending</div>
+          <div class="metric-value">${total - evaluated}</div>
+        </div>
+      </div>
+
+      <div class="section-title">Behavior</div>
+
+      <div class="card">
+        <strong>Behavioral Report</strong><br>
+        Review your decision patterns and coaching insights.<br>
+        <button class="btn" onclick="goBehavior()">
+          View Behavioral Report
+        </button>
+      </div>
+
+    `;
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = "<div class='error'>Failed to load</div>";
+  }
+}
+
+/* NAV */
+function goDash() { window.location.href = "dashboard.html"; }
+function goEvaluations() { window.location.href = "evaluations.html"; }
+function goInsights() { window.location.href = "insights.html"; }
+function goSettings() { window.location.href = "settings.html"; }
+function goBehavior() { window.location.href = "behavior.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

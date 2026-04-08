@@ -17,57 +17,39 @@ body {
   width: 220px;
   background: #eef2ff;
   height: 100vh;
-  padding: 20px 10px;
-  border-right: 1px solid #d1d5db;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding: 20px;
 }
 
 .nav-item {
-  padding: 14px;
-  margin-bottom: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 8px;
   text-align: center;
-  cursor: pointer;
-  color: #3730a3;
+  background: #4f46e5;
+  color: white;
 }
-
-.nav-item:hover { background: #c7d2fe; }
-.active { background: #4f46e5; color: white; }
 
 .main {
   flex: 1;
   padding: 20px;
   max-width: 900px;
   margin: auto;
-  position: relative;
-}
-
-.top-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: #4f46e5;
-  cursor: pointer;
 }
 
 .add-btn {
-  margin-top: 10px;
   padding: 10px 16px;
   background: #10b981;
   color: white;
   border-radius: 8px;
   display: inline-block;
   cursor: pointer;
+  margin-bottom: 20px;
 }
 
 .card {
   background: white;
   border-radius: 12px;
   padding: 16px;
-  margin-top: 14px;
-  border: 1px solid rgba(0,0,0,0.05);
+  margin-top: 10px;
 }
 
 .empty {
@@ -75,50 +57,42 @@ body {
   margin-top: 60px;
 }
 
-.cta {
-  margin-top: 15px;
-  padding: 12px 18px;
-  background: #4f46e5;
-  color: white;
-  border-radius: 8px;
-  display: inline-block;
-  cursor: pointer;
-}
-
 .modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top:0;left:0;width:100%;height:100%;
   background: rgba(0,0,0,0.4);
-  justify-content: center;
-  align-items: center;
+  justify-content:center;
+  align-items:center;
 }
 
 .modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 320px;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  width:320px;
 }
 
-input {
-  width: 100%;
-  padding: 8px;
-  margin-top: 8px;
+input, select {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+
+.slider-label {
+  margin-top:12px;
+  font-size:14px;
 }
 
 button {
-  margin-top: 10px;
-  padding: 10px;
-  width: 100%;
-  border: none;
-  background: #4f46e5;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
+  margin-top:12px;
+  padding:10px;
+  width:100%;
+  border:none;
+  background:#4f46e5;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -126,12 +100,10 @@ button {
 <body>
 
 <div class="sidebar">
-  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item">Dashboard</div>
 </div>
 
 <div class="main">
-
-<div class="top-link" onclick="goHow()">How It Works</div>
 
 <h2>Dashboard</h2>
 
@@ -144,16 +116,45 @@ button {
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
+
     <h3>Create Decision</h3>
 
     <input id="title" placeholder="Title">
-    <input id="category" placeholder="Category">
-    <input id="cost" type="number" placeholder="Cost">
-    <input id="emotion" type="number" placeholder="Emotion (1-10)">
-    <input id="timePressure" type="number" placeholder="Time Pressure (1-10)">
+
+    <input id="description" placeholder="Description">
+
+    <!-- CATEGORY DROPDOWN -->
+    <select id="category">
+      <option>Lifestyle</option>
+      <option>Subscription</option>
+      <option>Vehicle</option>
+      <option>Home</option>
+      <option>Electronics</option>
+      <option>Pets</option>
+      <option>Career</option>
+      <option>Investment</option>
+      <option>Home Office</option>
+      <option>Other</option>
+    </select>
+
+    <!-- COST (TEXT, NO ARROWS) -->
+    <input id="cost" placeholder="Cost (optional)">
+
+    <!-- EMOTION -->
+    <div class="slider-label">
+      Emotional Weight: <span id="emotionVal">5</span>
+    </div>
+    <input type="range" min="0" max="10" value="5" id="emotion">
+
+    <!-- TIME PRESSURE -->
+    <div class="slider-label">
+      Time Pressure: <span id="timeVal">5</span>
+    </div>
+    <input type="range" min="0" max="10" value="5" id="timePressure">
 
     <button onclick="createDecision()">Create</button>
     <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
+
   </div>
 </div>
 
@@ -162,10 +163,16 @@ button {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
 const token = localStorage.getItem("ads_token");
-if (!token || token === "null" || token === "undefined") {
+if (!token) {
   window.location.href = "login.html";
-  throw new Error("STOP");
 }
+
+/* SLIDER DISPLAY */
+document.getElementById("emotion").oninput = e =>
+  document.getElementById("emotionVal").innerText = e.target.value;
+
+document.getElementById("timePressure").oninput = e =>
+  document.getElementById("timeVal").innerText = e.target.value;
 
 /* LOAD */
 async function load(){
@@ -177,30 +184,21 @@ async function load(){
     const data = await res.json();
     const container = document.getElementById("content");
 
-    if (!data.success || !data.data.length){
+    if (!data.data.length){
       container.innerHTML = `
         <div class="empty">
           <h3>No decisions yet</h3>
-          <div>Create your first decision</div>
         </div>
       `;
       return;
     }
 
-    let html = "";
-
-    data.data.forEach(d => {
-      html += `
-        <div class="card">
-          <strong>${d.title}</strong><br>
-          Category: ${d.category || "—"}<br>
-          Emotion: ${d.emotion || "—"}<br>
-          Time Pressure: ${d.timePressure || "—"}
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
+    container.innerHTML = data.data.map(d => `
+      <div class="card">
+        <strong>${d.title}</strong><br>
+        ${d.category || ""}
+      </div>
+    `).join("");
 
   } catch {
     document.getElementById("content").innerText = "Error loading data";
@@ -208,43 +206,40 @@ async function load(){
 }
 
 /* MODAL */
-function openModal(){
-  document.getElementById("modal").style.display = "flex";
-}
-
-function closeModal(){
-  document.getElementById("modal").style.display = "none";
-}
+function openModal(){ modal.style.display="flex"; }
+function closeModal(){ modal.style.display="none"; }
 
 /* CREATE */
 async function createDecision(){
 
-  const title = document.getElementById("title").value.trim();
-  const category = document.getElementById("category").value.trim();
-  const cost = Number(document.getElementById("cost").value);
-  const emotion = Number(document.getElementById("emotion").value);
-  const timePressure = Number(document.getElementById("timePressure").value);
+  const payload = {
+    title: title.value,
+    description: description.value,
+    category: category.value,
+    cost: cost.value ? Number(cost.value) : null,
+    emotionalWeight: Number(emotion.value),
+    timePressure: Number(timePressure.value)
+  };
 
-  if (!title){
-    alert("Title required");
-    return;
-  }
-
-  await fetch(API + "/decisions", {
+  const res = await fetch(API + "/decisions", {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
       Authorization:"Bearer "+token
     },
-    body: JSON.stringify({ title, category, cost, emotion, timePressure })
+    body: JSON.stringify(payload)
   });
+
+  const data = await res.json();
+
+  if (!data.success){
+    alert("Failed to save");
+    return;
+  }
 
   closeModal();
   load();
 }
-
-/* NAV */
-function goHow(){ window.location.href = "how-it-works.html"; }
 
 load();
 

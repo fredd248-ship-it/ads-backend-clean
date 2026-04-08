@@ -10,46 +10,29 @@ body {
   margin: 0;
   font-family: Arial;
   background: #f5f7fb;
+}
+
+.header {
   display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  font-weight: bold;
 }
 
-.sidebar {
-  width: 220px;
-  background: #eef2ff;
-  height: 100vh;
-  padding: 20px;
-}
-
-.nav-item {
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  background: #4f46e5;
-  color: white;
-}
-
-.main {
-  flex: 1;
-  padding: 20px;
-  max-width: 900px;
-  margin: auto;
-}
-
-.add-btn {
-  padding: 10px 16px;
-  background: #10b981;
-  color: white;
-  border-radius: 8px;
-  display: inline-block;
+.how {
+  color: #4f46e5;
   cursor: pointer;
-  margin-bottom: 20px;
+}
+
+.container {
+  padding: 16px;
 }
 
 .card {
   background: white;
   border-radius: 12px;
-  padding: 16px;
-  margin-top: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
 }
 
 .empty {
@@ -57,6 +40,24 @@ body {
   margin-top: 60px;
 }
 
+/* FLOAT BUTTON */
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 50%;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* MODAL */
 .modal {
   display: none;
   position: fixed;
@@ -99,19 +100,17 @@ button {
 
 <body>
 
-<div class="sidebar">
-  <div class="nav-item">Dashboard</div>
+<div class="header">
+  <div>Decisions</div>
+  <div class="how" onclick="goHow()">How It Works</div>
 </div>
 
-<div class="main">
-
-<h2>Dashboard</h2>
-
-<div class="add-btn" onclick="openModal()">+ Create Decision</div>
-
-<div id="content">Loading...</div>
-
+<div class="container" id="content">
+Loading...
 </div>
+
+<!-- FAB -->
+<div class="fab" onclick="openModal()">+</div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
@@ -120,10 +119,8 @@ button {
     <h3>Create Decision</h3>
 
     <input id="title" placeholder="Title">
-
     <input id="description" placeholder="Description">
 
-    <!-- CATEGORY DROPDOWN -->
     <select id="category">
       <option>Lifestyle</option>
       <option>Subscription</option>
@@ -137,16 +134,13 @@ button {
       <option>Other</option>
     </select>
 
-    <!-- COST (TEXT, NO ARROWS) -->
     <input id="cost" placeholder="Cost (optional)">
 
-    <!-- EMOTION -->
     <div class="slider-label">
       Emotional Weight: <span id="emotionVal">5</span>
     </div>
     <input type="range" min="0" max="10" value="5" id="emotion">
 
-    <!-- TIME PRESSURE -->
     <div class="slider-label">
       Time Pressure: <span id="timeVal">5</span>
     </div>
@@ -161,18 +155,11 @@ button {
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-
 const token = localStorage.getItem("ads_token");
-if (!token) {
-  window.location.href = "login.html";
-}
 
-/* SLIDER DISPLAY */
-document.getElementById("emotion").oninput = e =>
-  document.getElementById("emotionVal").innerText = e.target.value;
-
-document.getElementById("timePressure").oninput = e =>
-  document.getElementById("timeVal").innerText = e.target.value;
+/* SLIDERS */
+emotion.oninput = e => emotionVal.innerText = e.target.value;
+timePressure.oninput = e => timeVal.innerText = e.target.value;
 
 /* LOAD */
 async function load(){
@@ -182,18 +169,13 @@ async function load(){
     });
 
     const data = await res.json();
-    const container = document.getElementById("content");
 
     if (!data.data.length){
-      container.innerHTML = `
-        <div class="empty">
-          <h3>No decisions yet</h3>
-        </div>
-      `;
+      content.innerHTML = "<div class='empty'>No decisions yet</div>";
       return;
     }
 
-    container.innerHTML = data.data.map(d => `
+    content.innerHTML = data.data.map(d => `
       <div class="card">
         <strong>${d.title}</strong><br>
         ${d.category || ""}
@@ -201,7 +183,7 @@ async function load(){
     `).join("");
 
   } catch {
-    document.getElementById("content").innerText = "Error loading data";
+    content.innerText = "Error loading data";
   }
 }
 
@@ -221,6 +203,8 @@ async function createDecision(){
     timePressure: Number(timePressure.value)
   };
 
+  console.log("SENDING:", payload);
+
   const res = await fetch(API + "/decisions", {
     method:"POST",
     headers:{
@@ -231,15 +215,19 @@ async function createDecision(){
   });
 
   const data = await res.json();
+  console.log("RESPONSE:", data);
 
   if (!data.success){
-    alert("Failed to save");
+    alert("Save failed");
     return;
   }
 
   closeModal();
   load();
 }
+
+/* NAV */
+function goHow(){ window.location.href="how-it-works.html"; }
 
 load();
 

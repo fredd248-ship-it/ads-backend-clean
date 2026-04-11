@@ -13,7 +13,6 @@ body {
   display: flex;
 }
 
-/* EXACT SIDEBAR STYLE (MATCH HISTORY) */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -44,7 +43,6 @@ body {
   font-weight: bold;
 }
 
-/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -55,146 +53,53 @@ body {
 .card {
   background: white;
   border-radius: 12px;
-  padding: 14px;
+  padding: 16px;
   margin-top: 14px;
   border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
 }
 
 .empty {
   text-align: center;
   margin-top: 60px;
 }
-
-/* FAB */
-.fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background: #4338ca;
-  color: white;
-  border-radius: 50%;
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* MODAL */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;left: 0;width: 100%;height: 100%;
-  background: rgba(0,0,0,0.4);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 320px;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-button {
-  margin-top: 12px;
-  padding: 10px;
-  width: 100%;
-  border: none;
-  background: #4338ca;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-}
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR (MATCH HISTORY EXACTLY) -->
 <div class="sidebar">
-  <div class="nav-item active">Decisions</div>
+  <div class="nav-item active">Dashboard</div>
   <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
   <div class="nav-item" onclick="goHistory()">History</div>
   <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
-
   <h2>Decisions</h2>
-
   <div id="content">Loading...</div>
-
-</div>
-
-<div class="fab" onclick="openModal()">+</div>
-
-<div class="modal" id="modal">
-  <div class="modal-content">
-
-    <h3>Create Decision</h3>
-
-    <input id="title" placeholder="Title">
-
-    <select id="category">
-      <option>Home Office</option>
-      <option>Travel</option>
-      <option>Relationship</option>
-      <option>Job</option>
-      <option>Lawn and Garden</option>
-      <option>Electronics</option>
-      <option>Home</option>
-      <option>Outdoors and Patio</option>
-      <option>Vehicle</option>
-      <option>Moving</option>
-      <option>Work</option>
-      <option>Business</option>
-      <option>Tools</option>
-      <option>Clothing</option>
-      <option>Decor</option>
-    </select>
-
-    <input id="cost" placeholder="Cost (optional)">
-
-    <button onclick="createDecision()">Create</button>
-    <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
-
-  </div>
 </div>
 
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
-/* AUTH */
-function token() {
-  return localStorage.getItem("ads_token");
-}
+const token = localStorage.getItem("ads_token");
 
-const t = token();
-if (!t || t === "null" || t === "undefined") {
+if (!token || token === "null" || token === "undefined") {
   window.location.href = "login.html";
   throw new Error("STOP");
 }
 
-/* LOAD */
 async function load(){
+
   const content = document.getElementById("content");
 
   try {
     const res = await fetch(API + "/decisions", {
-      headers:{ Authorization:"Bearer "+t }
+      headers:{ Authorization:"Bearer "+token }
     });
 
     const data = await res.json();
@@ -210,7 +115,7 @@ async function load(){
     }
 
     content.innerHTML = data.data.map(d => `
-      <div class="card">
+      <div class="card" onclick="goEvaluate('${d.id}')">
         <strong>${d.title}</strong><br>
         ${d.category || ""}
       </div>
@@ -222,43 +127,15 @@ async function load(){
 }
 
 /* NAV */
-function goEvaluations(){ window.location.href = "evaluations.html"; }
-function goHistory(){ window.location.href = "history.html"; }
-function goInsights(){ window.location.href = "insights.html"; }
-function goSettings(){ window.location.href = "settings.html"; }
-
-/* MODAL */
-function openModal(){ modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
-
-/* CREATE */
-async function createDecision(){
-
-  const payload = {
-    title: title.value,
-    category: category.value,
-    cost: cost.value ? Number(cost.value) : null
-  };
-
-  const res = await fetch(API + "/decisions", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+t
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await res.json();
-
-  if (!data.success){
-    alert("Save failed");
-    return;
-  }
-
-  closeModal();
-  load();
+function goEvaluate(id){
+  window.location.href = "evaluate.html?id=" + id;
 }
+
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
 
 load();
 

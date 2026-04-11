@@ -63,20 +63,6 @@ body {
   margin-top: 20px;
 }
 
-ul { padding-left: 20px; }
-
-.tag {
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.good { background: #bbf7d0; color: #065f46; }
-.warn { background: #fde68a; color: #92400e; }
-.bad { background: #fecaca; color: #7f1d1d; }
-
 .error {
   text-align: center;
   margin-top: 40px;
@@ -112,19 +98,6 @@ if (!token || token === "null" || token === "undefined") {
   throw new Error("STOP");
 }
 
-function getTagClass(text) {
-  const t = text.toLowerCase();
-  if (t.includes("improv") || t.includes("strong")) return "good";
-  if (t.includes("unstable") || t.includes("risk")) return "warn";
-  if (t.includes("declin") || t.includes("poor")) return "bad";
-  return "warn";
-}
-
-function avg(arr){
-  if(!arr.length) return 0;
-  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-}
-
 async function load() {
 
   const container = document.getElementById("content");
@@ -138,9 +111,15 @@ async function load() {
 
     const data = await res.json();
 
+    // ✅ SAFE HANDLING (KEY FIX)
     if (!data || !data.behaviorReport) {
-      container.innerHTML = "<div class='error'>Invalid data</div>";
-      throw new Error("API CONTRACT VIOLATION");
+      container.innerHTML = `
+        <div class="card">
+          Behavior data is not available yet.<br><br>
+          Start evaluating more decisions to generate insights.
+        </div>
+      `;
+      return;
     }
 
     const b = data.behaviorReport;
@@ -148,81 +127,6 @@ async function load() {
     let html = `
       <div class="card"><strong>Decision Profile</strong><br>${b.decisionProfile}</div>
       <div class="card"><strong>Coaching Summary</strong><br>${b.coachingSummary}</div>
-      <div class="card"><strong>Current Blind Spot</strong><br>
-        <span class="tag ${getTagClass(b.currentBlindSpot)}">Focus Area</span><br>
-        ${b.currentBlindSpot}
-      </div>
-      <div class="card"><strong>Best Next Habit</strong><br>${b.bestNextHabit}</div>
-      <div class="card"><strong>Strengths</strong>
-        <ul>${b.strengths.map(s => `<li>${s}</li>`).join("")}</ul>
-      </div>
-      <div class="card"><strong>Risk Areas</strong>
-        <ul>${b.riskAreas.map(r => `<li>${r}</li>`).join("")}</ul>
-      </div>
-      <div class="card"><strong>Recommended Adjustments</strong>
-        <ul>${b.recommendedAdjustments.map(a => `<li>${a}</li>`).join("")}</ul>
-      </div>
-    `;
-
-    const res2 = await fetch(API + "/decisions", {
-      headers: { Authorization: "Bearer " + token }
-    });
-
-    const d2 = await res2.json();
-
-    let highTime=[], lowTime=[], highEmotion=[], lowEmotion=[], highHigh=[];
-
-    d2.data?.forEach(d=>{
-      d.evaluations?.forEach(e=>{
-        const sat = 10 - e.regretScore;
-
-        // SAFE GUARDS (THIS IS THE FIX)
-        const tp = d.timePressure ?? 0;
-        const ew = d.emotionalWeight ?? 0;
-
-        if(tp >= 7) highTime.push(sat);
-        else lowTime.push(sat);
-
-        if(ew >= 7) highEmotion.push(sat);
-        else lowEmotion.push(sat);
-
-        if(tp >= 7 && ew >= 7){
-          highHigh.push(sat);
-        }
-      });
-    });
-
-    const ht=avg(highTime), lt=avg(lowTime);
-    const he=avg(highEmotion), le=avg(lowEmotion);
-    const hh=avg(highHigh);
-
-    html += `<div class="section-title">Real-Time Decision Coaching</div>`;
-
-    html += `
-      <div class="card ${ht > lt ? 'good':'bad'}">
-        <strong>${ht > lt ? "Use time pressure to your advantage" : "Avoid rushed decisions"}</strong><br>
-        ${ht > lt ? "You perform better when acting quickly." : "Your outcomes improve when you slow down."}
-      </div>
-    `;
-
-    html += `
-      <div class="card ${he > le ? 'good':'bad'}">
-        <strong>${he > le ? "Trust your instincts" : "Control emotional influence"}</strong><br>
-        ${he > le ? "Emotion is helping your decision quality." : "Emotion is reducing your outcomes."}
-      </div>
-    `;
-
-    html += `
-      <div class="card ${hh >= 7 ? 'good' : hh <= 4 ? 'bad' : 'warn'}">
-        <strong>${
-          hh >= 7
-          ? "High pressure + emotion is a strength"
-          : hh <= 4
-          ? "Avoid high-pressure emotional decisions"
-          : "Mixed results under pressure"
-        }</strong><br>
-        Average outcome score: ${hh}/10
-      </div>
     `;
 
     container.innerHTML = html;

@@ -3,14 +3,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   id       String   @id @default(uuid())
   email    String   @unique
   password String
+  createdAt DateTime @default(now())
 }
 
 model Decision {
@@ -19,4 +20,17 @@ model Decision {
   category  String?
   cost      Float?
   createdAt DateTime @default(now())
+
+  evaluations Evaluation[]
+}
+
+model Evaluation {
+  id             String   @id @default(uuid())
+  decisionId     String
+  regretScore    Int
+  frequencyOfUse String
+  wouldBuyAgain  Boolean
+  createdAt      DateTime @default(now())
+
+  decision Decision @relation(fields: [decisionId], references: [id])
 }

@@ -13,7 +13,6 @@ body {
   display: flex;
 }
 
-/* SIDEBAR (STANDARDIZED) */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -44,7 +43,6 @@ body {
   font-weight: bold;
 }
 
-/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -178,13 +176,17 @@ async function load() {
       d.evaluations?.forEach(e=>{
         const sat = 10 - e.regretScore;
 
-        if(d.timePressure >= 7) highTime.push(sat);
+        // SAFE GUARDS (THIS IS THE FIX)
+        const tp = d.timePressure ?? 0;
+        const ew = d.emotionalWeight ?? 0;
+
+        if(tp >= 7) highTime.push(sat);
         else lowTime.push(sat);
 
-        if(d.emotionalWeight >= 7) highEmotion.push(sat);
+        if(ew >= 7) highEmotion.push(sat);
         else lowEmotion.push(sat);
 
-        if(d.timePressure >= 7 && d.emotionalWeight >= 7){
+        if(tp >= 7 && ew >= 7){
           highHigh.push(sat);
         }
       });

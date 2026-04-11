@@ -13,13 +13,14 @@ body {
   display: flex;
 }
 
+/* SIDEBAR (STANDARDIZED) */
 .sidebar {
   width: 220px;
-  background: #eef2ff;
+  background: #e0e7ff;
   height: 100vh;
   padding: 20px 10px;
   box-sizing: border-box;
-  border-right: 1px solid #d1d5db;
+  border-right: 1px solid #c7d2fe;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -30,7 +31,7 @@ body {
   margin-bottom: 10px;
   border-radius: 10px;
   cursor: pointer;
-  color: #3730a3;
+  color: #312e81;
   font-weight: 500;
   text-align: center;
 }
@@ -38,11 +39,12 @@ body {
 .nav-item:hover { background: #c7d2fe; }
 
 .active {
-  background: #4f46e5;
+  background: #4338ca;
   color: white;
   font-weight: bold;
 }
 
+/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -88,7 +90,7 @@ ul { padding-left: 20px; }
 <body>
 
 <div class="sidebar">
-  <div class="nav-item" onclick="goDash()">Decisions</div>
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
   <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
   <div class="nav-item" onclick="goHistory()">History</div>
   <div class="nav-item" onclick="goInsights()">Insights</div>
@@ -103,10 +105,8 @@ ul { padding-left: 20px; }
 
 <script>
 
-/* ✅ FIXED BACKEND */
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
-/* AUTH */
 const token = localStorage.getItem("ads_token");
 
 if (!token || token === "null" || token === "undefined") {
@@ -231,7 +231,6 @@ async function load() {
   }
 }
 
-/* NAV */
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }

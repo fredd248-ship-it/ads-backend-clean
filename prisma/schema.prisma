@@ -15,22 +15,27 @@ model User {
 }
 
 model Decision {
-  id        String   @id @default(uuid())
-  title     String
-  category  String?
-  cost      Float?
-  createdAt DateTime @default(now())
+  id          String       @id @default(uuid())
+  title       String
+  category    String?
+  cost        Float?
+  createdAt   DateTime     @default(now())
 
   evaluations Evaluation[]
 }
 
 model Evaluation {
-  id             String   @id @default(uuid())
-  decisionId     String
-  regretScore    Int
-  frequencyOfUse String
-  wouldBuyAgain  Boolean
-  createdAt      DateTime @default(now())
+  id              String   @id @default(uuid())
+  decisionId      String
+  regretScore     Int
+  frequencyOfUse  String
+  wouldBuyAgain   Boolean
+
+  /* ✅ NEW FIELDS */
+  timePressure    Int?
+  emotionalWeight Int?
+
+  createdAt       DateTime @default(now())
 
   decision Decision @relation(fields: [decisionId], references: [id])
 }

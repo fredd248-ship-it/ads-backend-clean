@@ -63,6 +63,8 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
+/* BEHAVIOR ENGINE */
+
 function buildBehaviorReport(scores) {
 
   let total = scores.length;
@@ -135,6 +137,98 @@ function buildBehaviorReport(scores) {
   };
 }
 
+/* NEW: INSIGHT SUMMARY ENGINE */
+
+function buildInsightSummary(scores) {
+
+  let total = scores.length;
+  let low = scores.filter(s => s.displayScore <= 4).length;
+  let high = scores.filter(s => s.displayScore >= 7).length;
+
+  let emotionCount = 0;
+  let pressureCount = 0;
+
+  scores.forEach(s => {
+    s.explanation.forEach(e => {
+      const text = e.toLowerCase();
+      if (text.includes("emotional")) emotionCount++;
+      if (text.includes("pressure")) pressureCount++;
+    });
+  });
+
+  let primaryPattern = {
+    text: "Your decisions are generally stable",
+    severity: "low"
+  };
+
+  if (emotionCount > total * 0.4) {
+    primaryPattern = {
+      text: "Emotional decisions are reducing overall quality",
+      severity: "high"
+    };
+  } else if (pressureCount > total * 0.4) {
+    primaryPattern = {
+      text: "Time pressure is impacting decision quality",
+      severity: "high"
+    };
+  } else if (low > high) {
+    primaryPattern = {
+      text: "Decision outcomes are inconsistent",
+      severity: "medium"
+    };
+  }
+
+  let secondaryPattern = null;
+
+  if (pressureCount > total * 0.2 && pressureCount <= total * 0.4) {
+    secondaryPattern = {
+      text: "Some decisions are made under time pressure",
+      severity: "medium"
+    };
+  }
+
+  let stability = {
+    text: "Your decision-making is consistent",
+    severity: "low"
+  };
+
+  if (Math.abs(high - low) <= 1) {
+    stability = {
+      text: "Your results are mixed and may need refinement",
+      severity: "medium"
+    };
+  }
+
+  let recommendedFocus = {
+    text: "Maintain your current approach",
+    severity: "low"
+  };
+
+  if (emotionCount > total * 0.4) {
+    recommendedFocus = {
+      text: "Slow down decisions when emotional intensity is high",
+      severity: "high"
+    };
+  } else if (pressureCount > total * 0.4) {
+    recommendedFocus = {
+      text: "Avoid making decisions under time pressure",
+      severity: "high"
+    };
+  } else if (low > high) {
+    recommendedFocus = {
+      text: "Introduce a more structured decision process",
+      severity: "medium"
+    };
+  }
+
+  return {
+    primaryPattern,
+    secondaryPattern,
+    stability,
+    recommendedFocus
+  };
+}
+
 /* ROUTE */
 
 router.get("/", async (req, res) => {
@@ -148,6 +242,7 @@ router.get("/", async (req, res) => {
 
     decisions.forEach(d => {
       if (d.evaluations.length > 0) {
+
         const latest = d.evaluations[d.evaluations.length - 1];
 
         const rawScore = computeQualityScore(latest, d);
@@ -163,7 +258,6 @@ router.get("/", async (req, res) => {
       }
     });
 
-    // ✅ RESTORE OLD FIELDS
     const totalDecisions = decisions.length;
     const evaluatedDecisions = scores.length;
 
@@ -179,6 +273,7 @@ router.get("/", async (req, res) => {
     const worstDecision = sortedLow[0] || null;
 
     const behaviorReport = buildBehaviorReport(scores);
+    const insightSummary = buildInsightSummary(scores);
 
     return res.json({
       totalDecisions,
@@ -187,7 +282,8 @@ router.get("/", async (req, res) => {
       bestDecision,
       worstDecision,
       scores,
-      behaviorReport
+      behaviorReport,
+      insightSummary
     });
 
   } catch (err) {

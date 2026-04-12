@@ -31,7 +31,6 @@ model Evaluation {
   frequencyOfUse  String
   wouldBuyAgain   Boolean
 
-  /* ✅ NEW FIELDS */
   timePressure    Int?
   emotionalWeight Int?
 

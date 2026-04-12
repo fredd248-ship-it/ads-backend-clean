@@ -63,8 +63,6 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* NEW: BEHAVIOR ENGINE */
-
 function buildBehaviorReport(scores) {
 
   let total = scores.length;
@@ -78,14 +76,12 @@ function buildBehaviorReport(scores) {
   scores.forEach(s => {
     s.explanation.forEach(e => {
       const text = e.toLowerCase();
-
       if (text.includes("emotional")) emotionCount++;
       if (text.includes("pressure")) pressureCount++;
       if (text.includes("not make this decision again")) regretSignals++;
     });
   });
 
-  // --- PROFILE ---
   let decisionProfile = "Balanced decision maker";
 
   if (emotionCount > total * 0.4) {
@@ -94,7 +90,6 @@ function buildBehaviorReport(scores) {
     decisionProfile = "Inconsistent decision outcomes";
   }
 
-  // --- BLIND SPOT ---
   let currentBlindSpot = "No dominant blind spot detected";
 
   if (emotionCount > total * 0.4) {
@@ -103,7 +98,6 @@ function buildBehaviorReport(scores) {
     currentBlindSpot = "Time pressure is reducing decision quality";
   }
 
-  // --- BEST NEXT HABIT ---
   let bestNextHabit = "Maintain your current decision-making approach";
 
   if (emotionCount > total * 0.4) {
@@ -112,55 +106,23 @@ function buildBehaviorReport(scores) {
     bestNextHabit = "Delay decisions when under time pressure";
   }
 
-  // --- STRENGTHS ---
   let strengths = [];
+  if (high >= low) strengths.push("You are making generally strong decisions");
+  if (regretSignals === 0) strengths.push("You rarely regret your decisions");
 
-  if (high >= low) {
-    strengths.push("You are making generally strong decisions");
-  }
-
-  if (regretSignals === 0) {
-    strengths.push("You rarely regret your decisions");
-  }
-
-  // --- RISK AREAS ---
   let riskAreas = [];
+  if (emotionCount > 0) riskAreas.push("Emotion-driven decisions");
+  if (pressureCount > 0) riskAreas.push("Time-pressure decisions");
+  if (low > high) riskAreas.push("Inconsistent outcomes");
 
-  if (emotionCount > 0) {
-    riskAreas.push("Emotion-driven decisions");
-  }
-
-  if (pressureCount > 0) {
-    riskAreas.push("Time-pressure decisions");
-  }
-
-  if (low > high) {
-    riskAreas.push("Inconsistent outcomes");
-  }
-
-  // --- ADJUSTMENTS ---
   let recommendedAdjustments = [];
+  if (emotionCount > 0) recommendedAdjustments.push("Introduce a pause before emotional decisions");
+  if (pressureCount > 0) recommendedAdjustments.push("Avoid rushed decisions when possible");
+  if (low > high) recommendedAdjustments.push("Review past decisions before making similar ones");
 
-  if (emotionCount > 0) {
-    recommendedAdjustments.push("Introduce a pause before emotional decisions");
-  }
-
-  if (pressureCount > 0) {
-    recommendedAdjustments.push("Avoid rushed decisions when possible");
-  }
-
-  if (low > high) {
-    recommendedAdjustments.push("Review past decisions before making similar ones");
-  }
-
-  // --- COACHING SUMMARY ---
   let coachingSummary = "Your decision patterns appear stable";
-
-  if (emotionCount > total * 0.4) {
-    coachingSummary = "Emotional decisions are impacting your outcomes";
-  } else if (low > high) {
-    coachingSummary = "You may benefit from a more structured decision process";
-  }
+  if (emotionCount > total * 0.4) coachingSummary = "Emotional decisions are impacting your outcomes";
+  else if (low > high) coachingSummary = "You may benefit from a more structured decision process";
 
   return {
     decisionProfile,
@@ -186,7 +148,6 @@ router.get("/", async (req, res) => {
 
     decisions.forEach(d => {
       if (d.evaluations.length > 0) {
-
         const latest = d.evaluations[d.evaluations.length - 1];
 
         const rawScore = computeQualityScore(latest, d);
@@ -202,9 +163,29 @@ router.get("/", async (req, res) => {
       }
     });
 
+    // ✅ RESTORE OLD FIELDS
+    const totalDecisions = decisions.length;
+    const evaluatedDecisions = scores.length;
+
+    const averageScore =
+      scores.length > 0
+        ? Math.round(scores.reduce((a, b) => a + b.displayScore, 0) / scores.length)
+        : 0;
+
+    const sortedHigh = [...scores].sort((a, b) => b.displayScore - a.displayScore);
+    const sortedLow = [...scores].sort((a, b) => a.displayScore - b.displayScore);
+
+    const bestDecision = sortedHigh[0] || null;
+    const worstDecision = sortedLow[0] || null;
+
     const behaviorReport = buildBehaviorReport(scores);
 
     return res.json({
+      totalDecisions,
+      evaluatedDecisions,
+      averageScore,
+      bestDecision,
+      worstDecision,
       scores,
       behaviorReport
     });

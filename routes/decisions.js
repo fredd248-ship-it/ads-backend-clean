@@ -10,7 +10,7 @@ router.get("/", async (req, res) => {
 
     const decisions = await prisma.decision.findMany({
       orderBy: { createdAt: "desc" },
-      include: { evaluations: true } // IMPORTANT
+      include: { evaluations: true }
     });
 
     return res.json({
@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* CREATE EVALUATION (NEW CORE FEATURE) */
+/* CREATE EVALUATION (UPGRADED) */
 router.post("/:id/evaluate", async (req, res) => {
   try {
 
@@ -64,14 +64,16 @@ router.post("/:id/evaluate", async (req, res) => {
     const {
       regretScore,
       frequencyOfUse,
-      wouldBuyAgain
+      wouldBuyAgain,
+      timePressure,
+      emotionalWeight
     } = req.body;
 
-    // basic validation
+    // basic validation (unchanged core)
     if (regretScore === undefined || !frequencyOfUse || wouldBuyAgain === undefined) {
       return res.status(400).json({
         success: false,
-        error: "Missing fields"
+        error: "Missing required fields"
       });
     }
 
@@ -80,7 +82,11 @@ router.post("/:id/evaluate", async (req, res) => {
         decisionId,
         regretScore,
         frequencyOfUse,
-        wouldBuyAgain
+        wouldBuyAgain,
+
+        // NEW FIELDS (safe optional)
+        timePressure: timePressure ?? null,
+        emotionalWeight: emotionalWeight ?? null
       }
     });
 

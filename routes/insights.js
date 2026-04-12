@@ -15,8 +15,6 @@ function mapFrequency(freq) {
   return 0.1;
 }
 
-/* 🔥 PHASE 2: EVOLVED SCORING */
-
 function computeQualityScore(evaluation, decision) {
 
   const regretNorm = 1 - (evaluation.regretScore / 10);
@@ -26,9 +24,8 @@ function computeQualityScore(evaluation, decision) {
   const time = (decision.timePressure ?? 5) / 10;
   const emotion = (decision.emotionalWeight ?? 5) / 10;
 
-  // 🔥 NON-LINEAR PENALTIES
-  const timePenalty = Math.pow(time, 2);        // amplifies high values
-  const emotionPenalty = Math.pow(emotion, 2);  // amplifies high values
+  const timePenalty = Math.pow(time, 2);
+  const emotionPenalty = Math.pow(emotion, 2);
 
   const score =
     (regretNorm * 0.35) +
@@ -70,7 +67,43 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* DIAGNOSTIC INSIGHT ENGINE (UNCHANGED) */
+/* 🔥 NEW: CATEGORY ANALYSIS */
+
+function analyzeCategories(scores) {
+
+  const categories = {};
+
+  scores.forEach(s => {
+    const cat = s.category || "other";
+
+    if (!categories[cat]) {
+      categories[cat] = [];
+    }
+
+    categories[cat].push(s.displayScore);
+  });
+
+  let bestCategory = null;
+  let worstCategory = null;
+
+  Object.keys(categories).forEach(cat => {
+    const avg =
+      categories[cat].reduce((a, b) => a + b, 0) /
+      categories[cat].length;
+
+    if (!bestCategory || avg > bestCategory.avg) {
+      bestCategory = { name: cat, avg };
+    }
+
+    if (!worstCategory || avg < worstCategory.avg) {
+      worstCategory = { name: cat, avg };
+    }
+  });
+
+  return { bestCategory, worstCategory };
+}
+
+/* INSIGHT ENGINE (UPDATED) */
 
 function buildInsightSummary(scores) {
 
@@ -78,62 +111,20 @@ function buildInsightSummary(scores) {
   let low = scores.filter(s => s.displayScore <= 4);
   let high = scores.filter(s => s.displayScore >= 7);
 
-  let emotionLow = 0;
-  let emotionTotal = 0;
-
-  let pressureLow = 0;
-  let pressureTotal = 0;
-
-  scores.forEach(s => {
-
-    const hasEmotion = s.explanation.some(e =>
-      e.toLowerCase().includes("emotional")
-    );
-
-    const hasPressure = s.explanation.some(e =>
-      e.toLowerCase().includes("pressure")
-    );
-
-    if (hasEmotion) {
-      emotionTotal++;
-      if (s.displayScore <= 4) emotionLow++;
-    }
-
-    if (hasPressure) {
-      pressureTotal++;
-      if (s.displayScore <= 4) pressureLow++;
-    }
-
-  });
+  const { bestCategory, worstCategory } = analyzeCategories(scores);
 
   let primaryPattern = {
     text: "Your decisions are generally stable",
     severity: "low"
   };
 
-  if (emotionTotal > 0) {
-    const emotionRate = emotionLow / emotionTotal;
-
-    if (emotionRate > 0.5) {
-      primaryPattern = {
-        text: "Decisions made under emotional pressure tend to perform poorly",
-        severity: "high"
-      };
-    }
-  }
-
-  if (pressureTotal > 0) {
-    const pressureRate = pressureLow / pressureTotal;
-
-    if (pressureRate > 0.5) {
-      primaryPattern = {
-        text: "Decisions made under time pressure tend to perform poorly",
-        severity: "high"
-      };
-    }
-  }
-
-  if (primaryPattern.severity === "low" && low.length > high.length) {
+  // 🔥 CATEGORY-DRIVEN INSIGHT
+  if (worstCategory && worstCategory.avg <= 5) {
+    primaryPattern = {
+      text: `${worstCategory.name} decisions tend to perform poorly`,
+      severity: "high"
+    };
+  } else if (low.length > high.length) {
     primaryPattern = {
       text: "Decision outcomes are inconsistent",
       severity: "medium"
@@ -157,14 +148,9 @@ function buildInsightSummary(scores) {
     severity: "low"
   };
 
-  if (primaryPattern.text.includes("emotional")) {
+  if (worstCategory && worstCategory.avg <= 5) {
     recommendedFocus = {
-      text: "Pause before making decisions when emotions are high",
-      severity: "high"
-    };
-  } else if (primaryPattern.text.includes("time pressure")) {
-    recommendedFocus = {
-      text: "Avoid making rushed decisions under time pressure",
+      text: `Improve decision-making in ${worstCategory.name} category`,
       severity: "high"
     };
   } else if (low.length > high.length) {
@@ -176,7 +162,12 @@ function buildInsightSummary(scores) {
 
   return {
     primaryPattern,
-    secondaryPattern: null,
+    secondaryPattern: bestCategory
+      ? {
+          text: `${bestCategory.name} decisions are your strongest`,
+          severity: "low"
+        }
+      : null,
     stability,
     recommendedFocus
   };
@@ -205,6 +196,7 @@ router.get("/", async (req, res) => {
         scores.push({
           id: d.id,
           title: d.title,
+          category: d.category,
           displayScore,
           explanation
         });

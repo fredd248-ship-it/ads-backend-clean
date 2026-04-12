@@ -1,19 +1,251 @@
-<!-- ONLY SHOWING RELEVANT UPDATED PARTS, BUT THIS IS A FULL FILE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ADD THIS INSIDE SIDEBAR (BOTTOM) -->
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+}
 
-<div style="margin-top:20px; text-align:center;">
-  <div style="margin-bottom:8px; font-size:14px; color:#312e81;">
-    New Decision
+.sidebar {
+  width: 220px;
+  background: #e0e7ff;
+  height: 100vh;
+  padding: 20px 10px;
+  box-sizing: border-box;
+  border-right: 1px solid #c7d2fe;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #312e81;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+
+.active {
+  background: #4338ca;
+  color: white;
+  font-weight: bold;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.empty {
+  text-align: center;
+  margin-top: 60px;
+}
+
+/* Sidebar FAB section */
+.create-section {
+  margin-top: auto;
+  text-align: center;
+}
+
+.create-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #312e81;
+}
+
+.create-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #4338ca;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Modal */
+#createModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background: white;
+  width: 320px;
+  margin: 120px auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+
+  <div class="create-section">
+    <div class="create-label">New Decision</div>
+    <button class="create-btn" onclick="openModal()">+</button>
   </div>
-  <button onclick="openModal()" style="
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    background:#4338ca;
-    color:white;
-    font-size:24px;
-    border:none;
-    cursor:pointer;
-  ">+</button>
 </div>
+
+<div class="main">
+  <h2>Decisions</h2>
+  <div id="content">Loading...</div>
+</div>
+
+<!-- MODAL -->
+<div id="createModal">
+  <div class="modal-content">
+    <h3>New Decision</h3>
+
+    <input id="title" placeholder="Decision title">
+
+    <select id="category">
+      <option value="">Select Category</option>
+      <option value="financial">Financial</option>
+      <option value="lifestyle">Lifestyle</option>
+      <option value="subscription">Subscription</option>
+      <option value="home">Home</option>
+      <option value="vehicle">Vehicle</option>
+      <option value="electronics">Electronics</option>
+      <option value="career">Career</option>
+      <option value="investment">Investment</option>
+      <option value="other">Other</option>
+    </select>
+
+    <input id="cost" type="text" placeholder="Cost">
+
+    <button onclick="createDecision()" style="margin-top:12px;">Save</button>
+    <button onclick="closeModal()" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<script>
+
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+const token = localStorage.getItem("ads_token");
+
+if (!token || token === "null" || token === "undefined") {
+  window.location.href = "login.html";
+  throw new Error("STOP");
+}
+
+async function load(){
+  const content = document.getElementById("content");
+
+  try {
+    const res = await fetch(API + "/decisions", {
+      headers:{ Authorization:"Bearer "+token }
+    });
+
+    const data = await res.json();
+
+    if (!data.success){
+      content.innerText = "Error loading data";
+      return;
+    }
+
+    if (!data.data.length){
+      content.innerHTML = "<div class='empty'>No decisions yet</div>";
+      return;
+    }
+
+    content.innerHTML = data.data.map(d => `
+      <div class="card" onclick="goEvaluate('${d.id}')">
+        <strong>${d.title}</strong><br>
+        ${d.category || ""}
+      </div>
+    `).join("");
+
+  } catch {
+    content.innerText = "Error loading data";
+  }
+}
+
+function goEvaluate(id){
+  window.location.href = "evaluate.html?id=" + id;
+}
+
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+function openModal(){
+  document.getElementById("createModal").style.display = "block";
+}
+
+function closeModal(){
+  document.getElementById("createModal").style.display = "none";
+}
+
+async function createDecision(){
+  const title = document.getElementById("title").value;
+  const category = document.getElementById("category").value;
+  const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+  await fetch(API + "/decisions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ title, category, cost })
+  });
+
+  closeModal();
+  load();
+}
+
+load();
+
+</script>
+
+</body>
+</html>

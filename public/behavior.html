@@ -90,7 +90,6 @@ body {
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-
 const token = localStorage.getItem("ads_token");
 
 if (!token || token === "null" || token === "undefined") {
@@ -111,8 +110,7 @@ async function load() {
 
     const data = await res.json();
 
-    // ✅ SAFE HANDLING (KEY FIX)
-    if (!data || !data.behaviorReport) {
+    if (!data || !data.scores || data.scores.length === 0) {
       container.innerHTML = `
         <div class="card">
           Behavior data is not available yet.<br><br>
@@ -122,11 +120,59 @@ async function load() {
       return;
     }
 
-    const b = data.behaviorReport;
+    const scores = data.scores;
 
+    // --- PATTERN DETECTION ---
+    let lowScores = scores.filter(s => s.displayScore <= 4).length;
+    let highScores = scores.filter(s => s.displayScore >= 7).length;
+
+    let impulseSignals = 0;
+
+    scores.forEach(s => {
+      if (s.explanation.some(e => e.toLowerCase().includes("emotional"))) {
+        impulseSignals++;
+      }
+    });
+
+    // --- PROFILE ---
+    let profile = "Balanced decision maker";
+
+    if (impulseSignals > scores.length * 0.4) {
+      profile = "Emotion-driven decision maker";
+    }
+
+    if (lowScores > highScores) {
+      profile = "Inconsistent decision outcomes";
+    }
+
+    // --- COACHING ---
+    let coaching = [];
+
+    if (impulseSignals > 0) {
+      coaching.push("Reduce emotional influence before committing to decisions");
+    }
+
+    if (lowScores > highScores) {
+      coaching.push("Take more time evaluating decisions before acting");
+    }
+
+    if (highScores >= lowScores) {
+      coaching.push("You are making generally strong decisions—maintain your process");
+    }
+
+    if (coaching.length === 0) {
+      coaching.push("Your decision patterns appear stable");
+    }
+
+    // --- RENDER ---
     let html = `
-      <div class="card"><strong>Decision Profile</strong><br>${b.decisionProfile}</div>
-      <div class="card"><strong>Coaching Summary</strong><br>${b.coachingSummary}</div>
+      <div class="card">
+        <strong>Decision Profile</strong><br>${profile}
+      </div>
+
+      <div class="card">
+        <strong>Coaching Summary</strong><br>${coaching.join("<br><br>")}
+      </div>
     `;
 
     container.innerHTML = html;

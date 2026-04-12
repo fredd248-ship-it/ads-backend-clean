@@ -125,10 +125,8 @@ body {
 
 <script>
 
-/* ✅ FIXED BACKEND */
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
-/* 🔧 FIXED AUTH */
 function token() {
   return localStorage.getItem("ads_token");
 }
@@ -139,7 +137,6 @@ if (!t || t === "null" || t === "undefined") {
   throw new Error("STOP");
 }
 
-/* LOAD DATA */
 async function load() {
 
   const container = document.getElementById("content");
@@ -154,12 +151,11 @@ async function load() {
 
     const data = await res.json();
 
+    // ✅ FIXED VALIDATION
     if (
       !data ||
       typeof data.totalDecisions !== "number" ||
-      typeof data.evaluatedDecisions !== "number" ||
-      !data.insightSummary ||
-      !data.behaviorReport
+      typeof data.evaluatedDecisions !== "number"
     ) {
       container.innerHTML = "<div class='error'>Invalid data</div>";
       throw new Error("API CONTRACT VIOLATION");
@@ -216,7 +212,6 @@ async function load() {
   }
 }
 
-/* NAV */
 function goDash() { window.location.href = "dashboard.html"; }
 function goEvaluations() { window.location.href = "evaluations.html"; }
 function goInsights() { window.location.href = "insights.html"; }

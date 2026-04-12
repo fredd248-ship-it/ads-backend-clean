@@ -33,7 +33,6 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* NEW: EXPLANATION ENGINE */
 function generateExplanation(evaluation, decision) {
   const messages = [];
 
@@ -64,7 +63,118 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* INSIGHTS ROUTE */
+/* NEW: BEHAVIOR ENGINE */
+
+function buildBehaviorReport(scores) {
+
+  let total = scores.length;
+  let low = scores.filter(s => s.displayScore <= 4).length;
+  let high = scores.filter(s => s.displayScore >= 7).length;
+
+  let emotionCount = 0;
+  let pressureCount = 0;
+  let regretSignals = 0;
+
+  scores.forEach(s => {
+    s.explanation.forEach(e => {
+      const text = e.toLowerCase();
+
+      if (text.includes("emotional")) emotionCount++;
+      if (text.includes("pressure")) pressureCount++;
+      if (text.includes("not make this decision again")) regretSignals++;
+    });
+  });
+
+  // --- PROFILE ---
+  let decisionProfile = "Balanced decision maker";
+
+  if (emotionCount > total * 0.4) {
+    decisionProfile = "Emotion-driven decision maker";
+  } else if (low > high) {
+    decisionProfile = "Inconsistent decision outcomes";
+  }
+
+  // --- BLIND SPOT ---
+  let currentBlindSpot = "No dominant blind spot detected";
+
+  if (emotionCount > total * 0.4) {
+    currentBlindSpot = "Emotional pressure is influencing your decisions";
+  } else if (pressureCount > total * 0.4) {
+    currentBlindSpot = "Time pressure is reducing decision quality";
+  }
+
+  // --- BEST NEXT HABIT ---
+  let bestNextHabit = "Maintain your current decision-making approach";
+
+  if (emotionCount > total * 0.4) {
+    bestNextHabit = "Pause before committing when emotional intensity is high";
+  } else if (pressureCount > total * 0.4) {
+    bestNextHabit = "Delay decisions when under time pressure";
+  }
+
+  // --- STRENGTHS ---
+  let strengths = [];
+
+  if (high >= low) {
+    strengths.push("You are making generally strong decisions");
+  }
+
+  if (regretSignals === 0) {
+    strengths.push("You rarely regret your decisions");
+  }
+
+  // --- RISK AREAS ---
+  let riskAreas = [];
+
+  if (emotionCount > 0) {
+    riskAreas.push("Emotion-driven decisions");
+  }
+
+  if (pressureCount > 0) {
+    riskAreas.push("Time-pressure decisions");
+  }
+
+  if (low > high) {
+    riskAreas.push("Inconsistent outcomes");
+  }
+
+  // --- ADJUSTMENTS ---
+  let recommendedAdjustments = [];
+
+  if (emotionCount > 0) {
+    recommendedAdjustments.push("Introduce a pause before emotional decisions");
+  }
+
+  if (pressureCount > 0) {
+    recommendedAdjustments.push("Avoid rushed decisions when possible");
+  }
+
+  if (low > high) {
+    recommendedAdjustments.push("Review past decisions before making similar ones");
+  }
+
+  // --- COACHING SUMMARY ---
+  let coachingSummary = "Your decision patterns appear stable";
+
+  if (emotionCount > total * 0.4) {
+    coachingSummary = "Emotional decisions are impacting your outcomes";
+  } else if (low > high) {
+    coachingSummary = "You may benefit from a more structured decision process";
+  }
+
+  return {
+    decisionProfile,
+    coachingSummary,
+    currentBlindSpot,
+    bestNextHabit,
+    strengths,
+    riskAreas,
+    recommendedAdjustments
+  };
+}
+
+/* ROUTE */
+
 router.get("/", async (req, res) => {
   try {
 
@@ -72,56 +182,36 @@ router.get("/", async (req, res) => {
       include: { evaluations: true }
     });
 
-    let totalDecisions = decisions.length;
-    let evaluatedDecisions = 0;
-
     let scores = [];
 
     decisions.forEach(d => {
-      if (d.evaluations && d.evaluations.length > 0) {
+      if (d.evaluations.length > 0) {
 
-        evaluatedDecisions++;
+        const latest = d.evaluations[d.evaluations.length - 1];
 
-        const latestEval = d.evaluations[d.evaluations.length - 1];
-
-        const rawScore = computeQualityScore(latestEval, d);
+        const rawScore = computeQualityScore(latest, d);
         const displayScore = Math.round(rawScore / 10);
-
-        const explanation = generateExplanation(latestEval, d);
+        const explanation = generateExplanation(latest, d);
 
         scores.push({
           id: d.id,
           title: d.title,
-          category: d.category,
-          qualityScore: rawScore,
           displayScore,
           explanation
         });
       }
     });
 
-    const averageScore =
-      scores.length > 0
-        ? Math.round(scores.reduce((a, b) => a + b.displayScore, 0) / scores.length)
-        : 0;
-
-    const bestDecision = scores.sort((a, b) => b.displayScore - a.displayScore)[0] || null;
-    const worstDecision = scores.sort((a, b) => a.displayScore - b.displayScore)[0] || null;
+    const behaviorReport = buildBehaviorReport(scores);
 
     return res.json({
-      totalDecisions,
-      evaluatedDecisions,
-      averageScore,
-      bestDecision,
-      worstDecision,
-      scores
+      scores,
+      behaviorReport
     });
 
-  } catch (error) {
-    console.error("INSIGHTS ERROR:", error);
-    return res.status(500).json({
-      error: "Server error"
-    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

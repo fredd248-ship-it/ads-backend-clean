@@ -137,7 +137,7 @@ function buildBehaviorReport(scores) {
   };
 }
 
-/* NEW: INSIGHT SUMMARY ENGINE */
+/* INSIGHT SUMMARY ENGINE (FIXED) */
 
 function buildInsightSummary(scores) {
 
@@ -187,14 +187,16 @@ function buildInsightSummary(scores) {
     };
   }
 
+  /* ✅ FIXED STABILITY LOGIC */
+
   let stability = {
     text: "Your decision-making is consistent",
     severity: "low"
   };
 
-  if (Math.abs(high - low) <= 1) {
+  if (low > 0 && high > 0) {
     stability = {
-      text: "Your results are mixed and may need refinement",
+      text: "Your decision outcomes are inconsistent",
       severity: "medium"
     };
   }

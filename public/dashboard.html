@@ -63,6 +63,26 @@ body {
   text-align: center;
   margin-top: 60px;
 }
+
+/* ✅ FAB (ONLY ADDITION) */
+#fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #4338ca;
+  color: white;
+  font-size: 28px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+#fab:hover {
+  background: #3730a3;
+}
 </style>
 </head>
 
@@ -82,10 +102,12 @@ body {
   <div id="content">Loading...</div>
 </div>
 
+<!-- ✅ FAB BUTTON -->
+<button id="fab" onclick="goCreate()">+</button>
+
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-
 const token = localStorage.getItem("ads_token");
 
 if (!token || token === "null" || token === "undefined") {
@@ -94,7 +116,6 @@ if (!token || token === "null" || token === "undefined") {
 }
 
 async function load(){
-
   const content = document.getElementById("content");
 
   try {
@@ -129,6 +150,10 @@ async function load(){
 /* NAV */
 function goEvaluate(id){
   window.location.href = "evaluate.html?id=" + id;
+}
+
+function goCreate(){
+  window.location.href = "create.html";
 }
 
 function goEvaluations(){ window.location.href="evaluations.html"; }

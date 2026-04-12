@@ -15,20 +15,27 @@ function mapFrequency(freq) {
   return 0.1;
 }
 
+/* 🔥 PHASE 2: EVOLVED SCORING */
+
 function computeQualityScore(evaluation, decision) {
+
   const regretNorm = 1 - (evaluation.regretScore / 10);
   const frequencyNorm = mapFrequency(evaluation.frequencyOfUse);
   const buyAgainNorm = evaluation.wouldBuyAgain ? 1 : 0;
 
-  const timeNorm = (decision.timePressure ?? 5) / 10;
-  const emotionNorm = (decision.emotionalWeight ?? 5) / 10;
+  const time = (decision.timePressure ?? 5) / 10;
+  const emotion = (decision.emotionalWeight ?? 5) / 10;
+
+  // 🔥 NON-LINEAR PENALTIES
+  const timePenalty = Math.pow(time, 2);        // amplifies high values
+  const emotionPenalty = Math.pow(emotion, 2);  // amplifies high values
 
   const score =
     (regretNorm * 0.35) +
     (frequencyNorm * 0.20) +
     (buyAgainNorm * 0.20) +
-    ((1 - timeNorm) * 0.15) +
-    ((1 - emotionNorm) * 0.10);
+    ((1 - timePenalty) * 0.15) +
+    ((1 - emotionPenalty) * 0.10);
 
   return Math.round(score * 100);
 }
@@ -63,7 +70,7 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* DIAGNOSTIC INSIGHT ENGINE */
+/* DIAGNOSTIC INSIGHT ENGINE (UNCHANGED) */
 
 function buildInsightSummary(scores) {
 
@@ -99,8 +106,6 @@ function buildInsightSummary(scores) {
 
   });
 
-  // --- DETERMINE CAUSE ---
-
   let primaryPattern = {
     text: "Your decisions are generally stable",
     severity: "low"
@@ -128,7 +133,6 @@ function buildInsightSummary(scores) {
     }
   }
 
-  // fallback if no strong condition detected
   if (primaryPattern.severity === "low" && low.length > high.length) {
     primaryPattern = {
       text: "Decision outcomes are inconsistent",
@@ -136,7 +140,6 @@ function buildInsightSummary(scores) {
     };
   }
 
-  // --- STABILITY (correct logic) ---
   let stability = {
     text: "Your decision-making is consistent",
     severity: "low"
@@ -149,7 +152,6 @@ function buildInsightSummary(scores) {
     };
   }
 
-  // --- RECOMMENDED FOCUS ---
   let recommendedFocus = {
     text: "Maintain your current approach",
     severity: "low"

@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-/* GET ALL DECISIONS (WITH EVALUATIONS) */
+/* GET ALL DECISIONS */
 router.get("/", async (req, res) => {
   try {
 
@@ -27,17 +27,27 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* CREATE DECISION */
+/* CREATE DECISION (UPGRADED) */
 router.post("/", async (req, res) => {
   try {
 
-    const { title, category, cost } = req.body;
+    const {
+      title,
+      category,
+      cost,
+      timePressure,
+      emotionalWeight
+    } = req.body;
 
     const decision = await prisma.decision.create({
       data: {
         title,
         category,
-        cost
+        cost,
+
+        // NEW CONTEXT FIELDS
+        timePressure: timePressure ?? null,
+        emotionalWeight: emotionalWeight ?? null
       }
     });
 
@@ -55,7 +65,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* CREATE EVALUATION (UPGRADED) */
+/* CREATE EVALUATION */
 router.post("/:id/evaluate", async (req, res) => {
   try {
 
@@ -69,7 +79,6 @@ router.post("/:id/evaluate", async (req, res) => {
       emotionalWeight
     } = req.body;
 
-    // basic validation (unchanged core)
     if (regretScore === undefined || !frequencyOfUse || wouldBuyAgain === undefined) {
       return res.status(400).json({
         success: false,
@@ -84,7 +93,7 @@ router.post("/:id/evaluate", async (req, res) => {
         frequencyOfUse,
         wouldBuyAgain,
 
-        // NEW FIELDS (safe optional)
+        // TEMP (will remove later)
         timePressure: timePressure ?? null,
         emotionalWeight: emotionalWeight ?? null
       }

@@ -50,17 +50,23 @@ body {
   margin: auto;
 }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 14px;
+.section {
+  background: #fff6d8;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
   border: 1px solid rgba(0,0,0,0.05);
 }
 
 .section-title {
   font-weight: bold;
-  margin-top: 20px;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.list-item {
+  font-size: 13px;
+  margin-bottom: 3px;
 }
 
 .error {
@@ -97,6 +103,11 @@ if (!token || token === "null" || token === "undefined") {
   throw new Error("STOP");
 }
 
+function buildList(items) {
+  if (!items || items.length === 0) return "<div class='list-item'>None</div>";
+  return items.map(i => `<div class="list-item">• ${i}</div>`).join("");
+}
+
 async function load() {
 
   const container = document.getElementById("content");
@@ -110,9 +121,9 @@ async function load() {
 
     const data = await res.json();
 
-    if (!data || !data.scores || data.scores.length === 0) {
+    if (!data || !data.behaviorReport) {
       container.innerHTML = `
-        <div class="card">
+        <div class="section">
           Behavior data is not available yet.<br><br>
           Start evaluating more decisions to generate insights.
         </div>
@@ -120,58 +131,42 @@ async function load() {
       return;
     }
 
-    const scores = data.scores;
+    const b = data.behaviorReport;
 
-    // --- PATTERN DETECTION ---
-    let lowScores = scores.filter(s => s.displayScore <= 4).length;
-    let highScores = scores.filter(s => s.displayScore >= 7).length;
-
-    let impulseSignals = 0;
-
-    scores.forEach(s => {
-      if (s.explanation.some(e => e.toLowerCase().includes("emotional"))) {
-        impulseSignals++;
-      }
-    });
-
-    // --- PROFILE ---
-    let profile = "Balanced decision maker";
-
-    if (impulseSignals > scores.length * 0.4) {
-      profile = "Emotion-driven decision maker";
-    }
-
-    if (lowScores > highScores) {
-      profile = "Inconsistent decision outcomes";
-    }
-
-    // --- COACHING ---
-    let coaching = [];
-
-    if (impulseSignals > 0) {
-      coaching.push("Reduce emotional influence before committing to decisions");
-    }
-
-    if (lowScores > highScores) {
-      coaching.push("Take more time evaluating decisions before acting");
-    }
-
-    if (highScores >= lowScores) {
-      coaching.push("You are making generally strong decisions—maintain your process");
-    }
-
-    if (coaching.length === 0) {
-      coaching.push("Your decision patterns appear stable");
-    }
-
-    // --- RENDER ---
-    let html = `
-      <div class="card">
-        <strong>Decision Profile</strong><br>${profile}
+    const html = `
+      <div class="section">
+        <div class="section-title">Decision Profile</div>
+        ${b.decisionProfile}
       </div>
 
-      <div class="card">
-        <strong>Coaching Summary</strong><br>${coaching.join("<br><br>")}
+      <div class="section">
+        <div class="section-title">Coaching Summary</div>
+        ${b.coachingSummary}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Current Blind Spot</div>
+        ${b.currentBlindSpot}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Best Next Habit</div>
+        ${b.bestNextHabit}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Strengths</div>
+        ${buildList(b.strengths)}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risk Areas</div>
+        ${buildList(b.riskAreas)}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Recommended Adjustments</div>
+        ${buildList(b.recommendedAdjustments)}
       </div>
     `;
 

@@ -63,160 +63,109 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* BEHAVIOR ENGINE */
-
-function buildBehaviorReport(scores) {
-
-  let total = scores.length;
-  let low = scores.filter(s => s.displayScore <= 4).length;
-  let high = scores.filter(s => s.displayScore >= 7).length;
-
-  let emotionCount = 0;
-  let pressureCount = 0;
-  let regretSignals = 0;
-
-  scores.forEach(s => {
-    s.explanation.forEach(e => {
-      const text = e.toLowerCase();
-      if (text.includes("emotional")) emotionCount++;
-      if (text.includes("pressure")) pressureCount++;
-      if (text.includes("not make this decision again")) regretSignals++;
-    });
-  });
-
-  let decisionProfile = "Balanced decision maker";
-
-  if (emotionCount > total * 0.4) {
-    decisionProfile = "Emotion-driven decision maker";
-  } else if (low > high) {
-    decisionProfile = "Inconsistent decision outcomes";
-  }
-
-  let currentBlindSpot = "No dominant blind spot detected";
-
-  if (emotionCount > total * 0.4) {
-    currentBlindSpot = "Emotional pressure is influencing your decisions";
-  } else if (pressureCount > total * 0.4) {
-    currentBlindSpot = "Time pressure is reducing decision quality";
-  }
-
-  let bestNextHabit = "Maintain your current decision-making approach";
-
-  if (emotionCount > total * 0.4) {
-    bestNextHabit = "Pause before committing when emotional intensity is high";
-  } else if (pressureCount > total * 0.4) {
-    bestNextHabit = "Delay decisions when under time pressure";
-  }
-
-  let strengths = [];
-  if (high >= low) strengths.push("You are making generally strong decisions");
-  if (regretSignals === 0) strengths.push("You rarely regret your decisions");
-
-  let riskAreas = [];
-  if (emotionCount > 0) riskAreas.push("Emotion-driven decisions");
-  if (pressureCount > 0) riskAreas.push("Time-pressure decisions");
-  if (low > high) riskAreas.push("Inconsistent outcomes");
-
-  let recommendedAdjustments = [];
-  if (emotionCount > 0) recommendedAdjustments.push("Introduce a pause before emotional decisions");
-  if (pressureCount > 0) recommendedAdjustments.push("Avoid rushed decisions when possible");
-  if (low > high) recommendedAdjustments.push("Review past decisions before making similar ones");
-
-  let coachingSummary = "Your decision patterns appear stable";
-  if (emotionCount > total * 0.4) coachingSummary = "Emotional decisions are impacting your outcomes";
-  else if (low > high) coachingSummary = "You may benefit from a more structured decision process";
-
-  return {
-    decisionProfile,
-    coachingSummary,
-    currentBlindSpot,
-    bestNextHabit,
-    strengths,
-    riskAreas,
-    recommendedAdjustments
-  };
-}
-
-/* INSIGHT SUMMARY ENGINE (FIXED) */
+/* DIAGNOSTIC INSIGHT ENGINE */
 
 function buildInsightSummary(scores) {
 
   let total = scores.length;
-  let low = scores.filter(s => s.displayScore <= 4).length;
-  let high = scores.filter(s => s.displayScore >= 7).length;
+  let low = scores.filter(s => s.displayScore <= 4);
+  let high = scores.filter(s => s.displayScore >= 7);
 
-  let emotionCount = 0;
-  let pressureCount = 0;
+  let emotionLow = 0;
+  let emotionTotal = 0;
+
+  let pressureLow = 0;
+  let pressureTotal = 0;
 
   scores.forEach(s => {
-    s.explanation.forEach(e => {
-      const text = e.toLowerCase();
-      if (text.includes("emotional")) emotionCount++;
-      if (text.includes("pressure")) pressureCount++;
-    });
+
+    const hasEmotion = s.explanation.some(e =>
+      e.toLowerCase().includes("emotional")
+    );
+
+    const hasPressure = s.explanation.some(e =>
+      e.toLowerCase().includes("pressure")
+    );
+
+    if (hasEmotion) {
+      emotionTotal++;
+      if (s.displayScore <= 4) emotionLow++;
+    }
+
+    if (hasPressure) {
+      pressureTotal++;
+      if (s.displayScore <= 4) pressureLow++;
+    }
+
   });
+
+  // --- DETERMINE CAUSE ---
 
   let primaryPattern = {
     text: "Your decisions are generally stable",
     severity: "low"
   };
 
-  if (emotionCount > total * 0.4) {
-    primaryPattern = {
-      text: "Emotional decisions are reducing overall quality",
-      severity: "high"
-    };
-  } else if (pressureCount > total * 0.4) {
-    primaryPattern = {
-      text: "Time pressure is impacting decision quality",
-      severity: "high"
-    };
-  } else if (low > high) {
+  if (emotionTotal > 0) {
+    const emotionRate = emotionLow / emotionTotal;
+
+    if (emotionRate > 0.5) {
+      primaryPattern = {
+        text: "Decisions made under emotional pressure tend to perform poorly",
+        severity: "high"
+      };
+    }
+  }
+
+  if (pressureTotal > 0) {
+    const pressureRate = pressureLow / pressureTotal;
+
+    if (pressureRate > 0.5) {
+      primaryPattern = {
+        text: "Decisions made under time pressure tend to perform poorly",
+        severity: "high"
+      };
+    }
+  }
+
+  // fallback if no strong condition detected
+  if (primaryPattern.severity === "low" && low.length > high.length) {
     primaryPattern = {
       text: "Decision outcomes are inconsistent",
       severity: "medium"
     };
   }
 
-  let secondaryPattern = null;
-
-  if (pressureCount > total * 0.2 && pressureCount <= total * 0.4) {
-    secondaryPattern = {
-      text: "Some decisions are made under time pressure",
-      severity: "medium"
-    };
-  }
-
-  /* ✅ FIXED STABILITY LOGIC */
-
+  // --- STABILITY (correct logic) ---
   let stability = {
     text: "Your decision-making is consistent",
     severity: "low"
   };
 
-  if (low > 0 && high > 0) {
+  if (low.length > 0 && high.length > 0) {
     stability = {
       text: "Your decision outcomes are inconsistent",
       severity: "medium"
     };
   }
 
+  // --- RECOMMENDED FOCUS ---
   let recommendedFocus = {
     text: "Maintain your current approach",
     severity: "low"
   };
 
-  if (emotionCount > total * 0.4) {
+  if (primaryPattern.text.includes("emotional")) {
     recommendedFocus = {
-      text: "Slow down decisions when emotional intensity is high",
+      text: "Pause before making decisions when emotions are high",
       severity: "high"
     };
-  } else if (pressureCount > total * 0.4) {
+  } else if (primaryPattern.text.includes("time pressure")) {
     recommendedFocus = {
-      text: "Avoid making decisions under time pressure",
+      text: "Avoid making rushed decisions under time pressure",
       severity: "high"
     };
-  } else if (low > high) {
+  } else if (low.length > high.length) {
     recommendedFocus = {
       text: "Introduce a more structured decision process",
       severity: "medium"
@@ -225,7 +174,7 @@ function buildInsightSummary(scores) {
 
   return {
     primaryPattern,
-    secondaryPattern,
+    secondaryPattern: null,
     stability,
     recommendedFocus
   };
@@ -274,7 +223,6 @@ router.get("/", async (req, res) => {
     const bestDecision = sortedHigh[0] || null;
     const worstDecision = sortedLow[0] || null;
 
-    const behaviorReport = buildBehaviorReport(scores);
     const insightSummary = buildInsightSummary(scores);
 
     return res.json({
@@ -284,7 +232,6 @@ router.get("/", async (req, res) => {
       bestDecision,
       worstDecision,
       scores,
-      behaviorReport,
       insightSummary
     });
 

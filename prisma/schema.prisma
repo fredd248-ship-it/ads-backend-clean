@@ -19,6 +19,10 @@ model Decision {
   title       String
   category    String?
   cost        Float?
+
+  timePressure    Int?
+  emotionalWeight Int?
+
   createdAt   DateTime     @default(now())
 
   evaluations Evaluation[]

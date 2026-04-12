@@ -13,7 +13,6 @@ body {
   display: flex;
 }
 
-/* SIDEBAR */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -40,7 +39,7 @@ body {
   color: white;
 }
 
-/* FAB SECTION (moved upward) */
+/* FAB AREA */
 .create-section {
   margin-top: 40px;
   text-align: center;
@@ -63,7 +62,6 @@ body {
   cursor: pointer;
 }
 
-/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -80,7 +78,7 @@ body {
   cursor: pointer;
 }
 
-/* MODAL BACKDROP */
+/* MODAL */
 #createModal {
   display: none;
   position: fixed;
@@ -88,34 +86,52 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.55); /* darker overlay */
+  background: rgba(30, 41, 59, 0.6);
 }
 
-/* MODAL CARD */
 .modal-content {
-  background: #ffffff;
-  width: 340px;
-  margin: 120px auto;
+  background: linear-gradient(145deg, #ffffff, #f1f5ff);
+  width: 360px;
+  margin: 100px auto;
   padding: 22px;
-  border-radius: 14px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
 }
 
-/* INPUTS */
+.modal-section {
+  margin-top: 14px;
+}
+
+.modal-section label {
+  font-size: 13px;
+  color: #374151;
+}
+
 .modal-content input,
 .modal-content select {
   width: 100%;
   padding: 10px;
-  margin-top: 10px;
+  margin-top: 6px;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
 
-/* BUTTONS */
-.modal-content button {
+/* SLIDERS */
+.slider {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.slider-value {
+  font-size: 12px;
+  text-align: right;
+  color: #4338ca;
+}
+
+button {
   width: 100%;
   padding: 10px;
-  margin-top: 10px;
+  margin-top: 12px;
   border-radius: 6px;
   border: none;
 }
@@ -151,33 +167,55 @@ body {
 <!-- MODAL -->
 <div id="createModal">
   <div class="modal-content">
+
     <h3>New Decision</h3>
 
-    <input id="title" placeholder="Decision title">
+    <div class="modal-section">
+      <input id="title" placeholder="Decision title">
+    </div>
 
-    <select id="category">
-      <option value="">Select Category</option>
-      <option>Home Office</option>
-      <option>Travel</option>
-      <option>Relationship</option>
-      <option>Job</option>
-      <option>Lawn and Garden</option>
-      <option>Electronics</option>
-      <option>Home</option>
-      <option>Outdoors and Patio</option>
-      <option>Vehicle</option>
-      <option>Moving</option>
-      <option>Work</option>
-      <option>Business</option>
-      <option>Tools</option>
-      <option>Clothing</option>
-      <option>Decor</option>
-    </select>
+    <div class="modal-section">
+      <select id="category">
+        <option value="">Select Category</option>
+        <option>Home Office</option>
+        <option>Travel</option>
+        <option>Relationship</option>
+        <option>Job</option>
+        <option>Lawn and Garden</option>
+        <option>Electronics</option>
+        <option>Home</option>
+        <option>Outdoors and Patio</option>
+        <option>Vehicle</option>
+        <option>Moving</option>
+        <option>Work</option>
+        <option>Business</option>
+        <option>Tools</option>
+        <option>Clothing</option>
+        <option>Decor</option>
+      </select>
+    </div>
 
-    <input id="cost" type="text" placeholder="Cost">
+    <div class="modal-section">
+      <input id="cost" type="text" placeholder="Cost">
+    </div>
+
+    <!-- TIME PRESSURE -->
+    <div class="modal-section">
+      <label>Time Pressure</label>
+      <input type="range" min="0" max="10" value="5" id="timePressure" class="slider" oninput="updateValue('timePressureValue', this.value)">
+      <div id="timePressureValue" class="slider-value">5</div>
+    </div>
+
+    <!-- EMOTIONAL WEIGHT -->
+    <div class="modal-section">
+      <label>Emotional Weight</label>
+      <input type="range" min="0" max="10" value="5" id="emotionalWeight" class="slider" oninput="updateValue('emotionalWeightValue', this.value)">
+      <div id="emotionalWeightValue" class="slider-value">5</div>
+    </div>
 
     <button class="save-btn" onclick="createDecision()">Save</button>
     <button onclick="closeModal()">Cancel</button>
+
   </div>
 </div>
 
@@ -185,11 +223,6 @@ body {
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
-
-if (!token) {
-  window.location.href = "login.html";
-  throw new Error("STOP");
-}
 
 async function load(){
   const res = await fetch(API + "/decisions", {
@@ -208,15 +241,9 @@ async function load(){
   `).join("");
 }
 
-function goEvaluate(id){
-  window.location.href = "evaluate.html?id=" + id;
+function updateValue(id, value){
+  document.getElementById(id).innerText = value;
 }
-
-function goEvaluations(){ window.location.href="evaluations.html"; }
-function goHistory(){ window.location.href="history.html"; }
-function goInsights(){ window.location.href="insights.html"; }
-function goBehavior(){ window.location.href="behavior.html"; }
-function goSettings(){ window.location.href="settings.html"; }
 
 function openModal(){
   document.getElementById("createModal").style.display = "block";
@@ -227,9 +254,13 @@ function closeModal(){
 }
 
 async function createDecision(){
+
   const title = document.getElementById("title").value;
   const category = document.getElementById("category").value;
   const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+  const timePressure = parseInt(document.getElementById("timePressure").value);
+  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
 
   await fetch(API + "/decisions", {
     method: "POST",
@@ -237,12 +268,28 @@ async function createDecision(){
       "Content-Type": "application/json",
       Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ title, category, cost })
+    body: JSON.stringify({
+      title,
+      category,
+      cost,
+      timePressure,
+      emotionalWeight
+    })
   });
 
   closeModal();
   load();
 }
+
+function goEvaluate(id){
+  window.location.href = "evaluate.html?id=" + id;
+}
+
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
 
 load();
 

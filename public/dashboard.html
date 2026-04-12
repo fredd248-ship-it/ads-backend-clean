@@ -67,6 +67,16 @@ body {
   padding: 20px;
   max-width: 800px;
   margin: auto;
+  position: relative;
+}
+
+.top-link {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 14px;
+  color: #4338ca;
+  cursor: pointer;
 }
 
 .card {
@@ -160,8 +170,12 @@ button {
 </div>
 
 <div class="main">
+
+  <div class="top-link" onclick="goHow()">How it works</div>
+
   <h2>Decisions</h2>
   <div id="content">Loading...</div>
+
 </div>
 
 <!-- MODAL -->
@@ -177,21 +191,28 @@ button {
     <div class="modal-section">
       <select id="category">
         <option value="">Select Category</option>
-        <option>Home Office</option>
-        <option>Travel</option>
-        <option>Relationship</option>
-        <option>Job</option>
-        <option>Lawn and Garden</option>
-        <option>Electronics</option>
-        <option>Home</option>
-        <option>Outdoors and Patio</option>
-        <option>Vehicle</option>
-        <option>Moving</option>
-        <option>Work</option>
-        <option>Business</option>
-        <option>Tools</option>
-        <option>Clothing</option>
-        <option>Decor</option>
+
+        <option value="home_office">Home Office</option>
+        <option value="travel">Travel</option>
+        <option value="relationship">Relationship</option>
+        <option value="job">Job</option>
+        <option value="lawn_garden">Lawn and Garden</option>
+        <option value="electronics">Electronics</option>
+        <option value="home">Home</option>
+        <option value="outdoors_patio">Outdoors and Patio</option>
+        <option value="vehicle">Vehicle</option>
+        <option value="moving">Moving</option>
+        <option value="work">Work</option>
+        <option value="business">Business</option>
+        <option value="tools">Tools</option>
+        <option value="clothing">Clothing</option>
+        <option value="decor">Decor</option>
+
+        <option value="dining">Dining</option>
+        <option value="medical">Medical</option>
+        <option value="pets">Pets</option>
+        <option value="other">Other</option>
+
       </select>
     </div>
 
@@ -199,14 +220,12 @@ button {
       <input id="cost" type="text" placeholder="Cost">
     </div>
 
-    <!-- TIME PRESSURE -->
     <div class="modal-section">
       <label>Time Pressure</label>
       <input type="range" min="0" max="10" value="5" id="timePressure" class="slider" oninput="updateValue('timePressureValue', this.value)">
       <div id="timePressureValue" class="slider-value">5</div>
     </div>
 
-    <!-- EMOTIONAL WEIGHT -->
     <div class="modal-section">
       <label>Emotional Weight</label>
       <input type="range" min="0" max="10" value="5" id="emotionalWeight" class="slider" oninput="updateValue('emotionalWeightValue', this.value)">
@@ -290,6 +309,7 @@ function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
+function goHow(){ window.location.href="how-it-works.html"; }
 
 load();
 

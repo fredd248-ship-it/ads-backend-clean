@@ -36,13 +36,11 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE (RESTORED) */
+/* BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
 
-  if (!scores || scores.length < 5) {
-    return null;
-  }
+  if (!scores || scores.length < 5) return null;
 
   let highEmotion = 0;
   let highTime = 0;
@@ -66,12 +64,12 @@ function buildBehaviorReport(scores, decisions) {
 
   const coachingSummary =
     highEmotion > highTime
-      ? "Emotions appear to influence your decisions more than timing"
-      : "Time pressure appears to influence your decisions more than emotion";
+      ? "Emotions influence your decisions more than timing"
+      : "Time pressure influences your decisions more than emotion";
 
   const currentBlindSpot =
     highEmotion > scores.length / 2
-      ? "You may underestimate emotional influence on decisions"
+      ? "You may underestimate emotional influence"
       : highTime > scores.length / 2
       ? "You may rush decisions under time pressure"
       : "No major blind spots detected";
@@ -79,7 +77,7 @@ function buildBehaviorReport(scores, decisions) {
   const bestNextHabit =
     lowScore > strongScore
       ? "Slow down and evaluate decisions more deliberately"
-      : "Continue your current decision-making approach";
+      : "Continue your current approach";
 
   const strengths = [];
   const riskAreas = [];
@@ -100,12 +98,12 @@ function buildBehaviorReport(scores, decisions) {
 
   if (highTime > scores.length / 2) {
     riskAreas.push("Frequent time pressure decisions");
-    recommendedAdjustments.push("Allow more time before committing to decisions");
+    recommendedAdjustments.push("Allow more time before committing");
   }
 
   if (highEmotion > scores.length / 2) {
     riskAreas.push("Emotion-driven decisions");
-    recommendedAdjustments.push("Pause and reassess emotional decisions");
+    recommendedAdjustments.push("Pause before emotional decisions");
   }
 
   return {
@@ -141,7 +139,7 @@ router.get("/", async (req, res) => {
       });
 
       if (d.evaluations.length > 0) {
-        const latest = d.evaluations[d.evaluations.length - 1;
+        const latest = d.evaluations[d.evaluations.length - 1];
 
         const rawScore = computeQualityScore(latest, d);
         const displayScore = Math.round(rawScore / 10);

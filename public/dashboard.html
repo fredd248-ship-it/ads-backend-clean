@@ -47,7 +47,6 @@ body {
 .create-label {
   font-size: 14px;
   margin-bottom: 8px;
-  color: #312e81;
 }
 
 .create-btn {
@@ -73,7 +72,6 @@ body {
   position: absolute;
   top: 20px;
   right: 20px;
-  font-size: 14px;
   color: #4338ca;
   cursor: pointer;
 }
@@ -83,22 +81,39 @@ body {
   padding: 16px;
   margin-top: 14px;
   cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* ✅ EXACT COLOR SYSTEM */
-.low-use {
-  background: #fde68a;
+.low-use { background: #fde68a; }
+.medium-use { background: #bfdbfe; }
+.high-use { background: #bbf7d0; }
+
+/* MODAL */
+#createModal {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
 }
 
-.medium-use {
-  background: #bfdbfe;
+.modal-content {
+  background: white;
+  width: 360px;
+  margin: 100px auto;
+  padding: 20px;
+  border-radius: 12px;
 }
 
-.high-use {
-  background: #bbf7d0;
+input, select {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
 }
 
+button {
+  margin-top: 10px;
+  width: 100%;
+}
 </style>
 </head>
 
@@ -124,23 +139,85 @@ body {
   <div id="content">Loading...</div>
 </div>
 
+<!-- MODAL -->
+<div id="createModal">
+  <div class="modal-content">
+
+    <h3>Create Decision</h3>
+
+    <input id="title" placeholder="Title">
+    <input id="cost" type="number" placeholder="Cost">
+
+    <select id="category">
+      <option value="">Select Category</option>
+      <option value="home">Home</option>
+      <option value="vehicle">Vehicle</option>
+      <option value="electronics">Electronics</option>
+      <option value="pets">Pets</option>
+      <option value="dining">Dining</option>
+      <option value="medical">Medical</option>
+      <option value="other">Other</option>
+    </select>
+
+    <label>Time Pressure</label>
+    <input type="range" id="timePressure" min="1" max="5">
+
+    <label>Emotional Weight</label>
+    <input type="range" id="emotionalWeight" min="1" max="5">
+
+    <button onclick="createDecision()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
+
+  </div>
+</div>
+
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* ✅ EXACT MATCH LOGIC */
-function getUseClass(freq) {
-  if (!freq) return "";
+function openModal(){
+  document.getElementById("createModal").style.display = "block";
+}
 
-  if (freq === "Low") return "low-use";
-  if (freq === "Medium") return "medium-use";
-  if (freq === "High") return "high-use";
+function closeModal(){
+  document.getElementById("createModal").style.display = "none";
+}
 
+async function createDecision(){
+
+  const title = document.getElementById("title").value;
+  const cost = parseFloat(document.getElementById("cost").value);
+  const category = document.getElementById("category").value;
+  const timePressure = parseInt(document.getElementById("timePressure").value);
+  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
+
+  await fetch(API + "/decisions", {
+    method: "POST",
+    headers: {
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      title,
+      cost,
+      category,
+      timePressure,
+      emotionalWeight
+    })
+  });
+
+  closeModal();
+  load();
+}
+
+function getUseClass(freq){
+  if(freq==="Low") return "low-use";
+  if(freq==="Medium") return "medium-use";
+  if(freq==="High") return "high-use";
   return "";
 }
 
-/* LOAD */
 async function load(){
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
@@ -152,26 +229,13 @@ async function load(){
   content.innerHTML = data.data.map(d => {
 
     let freq = null;
-
-    if (d.evaluations && d.evaluations.length > 0) {
-      const latest = d.evaluations[d.evaluations.length - 1];
-      freq = latest.frequencyOfUse;
+    if (d.evaluations.length){
+      freq = d.evaluations[d.evaluations.length-1].frequencyOfUse;
     }
 
-    const useClass = getUseClass(freq);
-
-    return `
-      <div class="card ${useClass}" onclick="goEvaluate('${d.id}')">
-        <strong>${d.title}</strong><br>
-        ${d.category || ""}
-      </div>
-    `;
+    return `<div class="card ${getUseClass(freq)}">${d.title}</div>`;
 
   }).join("");
-}
-
-function goEvaluate(id){
-  window.location.href = "evaluate.html?id=" + id;
 }
 
 function goEvaluations(){ window.location.href="evaluations.html"; }

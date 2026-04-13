@@ -36,131 +36,86 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-function generateExplanation(evaluation, decision) {
-  const messages = [];
+/* BEHAVIOR ENGINE (RESTORED) */
 
-  if (decision.emotionalWeight >= 7) {
-    messages.push("High emotional influence may have impacted this decision");
+function buildBehaviorReport(scores, decisions) {
+
+  if (!scores || scores.length < 5) {
+    return null;
   }
 
-  if (decision.timePressure >= 7) {
-    messages.push("This decision was made under time pressure");
-  }
+  let highEmotion = 0;
+  let highTime = 0;
+  let lowScore = 0;
+  let strongScore = 0;
 
-  if (evaluation.wouldBuyAgain === false) {
-    messages.push("You would not make this decision again");
-  }
-
-  const freq = mapFrequency(evaluation.frequencyOfUse);
-
-  if (freq >= 0.7) {
-    messages.push("This decision is used frequently and provides value");
-  } else if (freq <= 0.2) {
-    messages.push("This decision sees little use");
-  }
-
-  if (messages.length === 0) {
-    messages.push("This appears to be a stable, balanced decision");
-  }
-
-  return messages;
-}
-
-/* CATEGORY ANALYSIS */
-
-function analyzeCategories(scores) {
-  const categories = {};
+  decisions.forEach(d => {
+    if ((d.emotionalWeight ?? 0) >= 7) highEmotion++;
+    if ((d.timePressure ?? 0) >= 7) highTime++;
+  });
 
   scores.forEach(s => {
-    const cat = s.category || "other";
-    if (!categories[cat]) categories[cat] = [];
-    categories[cat].push(s.displayScore);
+    if (s.displayScore <= 4) lowScore++;
+    if (s.displayScore >= 7) strongScore++;
   });
 
-  let bestCategory = null;
-  let worstCategory = null;
+  const decisionProfile =
+    lowScore > strongScore
+      ? "You tend to make inconsistent or lower-quality decisions"
+      : "You generally make stable, reliable decisions";
 
-  Object.keys(categories).forEach(cat => {
-    const avg =
-      categories[cat].reduce((a, b) => a + b, 0) /
-      categories[cat].length;
+  const coachingSummary =
+    highEmotion > highTime
+      ? "Emotions appear to influence your decisions more than timing"
+      : "Time pressure appears to influence your decisions more than emotion";
 
-    if (!bestCategory || avg > bestCategory.avg) {
-      bestCategory = { name: cat, avg };
-    }
+  const currentBlindSpot =
+    highEmotion > scores.length / 2
+      ? "You may underestimate emotional influence on decisions"
+      : highTime > scores.length / 2
+      ? "You may rush decisions under time pressure"
+      : "No major blind spots detected";
 
-    if (!worstCategory || avg < worstCategory.avg) {
-      worstCategory = { name: cat, avg };
-    }
-  });
+  const bestNextHabit =
+    lowScore > strongScore
+      ? "Slow down and evaluate decisions more deliberately"
+      : "Continue your current decision-making approach";
 
-  return { bestCategory, worstCategory };
-}
+  const strengths = [];
+  const riskAreas = [];
+  const recommendedAdjustments = [];
 
-/* INSIGHTS */
-
-function buildInsightSummary(scores) {
-  let low = scores.filter(s => s.displayScore <= 4);
-  let high = scores.filter(s => s.displayScore >= 7);
-
-  const { bestCategory, worstCategory } = analyzeCategories(scores);
-
-  let primaryPattern = {
-    text: "Your decisions are generally stable",
-    severity: "low"
-  };
-
-  if (worstCategory && worstCategory.avg <= 5) {
-    primaryPattern = {
-      text: `${worstCategory.name} decisions tend to perform poorly`,
-      severity: "high"
-    };
-  } else if (low.length > high.length) {
-    primaryPattern = {
-      text: "Decision outcomes are inconsistent",
-      severity: "medium"
-    };
+  if (strongScore > lowScore) {
+    strengths.push("You frequently make high-quality decisions");
   }
 
-  let stability = {
-    text: "Your decision-making is consistent",
-    severity: "low"
-  };
-
-  if (low.length > 0 && high.length > 0) {
-    stability = {
-      text: "Your decision outcomes are inconsistent",
-      severity: "medium"
-    };
+  if (highEmotion < scores.length / 2) {
+    strengths.push("You are not overly driven by emotion");
   }
 
-  let recommendedFocus = {
-    text: "Maintain your current approach",
-    severity: "low"
-  };
+  if (lowScore > strongScore) {
+    riskAreas.push("Inconsistent decision outcomes");
+    recommendedAdjustments.push("Introduce a structured decision process");
+  }
 
-  if (worstCategory && worstCategory.avg <= 5) {
-    recommendedFocus = {
-      text: `Improve decision-making in ${worstCategory.name}`,
-      severity: "high"
-    };
-  } else if (low.length > high.length) {
-    recommendedFocus = {
-      text: "Introduce a more structured decision process",
-      severity: "medium"
-    };
+  if (highTime > scores.length / 2) {
+    riskAreas.push("Frequent time pressure decisions");
+    recommendedAdjustments.push("Allow more time before committing to decisions");
+  }
+
+  if (highEmotion > scores.length / 2) {
+    riskAreas.push("Emotion-driven decisions");
+    recommendedAdjustments.push("Pause and reassess emotional decisions");
   }
 
   return {
-    primaryPattern,
-    secondaryPattern: bestCategory
-      ? {
-          text: `${bestCategory.name} decisions are your strongest`,
-          severity: "low"
-        }
-      : null,
-    stability,
-    recommendedFocus
+    decisionProfile,
+    coachingSummary,
+    currentBlindSpot,
+    bestNextHabit,
+    strengths,
+    riskAreas,
+    recommendedAdjustments
   };
 }
 
@@ -175,7 +130,6 @@ router.get("/", async (req, res) => {
 
     let scores = [];
 
-    // 🔥 FIX: count ALL evaluations
     let totalEvaluations = 0;
     let wouldBuyAgainCount = 0;
 
@@ -187,18 +141,16 @@ router.get("/", async (req, res) => {
       });
 
       if (d.evaluations.length > 0) {
-        const latest = d.evaluations[d.evaluations.length - 1];
+        const latest = d.evaluations[d.evaluations.length - 1;
 
         const rawScore = computeQualityScore(latest, d);
         const displayScore = Math.round(rawScore / 10);
-        const explanation = generateExplanation(latest, d);
 
         scores.push({
           id: d.id,
           title: d.title,
           category: d.category,
-          displayScore,
-          explanation
+          displayScore
         });
       }
     });
@@ -222,7 +174,7 @@ router.get("/", async (req, res) => {
     const bestDecision = sortedHigh[0] || null;
     const worstDecision = sortedLow[0] || null;
 
-    const insightSummary = buildInsightSummary(scores);
+    const behaviorReport = buildBehaviorReport(scores, decisions);
 
     return res.json({
       totalDecisions,
@@ -232,7 +184,7 @@ router.get("/", async (req, res) => {
       bestDecision,
       worstDecision,
       scores,
-      insightSummary
+      behaviorReport
     });
 
   } catch (err) {

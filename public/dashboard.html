@@ -86,20 +86,20 @@ body {
   border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* ✅ FULL CARD COLORS (YOUR SYSTEM) */
+/* ✅ FULL COLOR SYSTEM */
 .low-use {
-  background: #fef08a;   /* yellow */
+  background: #fef08a;
 }
 
 .medium-use {
-  background: #bfdbfe;   /* blue */
+  background: #bfdbfe;
 }
 
 .high-use {
-  background: #bbf7d0;   /* green */
+  background: #bbf7d0;
 }
 
-/* MODAL (unchanged) */
+/* MODAL */
 #createModal {
   display: none;
   position: fixed;
@@ -183,20 +183,31 @@ button {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* 🔥 ROBUST FREQUENCY MAPPING */
+/* ✅ FIXED FREQUENCY MAPPING */
 function getUseClass(freq) {
   if (!freq) return "";
 
   const f = freq.toLowerCase();
 
-  if (f.includes("day")) return "high-use";
-  if (f.includes("week")) return "medium-use";
+  if (
+    f.includes("day") ||
+    f.includes("daily") ||
+    f.includes("often") ||
+    f.includes("always")
+  ) return "high-use";
+
+  if (
+    f.includes("week") ||
+    f.includes("weekly") ||
+    f.includes("sometimes")
+  ) return "medium-use";
 
   if (
     f.includes("month") ||
+    f.includes("monthly") ||
     f.includes("rare") ||
     f.includes("occasion") ||
-    f.includes("low")
+    f.includes("never")
   ) return "low-use";
 
   return "low-use";

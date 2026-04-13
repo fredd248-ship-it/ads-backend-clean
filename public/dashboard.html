@@ -79,28 +79,27 @@ body {
 }
 
 .card {
-  background: white;
   border-radius: 12px;
   padding: 16px;
   margin-top: 14px;
-  border: 1px solid rgba(0,0,0,0.05);
   cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* 🔥 FREQUENCY COLORS */
+/* ✅ FULL CARD COLORS (YOUR SYSTEM) */
 .low-use {
-  border-left: 6px solid #facc15;
+  background: #fef08a;   /* yellow */
 }
 
 .medium-use {
-  border-left: 6px solid #3b82f6;
+  background: #bfdbfe;   /* blue */
 }
 
 .high-use {
-  border-left: 6px solid #22c55e;
+  background: #bbf7d0;   /* green */
 }
 
-/* MODAL */
+/* MODAL (unchanged) */
 #createModal {
   display: none;
   position: fixed;
@@ -179,84 +178,27 @@ button {
   <div id="content">Loading...</div>
 </div>
 
-<!-- MODAL -->
-<div id="createModal">
-  <div class="modal-content">
-    <h3>New Decision</h3>
-
-    <div class="modal-section">
-      <input id="title" placeholder="Decision title">
-    </div>
-
-    <div class="modal-section">
-      <select id="category">
-        <option value="">Select Category</option>
-        <option value="home_office">Home Office</option>
-        <option value="travel">Travel</option>
-        <option value="relationship">Relationship</option>
-        <option value="job">Job</option>
-        <option value="lawn_garden">Lawn and Garden</option>
-        <option value="electronics">Electronics</option>
-        <option value="home">Home</option>
-        <option value="outdoors_patio">Outdoors and Patio</option>
-        <option value="vehicle">Vehicle</option>
-        <option value="moving">Moving</option>
-        <option value="work">Work</option>
-        <option value="business">Business</option>
-        <option value="tools">Tools</option>
-        <option value="clothing">Clothing</option>
-        <option value="decor">Decor</option>
-        <option value="dining">Dining</option>
-        <option value="medical">Medical</option>
-        <option value="pets">Pets</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-
-    <div class="modal-section">
-      <input id="cost" type="text" placeholder="Cost">
-    </div>
-
-    <div class="modal-section">
-      <label>Time Pressure</label>
-      <input type="range" min="0" max="10" value="5" id="timePressure" class="slider" oninput="updateValue('timePressureValue', this.value)">
-      <div id="timePressureValue" class="slider-value">5</div>
-    </div>
-
-    <div class="modal-section">
-      <label>Emotional Weight</label>
-      <input type="range" min="0" max="10" value="5" id="emotionalWeight" class="slider" oninput="updateValue('emotionalWeightValue', this.value)">
-      <div id="emotionalWeightValue" class="slider-value">5</div>
-    </div>
-
-    <button class="save-btn" onclick="createDecision()">Save</button>
-    <button onclick="closeModal()">Cancel</button>
-  </div>
-</div>
-
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* RESET MODAL */
-function resetModal() {
-  document.getElementById("title").value = "";
-  document.getElementById("category").value = "";
-  document.getElementById("cost").value = "";
-  document.getElementById("timePressure").value = 5;
-  document.getElementById("timePressureValue").innerText = 5;
-  document.getElementById("emotionalWeight").value = 5;
-  document.getElementById("emotionalWeightValue").innerText = 5;
-}
-
-/* COLOR LOGIC */
+/* 🔥 ROBUST FREQUENCY MAPPING */
 function getUseClass(freq) {
   if (!freq) return "";
+
   const f = freq.toLowerCase();
+
   if (f.includes("day")) return "high-use";
   if (f.includes("week")) return "medium-use";
-  if (f.includes("month")) return "low-use";
+
+  if (
+    f.includes("month") ||
+    f.includes("rare") ||
+    f.includes("occasion") ||
+    f.includes("low")
+  ) return "low-use";
+
   return "low-use";
 }
 
@@ -288,46 +230,6 @@ async function load(){
     `;
 
   }).join("");
-}
-
-function updateValue(id, value){
-  document.getElementById(id).innerText = value;
-}
-
-function openModal(){
-  resetModal();
-  document.getElementById("createModal").style.display = "block";
-}
-
-function closeModal(){
-  document.getElementById("createModal").style.display = "none";
-  resetModal();
-}
-
-async function createDecision(){
-  const title = document.getElementById("title").value;
-  const category = document.getElementById("category").value;
-  const cost = parseFloat(document.getElementById("cost").value) || 0;
-  const timePressure = parseInt(document.getElementById("timePressure").value);
-  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
-
-  await fetch(API + "/decisions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({
-      title,
-      category,
-      cost,
-      timePressure,
-      emotionalWeight
-    })
-  });
-
-  closeModal();
-  load();
 }
 
 function goEvaluate(id){

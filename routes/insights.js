@@ -23,57 +23,46 @@ function computeQualityScore(evaluation, decision) {
   const time = (decision.timePressure ?? 5) / 10;
   const emotion = (decision.emotionalWeight ?? 5) / 10;
 
-  const timePenalty = Math.pow(time, 2);
-  const emotionPenalty = Math.pow(emotion, 2);
-
   const score =
     (regretNorm * 0.35) +
     (frequencyNorm * 0.20) +
     (buyAgainNorm * 0.20) +
-    ((1 - timePenalty) * 0.15) +
-    ((1 - emotionPenalty) * 0.10);
+    ((1 - time * time) * 0.15) +
+    ((1 - emotion * emotion) * 0.10);
 
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE (UNCHANGED) */
+/* BEHAVIOR ENGINE (unchanged) */
 
-function buildBehaviorReport(scores, decisions) {
+function buildBehaviorReport(scores) {
   if (!scores || scores.length < 5) return null;
 
-  let lowScore = 0;
-  let strongScore = 0;
+  let low = 0;
+  let high = 0;
 
   scores.forEach(s => {
-    if (s.displayScore <= 4) lowScore++;
-    if (s.displayScore >= 7) strongScore++;
+    if (s.displayScore <= 4) low++;
+    if (s.displayScore >= 7) high++;
   });
 
-  const decisionProfile =
-    lowScore > strongScore
-      ? "You tend to make inconsistent or lower-quality decisions"
-      : "You generally make stable, reliable decisions";
-
-  const coachingSummary =
-    lowScore > strongScore
-      ? "Your results suggest inconsistency"
-      : "Your results show consistency";
-
-  const currentBlindSpot =
-    lowScore > strongScore
-      ? "Inconsistent decision quality"
-      : "No major blind spots detected";
-
-  const bestNextHabit =
-    lowScore > strongScore
-      ? "Introduce a more structured decision process"
-      : "Continue your current approach";
-
   return {
-    decisionProfile,
-    coachingSummary,
-    currentBlindSpot,
-    bestNextHabit,
+    decisionProfile:
+      low > high
+        ? "You tend to make inconsistent or lower-quality decisions"
+        : "You generally make stable, reliable decisions",
+    coachingSummary:
+      low > high
+        ? "Your results suggest inconsistency"
+        : "Your results show consistency",
+    currentBlindSpot:
+      low > high
+        ? "Inconsistent decision quality"
+        : "No major blind spots detected",
+    bestNextHabit:
+      low > high
+        ? "Introduce a more structured decision process"
+        : "Continue your current approach",
     strengths: [],
     riskAreas: [],
     recommendedAdjustments: []
@@ -103,13 +92,13 @@ router.get("/", async (req, res) => {
       if (d.evaluations.length > 0) {
         const latest = d.evaluations[d.evaluations.length - 1];
 
-        const rawScore = computeQualityScore(latest, d);
-        const displayScore = Math.round(rawScore / 10);
+        const raw = computeQualityScore(latest, d);
+        const displayScore = Math.round(raw / 10);
 
         scores.push({
           id: d.id,
           title: d.title,
-          category: d.category,
+          category: (d.category || "other").toLowerCase(),
           displayScore
         });
       }
@@ -128,45 +117,65 @@ router.get("/", async (req, res) => {
         ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
         : 0;
 
-    /* 🔥 RESTORED LOGIC */
+    /* 🔥 CATEGORY INTELLIGENCE */
 
-    const avg =
-      scores.length > 0
-        ? scores.reduce((a, b) => a + b.displayScore, 0) / scores.length
-        : 0;
+    const categoryMap = {};
 
-    const variance =
-      scores.length > 0
-        ? scores.reduce((a, b) => a + Math.pow(b.displayScore - avg, 2), 0) / scores.length
-        : 0;
+    scores.forEach(s => {
+      if (!categoryMap[s.category]) {
+        categoryMap[s.category] = [];
+      }
+      categoryMap[s.category].push(s.displayScore);
+    });
 
-    let primaryPattern = "";
-    let stability = "";
-    let recommendedFocus = "";
+    let bestCategory = null;
+    let worstCategory = null;
+    let bestAvg = -1;
+    let worstAvg = 11;
 
-    if (avg >= 7) {
-      primaryPattern = "You consistently make strong decisions";
-    } else if (avg >= 5) {
-      primaryPattern = "Your decisions are moderately effective";
-    } else {
-      primaryPattern = "Your decisions need improvement";
+    Object.keys(categoryMap).forEach(cat => {
+      const arr = categoryMap[cat];
+      const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+
+      if (avg > bestAvg) {
+        bestAvg = avg;
+        bestCategory = cat;
+      }
+
+      if (avg < worstAvg) {
+        worstAvg = avg;
+        worstCategory = cat;
+      }
+    });
+
+    /* 🎯 INSIGHT GENERATION */
+
+    let primaryPattern = "Not enough data";
+    let stability = "Not enough data";
+    let recommendedFocus = "Continue evaluating decisions";
+
+    if (scores.length >= 5) {
+
+      if (bestCategory && worstCategory && bestCategory !== worstCategory) {
+        primaryPattern =
+          `You perform strongly in ${bestCategory} decisions but less effectively in ${worstCategory}`;
+      }
+
+      const diff = bestAvg - worstAvg;
+
+      if (diff < 1.5) {
+        stability = "Your decision-making is consistent across categories";
+      } else {
+        stability = "Your decision quality varies significantly by category";
+      }
+
+      if (worstCategory) {
+        recommendedFocus =
+          `Focus on improving decisions in ${worstCategory}`;
+      }
     }
 
-    if (variance < 2) {
-      stability = "Your decision-making is consistent";
-    } else {
-      stability = "Your decision outcomes are inconsistent";
-    }
-
-    if (avg < 6) {
-      recommendedFocus = "Improve evaluation and reflection";
-    } else if (variance > 3) {
-      recommendedFocus = "Reduce inconsistency in decisions";
-    } else {
-      recommendedFocus = "Maintain your current approach";
-    }
-
-    const behaviorReport = buildBehaviorReport(scores, decisions);
+    const behaviorReport = buildBehaviorReport(scores);
 
     return res.json({
       totalDecisions,

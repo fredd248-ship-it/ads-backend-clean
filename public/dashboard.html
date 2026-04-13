@@ -81,8 +81,14 @@ body {
   padding: 16px;
   margin-top: 14px;
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
 
+.card:hover {
+  transform: scale(1.02);
+}
+
+/* COLOR SYSTEM */
 .low-use { background: #fde68a; }
 .medium-use { background: #bfdbfe; }
 .high-use { background: #bbf7d0; }
@@ -229,7 +235,6 @@ function closeModal(){
 }
 
 async function createDecision(){
-
   const title = document.getElementById("title").value;
   const cost = parseFloat(document.getElementById("cost").value);
   const category = document.getElementById("category").value;
@@ -273,13 +278,22 @@ async function load(){
   content.innerHTML = data.data.map(d => {
 
     let freq = null;
-    if (d.evaluations.length){
+    if (d.evaluations && d.evaluations.length){
       freq = d.evaluations[d.evaluations.length-1].frequencyOfUse;
     }
 
-    return `<div class="card ${getUseClass(freq)}">${d.title}</div>`;
+    return `
+      <div class="card ${getUseClass(freq)}" onclick="goEvaluate('${d.id}')">
+        <strong>${d.title}</strong><br>
+        ${d.category || ""}
+      </div>
+    `;
 
   }).join("");
+}
+
+function goEvaluate(id){
+  window.location.href = "evaluate.html?id=" + id;
 }
 
 function goEvaluations(){ window.location.href="evaluations.html"; }

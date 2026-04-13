@@ -87,6 +87,20 @@ body {
   cursor: pointer;
 }
 
+/* 🔥 FREQUENCY COLORS */
+.low-use {
+  border-left: 6px solid #facc15;
+}
+
+.medium-use {
+  border-left: 6px solid #3b82f6;
+}
+
+.high-use {
+  border-left: 6px solid #22c55e;
+}
+
+/* MODAL */
 #createModal {
   display: none;
   position: fixed;
@@ -103,16 +117,10 @@ body {
   margin: 100px auto;
   padding: 22px;
   border-radius: 16px;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
 }
 
 .modal-section {
   margin-top: 14px;
-}
-
-.modal-section label {
-  font-size: 13px;
-  color: #374151;
 }
 
 .modal-content input,
@@ -132,7 +140,6 @@ body {
 .slider-value {
   font-size: 12px;
   text-align: right;
-  color: #4338ca;
 }
 
 button {
@@ -167,17 +174,14 @@ button {
 </div>
 
 <div class="main">
-
   <div class="top-link" onclick="goHow()">How it works</div>
-
   <h2>Decisions</h2>
   <div id="content">Loading...</div>
-
 </div>
 
+<!-- MODAL -->
 <div id="createModal">
   <div class="modal-content">
-
     <h3>New Decision</h3>
 
     <div class="modal-section">
@@ -187,7 +191,6 @@ button {
     <div class="modal-section">
       <select id="category">
         <option value="">Select Category</option>
-
         <option value="home_office">Home Office</option>
         <option value="travel">Travel</option>
         <option value="relationship">Relationship</option>
@@ -203,7 +206,6 @@ button {
         <option value="tools">Tools</option>
         <option value="clothing">Clothing</option>
         <option value="decor">Decor</option>
-
         <option value="dining">Dining</option>
         <option value="medical">Medical</option>
         <option value="pets">Pets</option>
@@ -229,7 +231,6 @@ button {
 
     <button class="save-btn" onclick="createDecision()">Save</button>
     <button onclick="closeModal()">Cancel</button>
-
   </div>
 </div>
 
@@ -238,34 +239,55 @@ button {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* 🔥 NEW RESET FUNCTION */
+/* RESET MODAL */
 function resetModal() {
   document.getElementById("title").value = "";
   document.getElementById("category").value = "";
   document.getElementById("cost").value = "";
-
   document.getElementById("timePressure").value = 5;
   document.getElementById("timePressureValue").innerText = 5;
-
   document.getElementById("emotionalWeight").value = 5;
   document.getElementById("emotionalWeightValue").innerText = 5;
 }
 
+/* COLOR LOGIC */
+function getUseClass(freq) {
+  if (!freq) return "";
+  const f = freq.toLowerCase();
+  if (f.includes("day")) return "high-use";
+  if (f.includes("week")) return "medium-use";
+  if (f.includes("month")) return "low-use";
+  return "low-use";
+}
+
+/* LOAD */
 async function load(){
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
   });
 
   const data = await res.json();
-
   const content = document.getElementById("content");
 
-  content.innerHTML = data.data.map(d => `
-    <div class="card" onclick="goEvaluate('${d.id}')">
-      <strong>${d.title}</strong><br>
-      ${d.category || ""}
-    </div>
-  `).join("");
+  content.innerHTML = data.data.map(d => {
+
+    let freq = null;
+
+    if (d.evaluations && d.evaluations.length > 0) {
+      const latest = d.evaluations[d.evaluations.length - 1];
+      freq = latest.frequencyOfUse;
+    }
+
+    const useClass = getUseClass(freq);
+
+    return `
+      <div class="card ${useClass}" onclick="goEvaluate('${d.id}')">
+        <strong>${d.title}</strong><br>
+        ${d.category || ""}
+      </div>
+    `;
+
+  }).join("");
 }
 
 function updateValue(id, value){
@@ -273,21 +295,19 @@ function updateValue(id, value){
 }
 
 function openModal(){
-  resetModal(); // 🔥 FIX
+  resetModal();
   document.getElementById("createModal").style.display = "block";
 }
 
 function closeModal(){
   document.getElementById("createModal").style.display = "none";
-  resetModal(); // 🔥 SAFETY
+  resetModal();
 }
 
 async function createDecision(){
-
   const title = document.getElementById("title").value;
   const category = document.getElementById("category").value;
   const cost = parseFloat(document.getElementById("cost").value) || 0;
-
   const timePressure = parseInt(document.getElementById("timePressure").value);
   const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
 

@@ -117,6 +117,7 @@ async function load() {
 
     const total = data.totalDecisions || 0;
     const evaluated = data.evaluatedDecisions || 0;
+    const followThrough = data.followThroughRate || 0;
 
     const rate = total > 0
       ? Math.round((evaluated / total) * 100)
@@ -131,9 +132,10 @@ async function load() {
       `${rate}% of your decisions have been evaluated`
     );
 
+    /* 🔥 FIXED */
     html += card(
       "Follow-Through Rate",
-      `${evaluated > 0 ? Math.round((evaluated / total) * 100) : 0}% would be made again`
+      `${followThrough}% would be made again`
     );
 
     if (summary.primaryPattern) {

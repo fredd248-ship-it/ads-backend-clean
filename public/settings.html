@@ -13,7 +13,7 @@ body {
   display: flex;
 }
 
-/* SIDEBAR (STANDARDIZED) */
+/* SIDEBAR */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -71,6 +71,19 @@ body {
   cursor: pointer;
   width: 100%;
 }
+
+/* LINK BUTTONS (match style but neutral color) */
+.link-button {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #e0e7ff;
+  color: #312e81;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 500;
+}
 </style>
 </head>
 
@@ -89,9 +102,19 @@ body {
 
 <h2>Settings</h2>
 
+<!-- ACCOUNT -->
 <div class="card">
   <div><strong>Account</strong></div>
   <button class="button" onclick="logout()">Log Out</button>
+</div>
+
+<!-- NEW SECTION -->
+<div class="card">
+  <div><strong>App Information</strong></div>
+
+  <button class="link-button" onclick="goAbout()">About</button>
+  <button class="link-button" onclick="goDisclaimer()">Disclaimer</button>
+  <button class="link-button" onclick="goFaq()">FAQ</button>
 </div>
 
 </div>
@@ -117,6 +140,11 @@ function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
+
+/* NEW LINKS */
+function goAbout(){ window.location.href="about.html"; }
+function goDisclaimer(){ window.location.href="disclaimer.html"; }
+function goFaq(){ window.location.href="faq.html"; }
 
 </script>
 

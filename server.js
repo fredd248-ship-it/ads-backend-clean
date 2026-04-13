@@ -16,14 +16,19 @@ app.use(cors({
 
 app.use(express.json());
 
+/* 🔐 AUTH MIDDLEWARE */
+const authenticate = require("./middleware/authenticate");
+
 /* ROUTES */
 const authRoutes = require("./routes/auth");
 const decisionRoutes = require("./routes/decisions");
 const insightsRoutes = require("./routes/insights");
 
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/decisions", decisionRoutes);
-app.use("/api/v1/insights", insightsRoutes);
+
+// 🔴 CRITICAL FIX — PROTECT ROUTES
+app.use("/api/v1/decisions", authenticate, decisionRoutes);
+app.use("/api/v1/insights", authenticate, insightsRoutes);
 
 /* HEALTH CHECK */
 app.get("/", (req, res) => {

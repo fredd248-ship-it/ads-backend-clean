@@ -16,7 +16,6 @@ function mapFrequency(freq) {
 }
 
 function computeQualityScore(evaluation, decision) {
-
   const regretNorm = 1 - (evaluation.regretScore / 10);
   const frequencyNorm = mapFrequency(evaluation.frequencyOfUse);
   const buyAgainNorm = evaluation.wouldBuyAgain ? 1 : 0;
@@ -67,19 +66,14 @@ function generateExplanation(evaluation, decision) {
   return messages;
 }
 
-/* 🔥 NEW: CATEGORY ANALYSIS */
+/* CATEGORY ANALYSIS */
 
 function analyzeCategories(scores) {
-
   const categories = {};
 
   scores.forEach(s => {
     const cat = s.category || "other";
-
-    if (!categories[cat]) {
-      categories[cat] = [];
-    }
-
+    if (!categories[cat]) categories[cat] = [];
     categories[cat].push(s.displayScore);
   });
 
@@ -103,11 +97,9 @@ function analyzeCategories(scores) {
   return { bestCategory, worstCategory };
 }
 
-/* INSIGHT ENGINE (UPDATED) */
+/* INSIGHTS */
 
 function buildInsightSummary(scores) {
-
-  let total = scores.length;
   let low = scores.filter(s => s.displayScore <= 4);
   let high = scores.filter(s => s.displayScore >= 7);
 
@@ -118,7 +110,6 @@ function buildInsightSummary(scores) {
     severity: "low"
   };
 
-  // 🔥 CATEGORY-DRIVEN INSIGHT
   if (worstCategory && worstCategory.avg <= 5) {
     primaryPattern = {
       text: `${worstCategory.name} decisions tend to perform poorly`,
@@ -150,7 +141,7 @@ function buildInsightSummary(scores) {
 
   if (worstCategory && worstCategory.avg <= 5) {
     recommendedFocus = {
-      text: `Improve decision-making in ${worstCategory.name} category`,
+      text: `Improve decision-making in ${worstCategory.name}`,
       severity: "high"
     };
   } else if (low.length > high.length) {
@@ -184,9 +175,18 @@ router.get("/", async (req, res) => {
 
     let scores = [];
 
-    decisions.forEach(d => {
-      if (d.evaluations.length > 0) {
+    // 🔥 FIX: count ALL evaluations
+    let totalEvaluations = 0;
+    let wouldBuyAgainCount = 0;
 
+    decisions.forEach(d => {
+
+      d.evaluations.forEach(e => {
+        totalEvaluations++;
+        if (e.wouldBuyAgain) wouldBuyAgainCount++;
+      });
+
+      if (d.evaluations.length > 0) {
         const latest = d.evaluations[d.evaluations.length - 1];
 
         const rawScore = computeQualityScore(latest, d);
@@ -206,6 +206,11 @@ router.get("/", async (req, res) => {
     const totalDecisions = decisions.length;
     const evaluatedDecisions = scores.length;
 
+    const followThroughRate =
+      totalEvaluations > 0
+        ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
+        : 0;
+
     const averageScore =
       scores.length > 0
         ? Math.round(scores.reduce((a, b) => a + b.displayScore, 0) / scores.length)
@@ -222,6 +227,7 @@ router.get("/", async (req, res) => {
     return res.json({
       totalDecisions,
       evaluatedDecisions,
+      followThroughRate,
       averageScore,
       bestDecision,
       worstDecision,

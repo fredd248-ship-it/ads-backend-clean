@@ -8,24 +8,28 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   password  String
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+
+  decisions Decision[]
 }
 
 model Decision {
-  id          String       @id @default(uuid())
-  title       String
-  category    String?
-  cost        Float?
-
+  id              String   @id @default(uuid())
+  title           String
+  category        String?
+  cost            Float?
   timePressure    Int?
   emotionalWeight Int?
+  createdAt       DateTime @default(now())
 
-  createdAt   DateTime     @default(now())
+  // 🔴 CRITICAL — USER OWNERSHIP
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
 
-  evaluations Evaluation[]
+  evaluations     Evaluation[]
 }
 
 model Evaluation {
@@ -34,11 +38,9 @@ model Evaluation {
   regretScore     Int
   frequencyOfUse  String
   wouldBuyAgain   Boolean
-
   timePressure    Int?
   emotionalWeight Int?
-
   createdAt       DateTime @default(now())
 
-  decision Decision @relation(fields: [decisionId], references: [id])
+  decision        Decision @relation(fields: [decisionId], references: [id])
 }

@@ -4,11 +4,12 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-/* GET ALL DECISIONS */
+/* GET ALL DECISIONS (USER SCOPED) */
 router.get("/", async (req, res) => {
   try {
 
     const decisions = await prisma.decision.findMany({
+      where: { userId: req.user.id }, // 🔴 CRITICAL FIX
       orderBy: { createdAt: "desc" },
       include: { evaluations: true }
     });
@@ -27,7 +28,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* CREATE DECISION (UPGRADED) */
+/* CREATE DECISION (USER SCOPED) */
 router.post("/", async (req, res) => {
   try {
 
@@ -44,10 +45,10 @@ router.post("/", async (req, res) => {
         title,
         category,
         cost,
-
-        // NEW CONTEXT FIELDS
         timePressure: timePressure ?? null,
-        emotionalWeight: emotionalWeight ?? null
+        emotionalWeight: emotionalWeight ?? null,
+
+        userId: req.user.id // 🔴 CRITICAL FIX
       }
     });
 
@@ -65,11 +66,23 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* CREATE EVALUATION */
+/* CREATE EVALUATION (VALIDATE OWNERSHIP) */
 router.post("/:id/evaluate", async (req, res) => {
   try {
 
     const decisionId = req.params.id;
+
+    const decision = await prisma.decision.findUnique({
+      where: { id: decisionId }
+    });
+
+    // 🔴 SECURITY CHECK
+    if (!decision || decision.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: "Unauthorized"
+      });
+    }
 
     const {
       regretScore,
@@ -92,8 +105,6 @@ router.post("/:id/evaluate", async (req, res) => {
         regretScore,
         frequencyOfUse,
         wouldBuyAgain,
-
-        // TEMP (will remove later)
         timePressure: timePressure ?? null,
         emotionalWeight: emotionalWeight ?? null
       }

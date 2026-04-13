@@ -33,7 +33,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE (unchanged) */
+/* BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores) {
   if (!scores || scores.length < 5) return null;
@@ -74,7 +74,9 @@ function buildBehaviorReport(scores) {
 router.get("/", async (req, res) => {
   try {
 
+    // 🔴 CRITICAL FIX — USER SCOPING
     const decisions = await prisma.decision.findMany({
+      where: { userId: req.user.id },
       include: { evaluations: true }
     });
 

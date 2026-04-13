@@ -97,22 +97,52 @@ body {
 }
 
 .modal-content {
-  background: white;
+  background: linear-gradient(135deg, #ffffff, #eef2ff);
   width: 360px;
   margin: 100px auto;
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
-input, select {
+.modal-content h3 {
+  margin-top: 0;
+  color: #312e81;
+}
+
+.modal-content label {
+  font-size: 13px;
+  margin-top: 10px;
+  display: block;
+  color: #444;
+}
+
+.modal-content input,
+.modal-content select {
   width: 100%;
   margin-top: 8px;
   padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
-button {
+.modal-content button {
   margin-top: 10px;
   width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #4338ca;
+  color: white;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #333;
 }
 </style>
 </head>
@@ -150,12 +180,26 @@ button {
 
     <select id="category">
       <option value="">Select Category</option>
-      <option value="home">Home</option>
-      <option value="vehicle">Vehicle</option>
+
+      <option value="home_office">Home Office</option>
+      <option value="travel">Travel</option>
+      <option value="relationship">Relationship</option>
+      <option value="job">Job</option>
+      <option value="lawn_garden">Lawn and Garden</option>
       <option value="electronics">Electronics</option>
-      <option value="pets">Pets</option>
+      <option value="home">Home</option>
+      <option value="outdoors_patio">Outdoors and Patio</option>
+      <option value="vehicle">Vehicle</option>
+      <option value="moving">Moving</option>
+      <option value="work">Work</option>
+      <option value="business">Business</option>
+      <option value="tools">Tools</option>
+      <option value="clothing">Clothing</option>
+      <option value="decor">Decor</option>
+
       <option value="dining">Dining</option>
       <option value="medical">Medical</option>
+      <option value="pets">Pets</option>
       <option value="other">Other</option>
     </select>
 
@@ -165,8 +209,8 @@ button {
     <label>Emotional Weight</label>
     <input type="range" id="emotionalWeight" min="1" max="5">
 
-    <button onclick="createDecision()">Save</button>
-    <button onclick="closeModal()">Cancel</button>
+    <button class="save-btn" onclick="createDecision()">Save</button>
+    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
 
   </div>
 </div>

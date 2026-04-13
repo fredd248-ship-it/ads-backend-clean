@@ -151,7 +151,6 @@ async function load() {
 
     const data = await res.json();
 
-    // ✅ FIXED VALIDATION
     if (
       !data ||
       typeof data.totalDecisions !== "number" ||
@@ -167,6 +166,25 @@ async function load() {
     const evalRate = total > 0
       ? Math.round((evaluated / total) * 100)
       : 0;
+
+    const avgScore = data.averageScore || 0;
+
+    /* MOST USED CATEGORY (simple, no normalization) */
+    const categoryCount = {};
+    (data.scores || []).forEach(s => {
+      const cat = s.category || "other";
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+    });
+
+    let topCategory = "N/A";
+    let max = 0;
+
+    Object.keys(categoryCount).forEach(cat => {
+      if (categoryCount[cat] > max) {
+        max = categoryCount[cat];
+        topCategory = cat;
+      }
+    });
 
     container.innerHTML = `
 
@@ -188,10 +206,23 @@ async function load() {
           <div class="metric-value">${evalRate}%</div>
         </div>
 
+        <!-- NEW -->
+        <div class="metric">
+          <div class="metric-title">Average Satisfaction</div>
+          <div class="metric-value">${avgScore}/10</div>
+        </div>
+
         <div class="metric">
           <div class="metric-title">Pending</div>
           <div class="metric-value">${total - evaluated}</div>
         </div>
+
+        <!-- NEW -->
+        <div class="metric">
+          <div class="metric-title">Most Used Category</div>
+          <div class="metric-value">${topCategory}</div>
+        </div>
+
       </div>
 
       <div class="section-title">Behavior</div>

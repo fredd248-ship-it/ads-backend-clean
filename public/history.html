@@ -47,8 +47,6 @@ body {
   margin: auto;
 }
 
-/* STATS */
-
 .stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -72,8 +70,6 @@ body {
   font-weight: bold;
   margin-top: 4px;
 }
-
-/* LIST */
 
 .card {
   background: white;
@@ -132,7 +128,7 @@ async function load() {
 
   const avgScore = data.averageScore || 0;
 
-  // 🔥 MOST USED CATEGORY
+  /* SIMPLE MOST USED CATEGORY (NO NORMALIZATION) */
   const categoryCount = {};
 
   (data.scores || []).forEach(s => {

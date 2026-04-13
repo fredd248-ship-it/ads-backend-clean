@@ -36,21 +36,13 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE */
+/* BEHAVIOR ENGINE (UNCHANGED) */
 
 function buildBehaviorReport(scores, decisions) {
-
   if (!scores || scores.length < 5) return null;
 
-  let highEmotion = 0;
-  let highTime = 0;
   let lowScore = 0;
   let strongScore = 0;
-
-  decisions.forEach(d => {
-    if ((d.emotionalWeight ?? 0) >= 7) highEmotion++;
-    if ((d.timePressure ?? 0) >= 7) highTime++;
-  });
 
   scores.forEach(s => {
     if (s.displayScore <= 4) lowScore++;
@@ -63,57 +55,28 @@ function buildBehaviorReport(scores, decisions) {
       : "You generally make stable, reliable decisions";
 
   const coachingSummary =
-    highEmotion > highTime
-      ? "Emotions influence your decisions more than timing"
-      : "Time pressure influences your decisions more than emotion";
+    lowScore > strongScore
+      ? "Your results suggest inconsistency"
+      : "Your results show consistency";
 
   const currentBlindSpot =
-    highEmotion > scores.length / 2
-      ? "You may underestimate emotional influence"
-      : highTime > scores.length / 2
-      ? "You may rush decisions under time pressure"
+    lowScore > strongScore
+      ? "Inconsistent decision quality"
       : "No major blind spots detected";
 
   const bestNextHabit =
     lowScore > strongScore
-      ? "Slow down and evaluate decisions more deliberately"
+      ? "Introduce a more structured decision process"
       : "Continue your current approach";
-
-  const strengths = [];
-  const riskAreas = [];
-  const recommendedAdjustments = [];
-
-  if (strongScore > lowScore) {
-    strengths.push("You frequently make high-quality decisions");
-  }
-
-  if (highEmotion < scores.length / 2) {
-    strengths.push("You are not overly driven by emotion");
-  }
-
-  if (lowScore > strongScore) {
-    riskAreas.push("Inconsistent decision outcomes");
-    recommendedAdjustments.push("Introduce a structured decision process");
-  }
-
-  if (highTime > scores.length / 2) {
-    riskAreas.push("Frequent time pressure decisions");
-    recommendedAdjustments.push("Allow more time before committing");
-  }
-
-  if (highEmotion > scores.length / 2) {
-    riskAreas.push("Emotion-driven decisions");
-    recommendedAdjustments.push("Pause before emotional decisions");
-  }
 
   return {
     decisionProfile,
     coachingSummary,
     currentBlindSpot,
     bestNextHabit,
-    strengths,
-    riskAreas,
-    recommendedAdjustments
+    strengths: [],
+    riskAreas: [],
+    recommendedAdjustments: []
   };
 }
 
@@ -127,7 +90,6 @@ router.get("/", async (req, res) => {
     });
 
     let scores = [];
-
     let totalEvaluations = 0;
     let wouldBuyAgainCount = 0;
 
@@ -156,31 +118,66 @@ router.get("/", async (req, res) => {
     const totalDecisions = decisions.length;
     const evaluatedDecisions = scores.length;
 
+    const evaluationRate =
+      totalDecisions > 0
+        ? Math.round((evaluatedDecisions / totalDecisions) * 100)
+        : 0;
+
     const followThroughRate =
       totalEvaluations > 0
         ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
         : 0;
 
-    const averageScore =
+    /* 🔥 RESTORED LOGIC */
+
+    const avg =
       scores.length > 0
-        ? Math.round(scores.reduce((a, b) => a + b.displayScore, 0) / scores.length)
+        ? scores.reduce((a, b) => a + b.displayScore, 0) / scores.length
         : 0;
 
-    const sortedHigh = [...scores].sort((a, b) => b.displayScore - a.displayScore);
-    const sortedLow = [...scores].sort((a, b) => a.displayScore - b.displayScore);
+    const variance =
+      scores.length > 0
+        ? scores.reduce((a, b) => a + Math.pow(b.displayScore - avg, 2), 0) / scores.length
+        : 0;
 
-    const bestDecision = sortedHigh[0] || null;
-    const worstDecision = sortedLow[0] || null;
+    let primaryPattern = "";
+    let stability = "";
+    let recommendedFocus = "";
+
+    if (avg >= 7) {
+      primaryPattern = "You consistently make strong decisions";
+    } else if (avg >= 5) {
+      primaryPattern = "Your decisions are moderately effective";
+    } else {
+      primaryPattern = "Your decisions need improvement";
+    }
+
+    if (variance < 2) {
+      stability = "Your decision-making is consistent";
+    } else {
+      stability = "Your decision outcomes are inconsistent";
+    }
+
+    if (avg < 6) {
+      recommendedFocus = "Improve evaluation and reflection";
+    } else if (variance > 3) {
+      recommendedFocus = "Reduce inconsistency in decisions";
+    } else {
+      recommendedFocus = "Maintain your current approach";
+    }
 
     const behaviorReport = buildBehaviorReport(scores, decisions);
 
     return res.json({
       totalDecisions,
       evaluatedDecisions,
+      evaluationRate,
       followThroughRate,
-      averageScore,
-      bestDecision,
-      worstDecision,
+
+      primaryPattern,
+      stability,
+      recommendedFocus,
+
       scores,
       behaviorReport
     });

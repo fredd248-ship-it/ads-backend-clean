@@ -39,7 +39,6 @@ body {
   color: white;
 }
 
-/* FAB AREA */
 .create-section {
   margin-top: 40px;
   text-align: center;
@@ -88,7 +87,6 @@ body {
   cursor: pointer;
 }
 
-/* MODAL */
 #createModal {
   display: none;
   position: fixed;
@@ -126,7 +124,6 @@ body {
   border: 1px solid #ccc;
 }
 
-/* SLIDERS */
 .slider {
   width: 100%;
   margin-top: 6px;
@@ -178,7 +175,6 @@ button {
 
 </div>
 
-<!-- MODAL -->
 <div id="createModal">
   <div class="modal-content">
 
@@ -212,7 +208,6 @@ button {
         <option value="medical">Medical</option>
         <option value="pets">Pets</option>
         <option value="other">Other</option>
-
       </select>
     </div>
 
@@ -243,6 +238,19 @@ button {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
+/* 🔥 NEW RESET FUNCTION */
+function resetModal() {
+  document.getElementById("title").value = "";
+  document.getElementById("category").value = "";
+  document.getElementById("cost").value = "";
+
+  document.getElementById("timePressure").value = 5;
+  document.getElementById("timePressureValue").innerText = 5;
+
+  document.getElementById("emotionalWeight").value = 5;
+  document.getElementById("emotionalWeightValue").innerText = 5;
+}
+
 async function load(){
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
@@ -265,11 +273,13 @@ function updateValue(id, value){
 }
 
 function openModal(){
+  resetModal(); // 🔥 FIX
   document.getElementById("createModal").style.display = "block";
 }
 
 function closeModal(){
   document.getElementById("createModal").style.display = "none";
+  resetModal(); // 🔥 SAFETY
 }
 
 async function createDecision(){

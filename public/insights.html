@@ -89,13 +89,20 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-function severityClass(s) {
-  return s === "high" ? "high" : s === "medium" ? "medium" : "low";
+function severityClass(text) {
+  if (!text) return "low";
+
+  const t = text.toLowerCase();
+
+  if (t.includes("inconsistent") || t.includes("improve")) return "high";
+  if (t.includes("moderate")) return "medium";
+
+  return "low";
 }
 
 function card(title, text, severity="low") {
   return `
-    <div class="card ${severityClass(severity)}">
+    <div class="card ${severity}">
       <div class="title">${title}</div>
       ${text}
     </div>
@@ -123,8 +130,6 @@ async function load() {
       ? Math.round((evaluated / total) * 100)
       : 0;
 
-    const summary = data.insightSummary || {};
-
     let html = "";
 
     html += card(
@@ -132,41 +137,32 @@ async function load() {
       `${rate}% of your decisions have been evaluated`
     );
 
-    /* 🔥 FIXED */
     html += card(
       "Follow-Through Rate",
       `${followThrough}% would be made again`
     );
 
-    if (summary.primaryPattern) {
+    if (data.primaryPattern) {
       html += card(
         "Primary Pattern",
-        summary.primaryPattern.text,
-        summary.primaryPattern.severity
+        data.primaryPattern,
+        severityClass(data.primaryPattern)
       );
     }
 
-    if (summary.secondaryPattern) {
-      html += card(
-        "Secondary Pattern",
-        summary.secondaryPattern.text,
-        summary.secondaryPattern.severity
-      );
-    }
-
-    if (summary.stability) {
+    if (data.stability) {
       html += card(
         "Stability",
-        summary.stability.text,
-        summary.stability.severity
+        data.stability,
+        severityClass(data.stability)
       );
     }
 
-    if (summary.recommendedFocus) {
+    if (data.recommendedFocus) {
       html += card(
         "Recommended Focus",
-        summary.recommendedFocus.text,
-        summary.recommendedFocus.severity
+        data.recommendedFocus,
+        severityClass(data.recommendedFocus)
       );
     }
 

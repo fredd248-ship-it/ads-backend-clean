@@ -15,7 +15,6 @@ function mapFrequency(freq) {
   return 0.1;
 }
 
-/* 🔴 NEW — RECENCY WEIGHT */
 function getRecencyWeight(date) {
   const now = new Date();
   const created = new Date(date);
@@ -44,7 +43,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE (unchanged logic, now uses weighted scores) */
+/* 🔴 PHASE 4 — ACTIONABLE FEEDBACK ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 5) return null;
@@ -107,13 +106,25 @@ function buildBehaviorReport(scores, decisions) {
         `${cat} decisions show low satisfaction (avg ${Math.round(avgScore)}/10)${reasonText}`
       );
 
-      let actions = [];
-      if (avgFreq < 0.5) actions.push("test or trial options");
-      if (buyRate < 0.5) actions.push("compare alternatives");
-      if (actions.length === 0) actions.push("slow down and review before committing");
+      /* 🔴 NEW — STRUCTURED ACTION RULE */
+      let steps = [];
+
+      steps.push("Pause before committing");
+
+      if (avgFreq < 0.5) {
+        steps.push("Test or trial options before deciding");
+      }
+
+      if (buyRate < 0.5) {
+        steps.push("Compare at least two alternatives");
+      }
+
+      if (steps.length < 2) {
+        steps.push("Review past similar decisions before proceeding");
+      }
 
       recommendedAdjustments.push(
-        `Before making ${cat} decisions: ${actions.join(" and ")}`
+        `When making ${cat} decisions: ${steps.join(" → ")}`
       );
     }
   });
@@ -179,7 +190,7 @@ function buildBehaviorReport(scores, decisions) {
   };
 }
 
-/* ROUTE */
+/* ROUTE (unchanged) */
 
 router.get("/", async (req, res) => {
   try {

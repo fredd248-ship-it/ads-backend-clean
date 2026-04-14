@@ -43,7 +43,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 RESTORED — BEHAVIOR ENGINE */
+/* 🔴 BEHAVIOR ENGINE (unchanged stable version) */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 5) return null;
@@ -59,7 +59,7 @@ function buildBehaviorReport(scores, decisions) {
   };
 }
 
-/* 🔴 NEW — ADVANCED INSIGHTS */
+/* 🔴 FIXED — ADVANCED INSIGHTS */
 
 function buildAdvancedInsights(decisions, scores) {
 
@@ -92,20 +92,42 @@ function buildAdvancedInsights(decisions, scores) {
     return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
   }
 
+  const highTimeAvg = avg(highTime);
+  const lowTimeAvg = avg(lowTime);
+
+  const highEmotionAvg = avg(highEmotion);
+  const lowEmotionAvg = avg(lowEmotion);
+
+  const highUseAvg = avg(highUse);
+  const lowUseAvg = avg(lowUse);
+
   return {
+
     timePressureInsight:
-      avg(highTime) && avg(lowTime)
-        ? `High-pressure decisions average ${avg(highTime)}/10 vs low-pressure decisions at ${avg(lowTime)}/10`
+      highTimeAvg !== null && lowTimeAvg !== null
+        ? `High-pressure decisions average ${highTimeAvg}/10 vs low-pressure decisions at ${lowTimeAvg}/10`
+        : highTimeAvg !== null
+        ? `High-pressure decisions average ${highTimeAvg}/10`
+        : lowTimeAvg !== null
+        ? `Low-pressure decisions average ${lowTimeAvg}/10`
         : null,
 
     emotionalInsight:
-      avg(highEmotion) && avg(lowEmotion)
-        ? `High-emotion decisions average ${avg(highEmotion)}/10 vs low-emotion decisions at ${avg(lowEmotion)}/10`
+      highEmotionAvg !== null && lowEmotionAvg !== null
+        ? `High-emotion decisions average ${highEmotionAvg}/10 vs low-emotion decisions at ${lowEmotionAvg}/10`
+        : highEmotionAvg !== null
+        ? `High-emotion decisions average ${highEmotionAvg}/10`
+        : lowEmotionAvg !== null
+        ? `Low-emotion decisions average ${lowEmotionAvg}/10`
         : null,
 
     usageInsight:
-      avg(highUse) && avg(lowUse)
-        ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
+      highUseAvg !== null && lowUseAvg !== null
+        ? `Frequently used decisions average ${highUseAvg}/10 vs rarely used decisions at ${lowUseAvg}/10`
+        : highUseAvg !== null
+        ? `Frequently used decisions average ${highUseAvg}/10`
+        : lowUseAvg !== null
+        ? `Rarely used decisions average ${lowUseAvg}/10`
         : null
   };
 }

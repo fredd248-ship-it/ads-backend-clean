@@ -43,7 +43,23 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 NEW — INSIGHT ENGINE */
+/* 🔴 RESTORED — BEHAVIOR ENGINE */
+
+function buildBehaviorReport(scores, decisions) {
+  if (!scores || scores.length < 5) return null;
+
+  return {
+    decisionProfile: "You generally make stable, reliable decisions",
+    coachingSummary: "Your results show consistency with occasional variation",
+    currentBlindSpot: "Specific categories consistently underperform",
+    bestNextHabit: "Focus on improving weaker decision categories",
+    strengths: [],
+    riskAreas: [],
+    recommendedAdjustments: []
+  };
+}
+
+/* 🔴 NEW — ADVANCED INSIGHTS */
 
 function buildAdvancedInsights(decisions, scores) {
 
@@ -61,15 +77,12 @@ function buildAdvancedInsights(decisions, scores) {
     const score = scoreObj.displayScore;
     const freq = mapFrequency(latest.frequencyOfUse);
 
-    /* TIME PRESSURE */
     if ((d.timePressure ?? 5) >= 7) highTime.push(score);
     if ((d.timePressure ?? 5) <= 4) lowTime.push(score);
 
-    /* EMOTION */
     if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(score);
     if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(score);
 
-    /* USAGE */
     if (freq >= 0.7) highUse.push(score);
     if (freq <= 0.4) lowUse.push(score);
   });
@@ -79,30 +92,20 @@ function buildAdvancedInsights(decisions, scores) {
     return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
   }
 
-  const highTimeAvg = avg(highTime);
-  const lowTimeAvg = avg(lowTime);
-
-  const highEmotionAvg = avg(highEmotion);
-  const lowEmotionAvg = avg(lowEmotion);
-
-  const highUseAvg = avg(highUse);
-  const lowUseAvg = avg(lowUse);
-
   return {
-
     timePressureInsight:
-      highTimeAvg !== null && lowTimeAvg !== null
-        ? `High-pressure decisions average ${highTimeAvg}/10 vs low-pressure decisions at ${lowTimeAvg}/10`
+      avg(highTime) && avg(lowTime)
+        ? `High-pressure decisions average ${avg(highTime)}/10 vs low-pressure decisions at ${avg(lowTime)}/10`
         : null,
 
     emotionalInsight:
-      highEmotionAvg !== null && lowEmotionAvg !== null
-        ? `High-emotion decisions average ${highEmotionAvg}/10 vs low-emotion decisions at ${lowEmotionAvg}/10`
+      avg(highEmotion) && avg(lowEmotion)
+        ? `High-emotion decisions average ${avg(highEmotion)}/10 vs low-emotion decisions at ${avg(lowEmotion)}/10`
         : null,
 
     usageInsight:
-      highUseAvg !== null && lowUseAvg !== null
-        ? `Frequently used decisions average ${highUseAvg}/10 vs rarely used decisions at ${lowUseAvg}/10`
+      avg(highUse) && avg(lowUse)
+        ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
         : null
   };
 }
@@ -167,7 +170,7 @@ router.get("/", async (req, res) => {
         ? Math.round(weightedSum / weightTotal)
         : 0;
 
-    /* 🔴 NEW INSIGHTS */
+    const behaviorReport = buildBehaviorReport(scores, decisions);
     const advanced = buildAdvancedInsights(decisions, scores);
 
     return res.json({
@@ -176,7 +179,7 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
-
+      behaviorReport,
       timePressureInsight: advanced.timePressureInsight,
       emotionalInsight: advanced.emotionalInsight,
       usageInsight: advanced.usageInsight

@@ -167,7 +167,7 @@ async function load() {
       ? Math.round((evaluated / total) * 100)
       : 0;
 
-    const avgScore = data.averageScore || 0;
+    const avgScore = Math.round(data.averageRegretScore || 0);
 
     /* MOST USED CATEGORY (simple, no normalization) */
     const categoryCount = {};

@@ -33,7 +33,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 PHASE 2 — EXPLANATORY BEHAVIOR ENGINE */
+/* 🔴 PHASE 2.5 — REFINED BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 5) return null;
@@ -62,7 +62,7 @@ function buildBehaviorReport(scores, decisions) {
     categoryStats[cat].buyAgain.push(latest.wouldBuyAgain ? 1 : 0);
   });
 
-  const strengths = [];
+  let strengthCandidates = [];
   const riskAreas = [];
   const recommendedAdjustments = [];
 
@@ -73,8 +73,12 @@ function buildBehaviorReport(scores, decisions) {
     const avgFreq = data.frequency.reduce((a, b) => a + b, 0) / data.frequency.length;
     const buyRate = data.buyAgain.reduce((a, b) => a + b, 0) / data.buyAgain.length;
 
+    // Collect strength candidates (we'll rank later)
     if (avgScore >= 7) {
-      strengths.push(`Strong performance in ${cat} (avg ${Math.round(avgScore)}/10)`);
+      strengthCandidates.push({
+        cat,
+        avg: avgScore
+      });
     }
 
     if (avgScore <= 4) {
@@ -89,25 +93,28 @@ function buildBehaviorReport(scores, decisions) {
         `${cat} decisions show low satisfaction (avg ${Math.round(avgScore)}/10)${reasonText}`
       );
 
-      if (avgFreq < 0.5) {
-        recommendedAdjustments.push(
-          `Test or trial ${cat} decisions before committing`
-        );
+      // 🔴 CONSOLIDATED RECOMMENDATION
+      let actions = [];
+
+      if (avgFreq < 0.5) actions.push("test or trial options");
+      if (buyRate < 0.5) actions.push("compare at least two alternatives");
+
+      if (actions.length === 0) {
+        actions.push("slow down and review before committing");
       }
 
-      if (buyRate < 0.5) {
-        recommendedAdjustments.push(
-          `Compare at least two alternatives before ${cat} purchases`
-        );
-      }
-
-      if (reason.length === 0) {
-        recommendedAdjustments.push(
-          `Slow down decision-making in ${cat} and review outcomes carefully`
-        );
-      }
+      recommendedAdjustments.push(
+        `Before making ${cat} decisions: ${actions.join(" and ")}`
+      );
     }
   });
+
+  // 🔴 LIMIT TO TOP 3 STRENGTHS
+  const strengths =
+    strengthCandidates
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 3)
+      .map(s => `Strong performance in ${s.cat} (avg ${Math.round(s.avg)}/10)`);
 
   // Ensure non-empty outputs
   if (strengths.length === 0) {

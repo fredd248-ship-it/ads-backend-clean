@@ -43,154 +43,71 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 PHASE 4 — ACTIONABLE FEEDBACK ENGINE */
+/* 🔴 NEW — INSIGHT ENGINE */
 
-function buildBehaviorReport(scores, decisions) {
-  if (!scores || scores.length < 5) return null;
+function buildAdvancedInsights(decisions, scores) {
 
-  const categoryStats = {};
+  let highTime = [], lowTime = [];
+  let highEmotion = [], lowEmotion = [];
+  let highUse = [], lowUse = [];
 
   decisions.forEach(d => {
     if (!d.evaluations.length) return;
 
     const latest = d.evaluations[d.evaluations.length - 1];
-    const cat = (d.category || "other").toLowerCase();
-
-    if (!categoryStats[cat]) {
-      categoryStats[cat] = {
-        scores: [],
-        weights: [],
-        frequency: [],
-        buyAgain: []
-      };
-    }
-
     const scoreObj = scores.find(s => s.id === d.id);
     if (!scoreObj) return;
 
-    categoryStats[cat].scores.push(scoreObj.displayScore);
-    categoryStats[cat].weights.push(scoreObj.weight);
-    categoryStats[cat].frequency.push(mapFrequency(latest.frequencyOfUse));
-    categoryStats[cat].buyAgain.push(latest.wouldBuyAgain ? 1 : 0);
+    const score = scoreObj.displayScore;
+    const freq = mapFrequency(latest.frequencyOfUse);
+
+    /* TIME PRESSURE */
+    if ((d.timePressure ?? 5) >= 7) highTime.push(score);
+    if ((d.timePressure ?? 5) <= 4) lowTime.push(score);
+
+    /* EMOTION */
+    if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(score);
+    if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(score);
+
+    /* USAGE */
+    if (freq >= 0.7) highUse.push(score);
+    if (freq <= 0.4) lowUse.push(score);
   });
 
-  let strengthCandidates = [];
-  const riskAreas = [];
-  const recommendedAdjustments = [];
-  const weakCategories = [];
-
-  Object.keys(categoryStats).forEach(cat => {
-    const data = categoryStats[cat];
-
-    const weightedSum = data.scores.reduce((sum, s, i) => sum + s * data.weights[i], 0);
-    const weightTotal = data.weights.reduce((a, b) => a + b, 0);
-
-    const avgScore = weightedSum / weightTotal;
-    const avgFreq = data.frequency.reduce((a, b) => a + b, 0) / data.frequency.length;
-    const buyRate = data.buyAgain.reduce((a, b) => a + b, 0) / data.buyAgain.length;
-
-    if (avgScore >= 7) {
-      strengthCandidates.push({ cat, avg: avgScore });
-    }
-
-    if (avgScore <= 4) {
-      weakCategories.push({ cat, avgScore, avgFreq, buyRate });
-
-      let reason = [];
-      if (avgFreq < 0.5) reason.push("low reuse");
-      if (buyRate < 0.5) reason.push("low buy-again rate");
-
-      const reasonText = reason.length ? ` driven by ${reason.join(" and ")}` : "";
-
-      riskAreas.push(
-        `${cat} decisions show low satisfaction (avg ${Math.round(avgScore)}/10)${reasonText}`
-      );
-
-      /* 🔴 NEW — STRUCTURED ACTION RULE */
-      let steps = [];
-
-      steps.push("Pause before committing");
-
-      if (avgFreq < 0.5) {
-        steps.push("Test or trial options before deciding");
-      }
-
-      if (buyRate < 0.5) {
-        steps.push("Compare at least two alternatives");
-      }
-
-      if (steps.length < 2) {
-        steps.push("Review past similar decisions before proceeding");
-      }
-
-      recommendedAdjustments.push(
-        `When making ${cat} decisions: ${steps.join(" → ")}`
-      );
-    }
-  });
-
-  const strengths =
-    strengthCandidates
-      .sort((a, b) => b.avg - a.avg)
-      .slice(0, 3)
-      .map(s => `Strong performance in ${s.cat} (avg ${Math.round(s.avg)}/10)`);
-
-  if (strengths.length === 0) strengths.push("Balanced performance across categories");
-  if (riskAreas.length === 0) riskAreas.push("No significant risk patterns detected");
-  if (recommendedAdjustments.length === 0) {
-    recommendedAdjustments.push("Maintain your current decision-making approach");
+  function avg(arr) {
+    if (!arr.length) return null;
+    return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
   }
 
-  const weightedSum =
-    scores.reduce((sum, s) => sum + s.displayScore * s.weight, 0);
-  const weightTotal =
-    scores.reduce((sum, s) => sum + s.weight, 0);
+  const highTimeAvg = avg(highTime);
+  const lowTimeAvg = avg(lowTime);
 
-  const avgOverall = weightedSum / weightTotal;
+  const highEmotionAvg = avg(highEmotion);
+  const lowEmotionAvg = avg(lowEmotion);
 
-  let currentBlindSpot = "No major blind spots detected";
-
-  if (weakCategories.length > 0) {
-    const topWeak = weakCategories.slice(0, 2);
-    const cats = topWeak.map(c => c.cat).join(" and ");
-
-    let causes = [];
-    const avgFreq = topWeak.reduce((a, b) => a + b.avgFreq, 0) / topWeak.length;
-    const avgBuy = topWeak.reduce((a, b) => a + b.buyRate, 0) / topWeak.length;
-
-    if (avgFreq < 0.5) causes.push("low reuse");
-    if (avgBuy < 0.5) causes.push("low buy-again outcomes");
-
-    const causeText = causes.length ? `, driven by ${causes.join(" and ")}` : "";
-
-    currentBlindSpot = `You consistently underperform in ${cats} decisions${causeText}`;
-  }
+  const highUseAvg = avg(highUse);
+  const lowUseAvg = avg(lowUse);
 
   return {
-    decisionProfile:
-      avgOverall >= 6
-        ? "You generally make stable, reliable decisions"
-        : "Your decision-making shows inconsistency and opportunity for improvement",
 
-    coachingSummary:
-      avgOverall >= 6
-        ? "Your results are consistently strong with some variation across categories"
-        : "Your results suggest inconsistent decision quality across categories",
+    timePressureInsight:
+      highTimeAvg !== null && lowTimeAvg !== null
+        ? `High-pressure decisions average ${highTimeAvg}/10 vs low-pressure decisions at ${lowTimeAvg}/10`
+        : null,
 
-    currentBlindSpot,
+    emotionalInsight:
+      highEmotionAvg !== null && lowEmotionAvg !== null
+        ? `High-emotion decisions average ${highEmotionAvg}/10 vs low-emotion decisions at ${lowEmotionAvg}/10`
+        : null,
 
-    bestNextHabit:
-      avgOverall >= 6
-        ? "Apply the same decision process you use in your strongest categories to improve weaker ones"
-        : "Pause before committing and compare at least one alternative for each decision",
-
-    strengths,
-    riskAreas,
-    recommendedAdjustments
+    usageInsight:
+      highUseAvg !== null && lowUseAvg !== null
+        ? `Frequently used decisions average ${highUseAvg}/10 vs rarely used decisions at ${lowUseAvg}/10`
+        : null
   };
 }
 
-/* ROUTE (unchanged) */
+/* ROUTE */
 
 router.get("/", async (req, res) => {
   try {
@@ -216,13 +133,10 @@ router.get("/", async (req, res) => {
 
         const raw = computeQualityScore(latest, d);
         const displayScore = Math.round(raw / 10);
-
         const weight = getRecencyWeight(d.createdAt);
 
         scores.push({
           id: d.id,
-          title: d.title,
-          category: (d.category || "other").toLowerCase(),
           displayScore,
           weight
         });
@@ -253,7 +167,8 @@ router.get("/", async (req, res) => {
         ? Math.round(weightedSum / weightTotal)
         : 0;
 
-    const behaviorReport = buildBehaviorReport(scores, decisions);
+    /* 🔴 NEW INSIGHTS */
+    const advanced = buildAdvancedInsights(decisions, scores);
 
     return res.json({
       totalDecisions,
@@ -261,8 +176,10 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
-      scores,
-      behaviorReport
+
+      timePressureInsight: advanced.timePressureInsight,
+      emotionalInsight: advanced.emotionalInsight,
+      usageInsight: advanced.usageInsight
     });
 
   } catch (err) {

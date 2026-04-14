@@ -33,39 +33,86 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE */
+/* 🔴 PHASE 1 — IMPROVED BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores) {
   if (!scores || scores.length < 5) return null;
 
-  let low = 0;
-  let high = 0;
+  const categoryMap = {};
 
   scores.forEach(s => {
-    if (s.displayScore <= 4) low++;
-    if (s.displayScore >= 7) high++;
+    if (!categoryMap[s.category]) {
+      categoryMap[s.category] = [];
+    }
+    categoryMap[s.category].push(s.displayScore);
   });
 
+  const strengths = [];
+  const riskAreas = [];
+  const recommendedAdjustments = [];
+
+  Object.keys(categoryMap).forEach(cat => {
+    const arr = categoryMap[cat];
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+
+    if (avg >= 7) {
+      strengths.push(`You consistently make strong decisions in ${cat}`);
+    }
+
+    if (avg <= 4) {
+      riskAreas.push(`Low satisfaction outcomes in ${cat}`);
+
+      recommendedAdjustments.push(
+        `Slow down and evaluate alternatives before making ${cat} decisions`
+      );
+    }
+  });
+
+  // Ensure non-empty outputs
+  if (strengths.length === 0) {
+    strengths.push("You demonstrate balanced decision-making across categories");
+  }
+
+  if (riskAreas.length === 0) {
+    riskAreas.push("No significant risk patterns detected");
+  }
+
+  if (recommendedAdjustments.length === 0) {
+    recommendedAdjustments.push("Continue applying your current decision-making approach");
+  }
+
+  // Overall profile
+  const avgScore =
+    scores.reduce((sum, s) => sum + s.displayScore, 0) / scores.length;
+
+  const decisionProfile =
+    avgScore >= 6
+      ? "You generally make stable, reliable decisions"
+      : "Your decision-making shows inconsistency and opportunity for improvement";
+
+  const coachingSummary =
+    avgScore >= 6
+      ? "Your results show consistency with occasional variation"
+      : "Your results suggest inconsistent decision quality";
+
+  const currentBlindSpot =
+    riskAreas.length > 0 && !riskAreas.includes("No significant risk patterns detected")
+      ? "Recurring low-performance categories"
+      : "No major blind spots detected";
+
+  const bestNextHabit =
+    avgScore >= 6
+      ? "Continue reinforcing your current decision habits"
+      : "Introduce a structured evaluation step before committing";
+
   return {
-    decisionProfile:
-      low > high
-        ? "You tend to make inconsistent or lower-quality decisions"
-        : "You generally make stable, reliable decisions",
-    coachingSummary:
-      low > high
-        ? "Your results suggest inconsistency"
-        : "Your results show consistency",
-    currentBlindSpot:
-      low > high
-        ? "Inconsistent decision quality"
-        : "No major blind spots detected",
-    bestNextHabit:
-      low > high
-        ? "Introduce a more structured decision process"
-        : "Continue your current approach",
-    strengths: [],
-    riskAreas: [],
-    recommendedAdjustments: []
+    decisionProfile,
+    coachingSummary,
+    currentBlindSpot,
+    bestNextHabit,
+    strengths,
+    riskAreas,
+    recommendedAdjustments
   };
 }
 
@@ -118,69 +165,12 @@ router.get("/", async (req, res) => {
         ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
         : 0;
 
-    /* 🔴 NEW — AVERAGE SCORE FIX */
     const averageRegretScore =
       scores.length > 0
         ? Math.round(
             scores.reduce((sum, s) => sum + s.displayScore, 0) / scores.length
           )
         : 0;
-
-    /* CATEGORY INTELLIGENCE */
-
-    const categoryMap = {};
-
-    scores.forEach(s => {
-      if (!categoryMap[s.category]) {
-        categoryMap[s.category] = [];
-      }
-      categoryMap[s.category].push(s.displayScore);
-    });
-
-    let bestCategory = null;
-    let worstCategory = null;
-    let bestAvg = -1;
-    let worstAvg = 11;
-
-    Object.keys(categoryMap).forEach(cat => {
-      const arr = categoryMap[cat];
-      const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-
-      if (avg > bestAvg) {
-        bestAvg = avg;
-        bestCategory = cat;
-      }
-
-      if (avg < worstAvg) {
-        worstAvg = avg;
-        worstCategory = cat;
-      }
-    });
-
-    let primaryPattern = "Not enough data";
-    let stability = "Not enough data";
-    let recommendedFocus = "Continue evaluating decisions";
-
-    if (scores.length >= 5) {
-
-      if (bestCategory && worstCategory && bestCategory !== worstCategory) {
-        primaryPattern =
-          `You perform strongly in ${bestCategory} decisions but less effectively in ${worstCategory}`;
-      }
-
-      const diff = bestAvg - worstAvg;
-
-      if (diff < 1.5) {
-        stability = "Your decision-making is consistent across categories";
-      } else {
-        stability = "Your decision quality varies significantly by category";
-      }
-
-      if (worstCategory) {
-        recommendedFocus =
-          `Focus on improving decisions in ${worstCategory}`;
-      }
-    }
 
     const behaviorReport = buildBehaviorReport(scores);
 
@@ -189,14 +179,7 @@ router.get("/", async (req, res) => {
       evaluatedDecisions,
       evaluationRate,
       followThroughRate,
-
-      /* 🔴 NEW FIELD */
       averageRegretScore,
-
-      primaryPattern,
-      stability,
-      recommendedFocus,
-
       scores,
       behaviorReport
     });

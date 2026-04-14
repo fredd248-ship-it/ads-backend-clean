@@ -88,12 +88,10 @@ body {
   transform: scale(1.02);
 }
 
-/* COLOR SYSTEM */
 .low-use { background: #fde68a; }
 .medium-use { background: #bfdbfe; }
 .high-use { background: #bbf7d0; }
 
-/* MODAL */
 #createModal {
   display: none;
   position: fixed;
@@ -175,7 +173,6 @@ body {
   <div id="content">Loading...</div>
 </div>
 
-<!-- MODAL -->
 <div id="createModal">
   <div class="modal-content">
 
@@ -186,7 +183,6 @@ body {
 
     <select id="category">
       <option value="">Select Category</option>
-
       <option value="home_office">Home Office</option>
       <option value="travel">Travel</option>
       <option value="relationship">Relationship</option>
@@ -202,7 +198,6 @@ body {
       <option value="tools">Tools</option>
       <option value="clothing">Clothing</option>
       <option value="decor">Decor</option>
-
       <option value="dining">Dining</option>
       <option value="medical">Medical</option>
       <option value="pets">Pets</option>
@@ -226,7 +221,17 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
+/* 🔴 FIX */
+function resetForm(){
+  document.getElementById("title").value = "";
+  document.getElementById("cost").value = "";
+  document.getElementById("category").value = "";
+  document.getElementById("timePressure").value = 3;
+  document.getElementById("emotionalWeight").value = 3;
+}
+
 function openModal(){
+  resetForm();
   document.getElementById("createModal").style.display = "block";
 }
 
@@ -256,6 +261,7 @@ async function createDecision(){
     })
   });
 
+  resetForm();
   closeModal();
   load();
 }

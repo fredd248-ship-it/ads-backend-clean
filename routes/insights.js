@@ -73,7 +73,6 @@ function buildBehaviorReport(scores, decisions) {
     const avgFreq = data.frequency.reduce((a, b) => a + b, 0) / data.frequency.length;
     const buyRate = data.buyAgain.reduce((a, b) => a + b, 0) / data.buyAgain.length;
 
-    // Collect strength candidates (we'll rank later)
     if (avgScore >= 7) {
       strengthCandidates.push({
         cat,
@@ -93,7 +92,6 @@ function buildBehaviorReport(scores, decisions) {
         `${cat} decisions show low satisfaction (avg ${Math.round(avgScore)}/10)${reasonText}`
       );
 
-      // 🔴 CONSOLIDATED RECOMMENDATION
       let actions = [];
 
       if (avgFreq < 0.5) actions.push("test or trial options");
@@ -109,14 +107,12 @@ function buildBehaviorReport(scores, decisions) {
     }
   });
 
-  // 🔴 LIMIT TO TOP 3 STRENGTHS
   const strengths =
     strengthCandidates
       .sort((a, b) => b.avg - a.avg)
       .slice(0, 3)
       .map(s => `Strong performance in ${s.cat} (avg ${Math.round(s.avg)}/10)`);
 
-  // Ensure non-empty outputs
   if (strengths.length === 0) {
     strengths.push("Balanced performance across categories");
   }
@@ -137,19 +133,25 @@ function buildBehaviorReport(scores, decisions) {
       avgOverall >= 6
         ? "You generally make stable, reliable decisions"
         : "Your decision-making shows inconsistency and opportunity for improvement",
+
     coachingSummary:
       avgOverall >= 6
-        ? "Your results show consistency with occasional variation"
-        : "Your results suggest inconsistent decision quality",
+        ? "Your results are consistently strong with some variation across categories"
+        : "Your results suggest inconsistent decision quality across categories",
+
+    /* 🔴 IMPROVED */
     currentBlindSpot:
       riskAreas.length > 0 &&
       !riskAreas.includes("No significant risk patterns detected")
-        ? "Specific categories consistently underperform"
+        ? "You tend to repeat lower-quality decisions in specific categories instead of adjusting your approach"
         : "No major blind spots detected",
+
+    /* 🔴 IMPROVED */
     bestNextHabit:
       avgOverall >= 6
-        ? "Reinforce your strongest decision patterns"
-        : "Introduce a structured evaluation step before decisions",
+        ? "Apply the same decision process you use in your strongest categories to improve weaker ones"
+        : "Pause before committing and compare at least one alternative for each decision",
+
     strengths,
     riskAreas,
     recommendedAdjustments

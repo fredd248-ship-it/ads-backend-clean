@@ -45,7 +45,7 @@ function computeQualityScore(evaluation, decision) {
 
 /* BEHAVIOR ENGINE */
 
-function buildBehaviorReport(scores, decisions) {
+function buildBehaviorReport(scores) {
   if (!scores || scores.length < 5) return null;
 
   return {
@@ -56,6 +56,111 @@ function buildBehaviorReport(scores, decisions) {
     strengths: [],
     riskAreas: [],
     recommendedAdjustments: []
+  };
+}
+
+/* DISTRIBUTION ENGINE */
+
+function buildDistribution(scores) {
+  if (!scores.length) return null;
+
+  let strong = 0;
+  let average = 0;
+  let weak = 0;
+
+  scores.forEach(s => {
+    if (s.displayScore >= 8) strong++;
+    else if (s.displayScore >= 5) average++;
+    else weak++;
+  });
+
+  const total = scores.length;
+
+  return {
+    strong: Math.round((strong / total) * 100),
+    average: Math.round((average / total) * 100),
+    weak: Math.round((weak / total) * 100)
+  };
+}
+
+/* CATEGORY + STRATEGIC ENGINE */
+
+function buildCategoryInsights(decisions, scores) {
+
+  const categoryMap = {};
+
+  decisions.forEach(d => {
+    if (!d.evaluations.length) return;
+
+    const scoreObj = scores.find(s => s.id === d.id);
+    if (!scoreObj) return;
+
+    const category = d.category || "other";
+
+    if (!categoryMap[category]) {
+      categoryMap[category] = [];
+    }
+
+    categoryMap[category].push(scoreObj.displayScore);
+  });
+
+  let bestCategory = null;
+  let worstCategory = null;
+  let bestAvg = -Infinity;
+  let worstAvg = Infinity;
+
+  Object.keys(categoryMap).forEach(cat => {
+    const arr = categoryMap[cat];
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+
+    if (avg > bestAvg) {
+      bestAvg = avg;
+      bestCategory = cat;
+    }
+
+    if (avg < worstAvg) {
+      worstAvg = avg;
+      worstCategory = cat;
+    }
+  });
+
+  return {
+    bestCategory,
+    worstCategory,
+    bestAvg: Math.round(bestAvg),
+    worstAvg: Math.round(worstAvg)
+  };
+}
+
+function buildStrategicInsights(categoryData, scores) {
+
+  let primaryPattern = null;
+  let stability = null;
+  let recommendedFocus = null;
+
+  if (categoryData.bestCategory && categoryData.worstCategory) {
+    primaryPattern = `You perform strongly in ${categoryData.bestCategory} decisions but less effectively in ${categoryData.worstCategory}`;
+    recommendedFocus = `Focus on improving decisions in ${categoryData.worstCategory}`;
+  }
+
+  if (scores.length > 1) {
+    const values = scores.map(s => s.displayScore);
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+
+    const variance =
+      values.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / values.length;
+
+    if (variance > 4) {
+      stability = "Your decision quality varies significantly by category";
+    } else {
+      stability = "Your decision-making is relatively consistent";
+    }
+  }
+
+  return {
+    primaryPattern,
+    stability,
+    recommendedFocus
   };
 }
 
@@ -107,30 +212,6 @@ function buildAdvancedInsights(decisions, scores) {
       avg(highUse) && avg(lowUse)
         ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
         : null
-  };
-}
-
-/* 🔴 RESTORED — DISTRIBUTION ENGINE */
-
-function buildDistribution(scores) {
-  if (!scores.length) return null;
-
-  let strong = 0;
-  let average = 0;
-  let weak = 0;
-
-  scores.forEach(s => {
-    if (s.displayScore >= 8) strong++;
-    else if (s.displayScore >= 5) average++;
-    else weak++;
-  });
-
-  const total = scores.length;
-
-  return {
-    strong: Math.round((strong / total) * 100),
-    average: Math.round((average / total) * 100),
-    weak: Math.round((weak / total) * 100)
   };
 }
 
@@ -194,9 +275,11 @@ router.get("/", async (req, res) => {
         ? Math.round(weightedSum / weightTotal)
         : 0;
 
-    const behaviorReport = buildBehaviorReport(scores, decisions);
-    const advanced = buildAdvancedInsights(decisions, scores);
+    const behaviorReport = buildBehaviorReport(scores);
     const distribution = buildDistribution(scores);
+    const categoryData = buildCategoryInsights(decisions, scores);
+    const strategic = buildStrategicInsights(categoryData, scores);
+    const advanced = buildAdvancedInsights(decisions, scores);
 
     return res.json({
       totalDecisions,
@@ -204,10 +287,17 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
+
       behaviorReport,
+
+      primaryPattern: strategic.primaryPattern,
+      stability: strategic.stability,
+      recommendedFocus: strategic.recommendedFocus,
+
       timePressureInsight: advanced.timePressureInsight,
       emotionalInsight: advanced.emotionalInsight,
       usageInsight: advanced.usageInsight,
+
       distribution
     });
 

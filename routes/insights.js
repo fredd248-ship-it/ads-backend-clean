@@ -43,19 +43,74 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* BEHAVIOR ENGINE */
+/* 🔴 UPDATED — BEHAVIOR ENGINE (ONLY CHANGE) */
 
-function buildBehaviorReport(scores) {
-  if (!scores || scores.length < 5) return null;
+function buildBehaviorReport(scores, decisions) {
+  if (!scores || scores.length < 3) return null;
+
+  const categoryMap = {};
+
+  decisions.forEach(d => {
+    if (!d.evaluations.length) return;
+
+    const scoreObj = scores.find(s => s.id === d.id);
+    if (!scoreObj) return;
+
+    const cat = d.category || "other";
+
+    if (!categoryMap[cat]) categoryMap[cat] = [];
+    categoryMap[cat].push(scoreObj.displayScore);
+  });
+
+  const strengths = [];
+  const riskAreas = [];
+  const recommendedAdjustments = [];
+
+  Object.keys(categoryMap).forEach(cat => {
+    const arr = categoryMap[cat];
+    const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+
+    if (avg >= 7) {
+      strengths.push(`Strong performance in ${cat} (avg ${avg}/10)`);
+    }
+
+    if (avg <= 4) {
+      riskAreas.push(`Low satisfaction in ${cat} (avg ${avg}/10)`);
+
+      recommendedAdjustments.push(
+        `Slow down and evaluate alternatives before making ${cat} decisions`
+      );
+
+      recommendedAdjustments.push(
+        `Test or trial ${cat} options before committing`
+      );
+    }
+  });
 
   return {
-    decisionProfile: "You generally make stable, reliable decisions",
-    coachingSummary: "Your results show consistency with occasional variation",
-    currentBlindSpot: "Specific categories consistently underperform",
-    bestNextHabit: "Focus on improving weaker decision categories",
-    strengths: [],
-    riskAreas: [],
-    recommendedAdjustments: []
+    decisionProfile:
+      scores.length > 10
+        ? "You consistently make decisions across multiple areas"
+        : "You are still building your decision history",
+
+    coachingSummary:
+      riskAreas.length === 0
+        ? "Your decisions show strong consistency"
+        : "Your results show strong areas with some underperforming categories",
+
+    currentBlindSpot:
+      riskAreas.length > 0
+        ? "Specific categories consistently underperform"
+        : "No major blind spots detected",
+
+    bestNextHabit:
+      riskAreas.length > 0
+        ? "Focus on improving weaker decision categories"
+        : "Continue reinforcing your strongest decision habits",
+
+    strengths,
+    riskAreas,
+    recommendedAdjustments
   };
 }
 
@@ -83,11 +138,10 @@ function buildDistribution(scores) {
   };
 }
 
-/* CATEGORY + STRATEGIC ENGINE */
+/* CATEGORY + STRATEGIC */
 
 function buildCategoryInsights(decisions, scores) {
-
-  const categoryMap = {};
+  const map = {};
 
   decisions.forEach(d => {
     if (!d.evaluations.length) return;
@@ -95,13 +149,10 @@ function buildCategoryInsights(decisions, scores) {
     const scoreObj = scores.find(s => s.id === d.id);
     if (!scoreObj) return;
 
-    const category = d.category || "other";
+    const cat = d.category || "other";
 
-    if (!categoryMap[category]) {
-      categoryMap[category] = [];
-    }
-
-    categoryMap[category].push(scoreObj.displayScore);
+    if (!map[cat]) map[cat] = [];
+    map[cat].push(scoreObj.displayScore);
   });
 
   let bestCategory = null;
@@ -109,8 +160,8 @@ function buildCategoryInsights(decisions, scores) {
   let bestAvg = -Infinity;
   let worstAvg = Infinity;
 
-  Object.keys(categoryMap).forEach(cat => {
-    const arr = categoryMap[cat];
+  Object.keys(map).forEach(cat => {
+    const arr = map[cat];
     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
 
     if (avg > bestAvg) {
@@ -133,7 +184,6 @@ function buildCategoryInsights(decisions, scores) {
 }
 
 function buildStrategicInsights(categoryData, scores) {
-
   let primaryPattern = null;
   let stability = null;
   let recommendedFocus = null;
@@ -144,30 +194,24 @@ function buildStrategicInsights(categoryData, scores) {
   }
 
   if (scores.length > 1) {
-    const values = scores.map(s => s.displayScore);
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const vals = scores.map(s => s.displayScore);
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
 
     const variance =
-      values.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / values.length;
+      vals.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / vals.length;
 
-    if (variance > 4) {
-      stability = "Your decision quality varies significantly by category";
-    } else {
-      stability = "Your decision-making is relatively consistent";
-    }
+    stability =
+      variance > 4
+        ? "Your decision quality varies significantly by category"
+        : "Your decision-making is relatively consistent";
   }
 
-  return {
-    primaryPattern,
-    stability,
-    recommendedFocus
-  };
+  return { primaryPattern, stability, recommendedFocus };
 }
 
 /* ADVANCED INSIGHTS */
 
 function buildAdvancedInsights(decisions, scores) {
-
   let highTime = [], lowTime = [];
   let highEmotion = [], lowEmotion = [];
   let highUse = [], lowUse = [];
@@ -275,7 +319,7 @@ router.get("/", async (req, res) => {
         ? Math.round(weightedSum / weightTotal)
         : 0;
 
-    const behaviorReport = buildBehaviorReport(scores);
+    const behaviorReport = buildBehaviorReport(scores, decisions);
     const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
     const strategic = buildStrategicInsights(categoryData, scores);
@@ -287,17 +331,13 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
-
       behaviorReport,
-
       primaryPattern: strategic.primaryPattern,
       stability: strategic.stability,
       recommendedFocus: strategic.recommendedFocus,
-
       timePressureInsight: advanced.timePressureInsight,
       emotionalInsight: advanced.emotionalInsight,
       usageInsight: advanced.usageInsight,
-
       distribution
     });
 

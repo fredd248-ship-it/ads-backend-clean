@@ -43,7 +43,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 BEHAVIOR ENGINE (unchanged stable version) */
+/* BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 5) return null;
@@ -59,7 +59,7 @@ function buildBehaviorReport(scores, decisions) {
   };
 }
 
-/* 🔴 FIXED — ADVANCED INSIGHTS */
+/* ADVANCED INSIGHTS */
 
 function buildAdvancedInsights(decisions, scores) {
 
@@ -92,43 +92,45 @@ function buildAdvancedInsights(decisions, scores) {
     return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
   }
 
-  const highTimeAvg = avg(highTime);
-  const lowTimeAvg = avg(lowTime);
-
-  const highEmotionAvg = avg(highEmotion);
-  const lowEmotionAvg = avg(lowEmotion);
-
-  const highUseAvg = avg(highUse);
-  const lowUseAvg = avg(lowUse);
-
   return {
-
     timePressureInsight:
-      highTimeAvg !== null && lowTimeAvg !== null
-        ? `High-pressure decisions average ${highTimeAvg}/10 vs low-pressure decisions at ${lowTimeAvg}/10`
-        : highTimeAvg !== null
-        ? `High-pressure decisions average ${highTimeAvg}/10`
-        : lowTimeAvg !== null
-        ? `Low-pressure decisions average ${lowTimeAvg}/10`
+      avg(highTime) && avg(lowTime)
+        ? `High-pressure decisions average ${avg(highTime)}/10 vs low-pressure decisions at ${avg(lowTime)}/10`
         : null,
 
     emotionalInsight:
-      highEmotionAvg !== null && lowEmotionAvg !== null
-        ? `High-emotion decisions average ${highEmotionAvg}/10 vs low-emotion decisions at ${lowEmotionAvg}/10`
-        : highEmotionAvg !== null
-        ? `High-emotion decisions average ${highEmotionAvg}/10`
-        : lowEmotionAvg !== null
-        ? `Low-emotion decisions average ${lowEmotionAvg}/10`
+      avg(highEmotion) && avg(lowEmotion)
+        ? `High-emotion decisions average ${avg(highEmotion)}/10 vs low-emotion decisions at ${avg(lowEmotion)}/10`
         : null,
 
     usageInsight:
-      highUseAvg !== null && lowUseAvg !== null
-        ? `Frequently used decisions average ${highUseAvg}/10 vs rarely used decisions at ${lowUseAvg}/10`
-        : highUseAvg !== null
-        ? `Frequently used decisions average ${highUseAvg}/10`
-        : lowUseAvg !== null
-        ? `Rarely used decisions average ${lowUseAvg}/10`
+      avg(highUse) && avg(lowUse)
+        ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
         : null
+  };
+}
+
+/* 🔴 RESTORED — DISTRIBUTION ENGINE */
+
+function buildDistribution(scores) {
+  if (!scores.length) return null;
+
+  let strong = 0;
+  let average = 0;
+  let weak = 0;
+
+  scores.forEach(s => {
+    if (s.displayScore >= 8) strong++;
+    else if (s.displayScore >= 5) average++;
+    else weak++;
+  });
+
+  const total = scores.length;
+
+  return {
+    strong: Math.round((strong / total) * 100),
+    average: Math.round((average / total) * 100),
+    weak: Math.round((weak / total) * 100)
   };
 }
 
@@ -194,6 +196,7 @@ router.get("/", async (req, res) => {
 
     const behaviorReport = buildBehaviorReport(scores, decisions);
     const advanced = buildAdvancedInsights(decisions, scores);
+    const distribution = buildDistribution(scores);
 
     return res.json({
       totalDecisions,
@@ -204,7 +207,8 @@ router.get("/", async (req, res) => {
       behaviorReport,
       timePressureInsight: advanced.timePressureInsight,
       emotionalInsight: advanced.emotionalInsight,
-      usageInsight: advanced.usageInsight
+      usageInsight: advanced.usageInsight,
+      distribution
     });
 
   } catch (err) {

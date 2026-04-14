@@ -45,28 +45,37 @@ body {
 
 .main {
   flex: 1;
-  padding: 20px;
-  max-width: 800px;
+  padding: 24px;
+  max-width: 820px;
   margin: auto;
 }
 
 .section {
   background: #fff6d8;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 12px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
   border: 1px solid rgba(0,0,0,0.05);
 }
 
 .section-title {
   font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 6px;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.section div {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #374151;
 }
 
 .list-item {
-  font-size: 13px;
-  margin-bottom: 3px;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  padding-left: 6px;
 }
 
 .error {
@@ -136,22 +145,22 @@ async function load() {
     const html = `
       <div class="section">
         <div class="section-title">Decision Profile</div>
-        ${b.decisionProfile}
+        <div>${b.decisionProfile}</div>
       </div>
 
       <div class="section">
         <div class="section-title">Coaching Summary</div>
-        ${b.coachingSummary}
+        <div>${b.coachingSummary}</div>
       </div>
 
       <div class="section">
         <div class="section-title">Current Blind Spot</div>
-        ${b.currentBlindSpot}
+        <div>${b.currentBlindSpot}</div>
       </div>
 
       <div class="section">
         <div class="section-title">Best Next Habit</div>
-        ${b.bestNextHabit}
+        <div>${b.bestNextHabit}</div>
       </div>
 
       <div class="section">

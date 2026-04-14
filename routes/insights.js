@@ -33,7 +33,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 PHASE 2.5 — REFINED BEHAVIOR ENGINE */
+/* 🔴 PHASE 2.6 — BLIND SPOT PRECISION */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 5) return null;
@@ -65,6 +65,7 @@ function buildBehaviorReport(scores, decisions) {
   let strengthCandidates = [];
   const riskAreas = [];
   const recommendedAdjustments = [];
+  const weakCategories = [];
 
   Object.keys(categoryStats).forEach(cat => {
     const data = categoryStats[cat];
@@ -74,13 +75,17 @@ function buildBehaviorReport(scores, decisions) {
     const buyRate = data.buyAgain.reduce((a, b) => a + b, 0) / data.buyAgain.length;
 
     if (avgScore >= 7) {
-      strengthCandidates.push({
-        cat,
-        avg: avgScore
-      });
+      strengthCandidates.push({ cat, avg: avgScore });
     }
 
     if (avgScore <= 4) {
+      weakCategories.push({
+        cat,
+        avgScore,
+        avgFreq,
+        buyRate
+      });
+
       let reason = [];
 
       if (avgFreq < 0.5) reason.push("low reuse");
@@ -128,6 +133,27 @@ function buildBehaviorReport(scores, decisions) {
   const avgOverall =
     scores.reduce((sum, s) => sum + s.displayScore, 0) / scores.length;
 
+  /* 🔴 NEW — SPECIFIC BLIND SPOT */
+  let currentBlindSpot = "No major blind spots detected";
+
+  if (weakCategories.length > 0) {
+    const topWeak = weakCategories.slice(0, 2);
+
+    const cats = topWeak.map(c => c.cat).join(" and ");
+
+    let causes = [];
+
+    const avgFreq = topWeak.reduce((a, b) => a + b.avgFreq, 0) / topWeak.length;
+    const avgBuy = topWeak.reduce((a, b) => a + b.buyRate, 0) / topWeak.length;
+
+    if (avgFreq < 0.5) causes.push("low reuse");
+    if (avgBuy < 0.5) causes.push("low buy-again outcomes");
+
+    const causeText = causes.length ? `, driven by ${causes.join(" and ")}` : "";
+
+    currentBlindSpot = `You consistently underperform in ${cats} decisions${causeText}`;
+  }
+
   return {
     decisionProfile:
       avgOverall >= 6
@@ -139,14 +165,8 @@ function buildBehaviorReport(scores, decisions) {
         ? "Your results are consistently strong with some variation across categories"
         : "Your results suggest inconsistent decision quality across categories",
 
-    /* 🔴 IMPROVED */
-    currentBlindSpot:
-      riskAreas.length > 0 &&
-      !riskAreas.includes("No significant risk patterns detected")
-        ? "You tend to repeat lower-quality decisions in specific categories instead of adjusting your approach"
-        : "No major blind spots detected",
+    currentBlindSpot,
 
-    /* 🔴 IMPROVED */
     bestNextHabit:
       avgOverall >= 6
         ? "Apply the same decision process you use in your strongest categories to improve weaker ones"
@@ -158,7 +178,7 @@ function buildBehaviorReport(scores, decisions) {
   };
 }
 
-/* ROUTE */
+/* ROUTE (unchanged) */
 
 router.get("/", async (req, res) => {
   try {

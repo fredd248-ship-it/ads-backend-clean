@@ -47,28 +47,29 @@ body {
 .main {
   flex: 1;
   padding: 20px;
-  max-width: 820px;
+  max-width: 850px;
   margin: auto;
 }
 
 /* CARDS */
 
 .card {
-  margin-top: 14px;
-  padding: 16px;
+  margin-top: 16px;
+  padding: 18px;
   border-radius: 12px;
-  border-left: 5px solid;
   background: white;
+  border-left: 5px solid #ccc;
 }
 
-.low { border-color: #4caf50; background: #f3faf5; }
-.medium { border-color: #ff9800; background: #fff7ed; }
-.high { border-color: #f44336; background: #fdecec; }
+.card.primary { border-color: #4338ca; background: #f5f7ff; }
+.card.success { border-color: #4caf50; background: #f3faf5; }
+.card.warning { border-color: #ff9800; background: #fff7ed; }
+.card.danger { border-color: #f44336; background: #fdecec; }
 
 .title {
   font-weight: bold;
-  margin-bottom: 6px;
-  font-size: 15px;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
 .text {
@@ -80,26 +81,31 @@ body {
 
 .distribution {
   display: flex;
-  justify-content: space-between;
+  gap: 10px;
   margin-top: 10px;
 }
 
 .dist-box {
   flex: 1;
+  padding: 12px;
+  border-radius: 10px;
   text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-  margin-right: 8px;
   font-weight: bold;
 }
 
-.dist-box:last-child {
-  margin-right: 0;
-}
+.dist-strong { background: #e6f7ec; color: #1b5e20; }
+.dist-average { background: #fff3e0; color: #e65100; }
+.dist-weak { background: #fdecea; color: #b71c1c; }
 
-.strong { background: #e6f7ec; color: #1b5e20; }
-.average { background: #fff3e0; color: #e65100; }
-.weak { background: #fdecea; color: #b71c1c; }
+/* SECTION HEADERS */
+
+.section {
+  margin-top: 24px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+}
 </style>
 </head>
 
@@ -124,20 +130,35 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-function card(title, content, severity="low") {
+function card(title, content, type="") {
   return `
-    <div class="card ${severity}">
+    <div class="card ${type}">
       <div class="title">${title}</div>
       <div class="text">${content}</div>
     </div>
   `;
 }
 
-function severityFromText(text) {
-  if (!text) return "low";
-  if (text.includes("average 3") || text.includes("average 4")) return "high";
-  if (text.includes("average 5") || text.includes("average 6")) return "medium";
-  return "low";
+function interpretDistribution(d) {
+  if (!d) return "";
+
+  if (d.strong >= 60)
+    return "You consistently make strong decisions across most areas.";
+
+  if (d.weak >= 50)
+    return "A large portion of your decisions are underperforming — improvement is needed.";
+
+  if (d.strong >= 30 && d.weak >= 30)
+    return "Your results show a mix of high-quality and low-quality decisions, indicating inconsistency rather than lack of ability.";
+
+  return "Your decisions are generally balanced with moderate consistency.";
+}
+
+function severity(text) {
+  if (!text) return "";
+  if (text.includes("low") || text.includes("worse")) return "danger";
+  if (text.includes("vary") || text.includes("inconsistent")) return "warning";
+  return "success";
 }
 
 async function load() {
@@ -153,84 +174,86 @@ async function load() {
 
     const data = await res.json();
 
-    const total = data.totalDecisions || 0;
-    const evaluated = data.evaluatedDecisions || 0;
-    const followThrough = data.followThroughRate || 0;
-
-    const rate = total > 0
-      ? Math.round((evaluated / total) * 100)
-      : 0;
-
     let html = "";
 
-    /* DISTRIBUTION (TOP PRIORITY) */
+    /* =========================
+       🟦 DISTRIBUTION
+    ========================== */
 
     if (data.distribution) {
       html += card(
         "Decision Distribution",
         `
         <div class="distribution">
-          <div class="dist-box strong">
-            ${data.distribution.strong}%<br>Strong
-          </div>
-          <div class="dist-box average">
-            ${data.distribution.average}%<br>Average
-          </div>
-          <div class="dist-box weak">
-            ${data.distribution.weak}%<br>Weak
-          </div>
+          <div class="dist-box dist-strong">${data.distribution.strong}%<br>Strong</div>
+          <div class="dist-box dist-average">${data.distribution.average}%<br>Average</div>
+          <div class="dist-box dist-weak">${data.distribution.weak}%<br>Weak</div>
         </div>
-        `
+        <div style="margin-top:10px;">
+          ${interpretDistribution(data.distribution)}
+        </div>
+        `,
+        "primary"
       );
     }
 
-    /* CORE METRICS */
+    /* =========================
+       🟨 STRATEGIC INSIGHTS
+    ========================== */
+
+    html += `<div class="section">Strategic Insights</div>`;
+
+    if (data.primaryPattern) {
+      html += card("Primary Pattern", data.primaryPattern, "warning");
+    }
+
+    if (data.stability) {
+      html += card("Stability", data.stability, severity(data.stability));
+    }
+
+    if (data.recommendedFocus) {
+      html += card("Recommended Focus", data.recommendedFocus, "danger");
+    }
+
+    /* =========================
+       🟩 BEHAVIORAL FACTORS
+    ========================== */
+
+    html += `<div class="section">Behavioral Factors</div>`;
+
+    if (data.timePressureInsight) {
+      html += card("Time Pressure Impact", data.timePressureInsight);
+    }
+
+    if (data.emotionalInsight) {
+      html += card("Emotional Impact", data.emotionalInsight);
+    }
+
+    if (data.usageInsight) {
+      html += card("Usage vs Satisfaction", data.usageInsight);
+    }
+
+    /* =========================
+       📊 CORE METRICS
+    ========================== */
+
+    html += `<div class="section">Overview</div>`;
 
     html += card(
       "Evaluation Rate",
-      `${rate}% of your decisions have been evaluated`
+      `${data.evaluationRate}% of your decisions have been evaluated`
     );
 
     html += card(
       "Follow-Through Rate",
-      `${followThrough}% of your decisions would be made again`
+      `${data.followThroughRate}% of your decisions would be made again`
     );
-
-    /* TIME PRESSURE */
-
-    if (data.timePressureInsight) {
-      html += card(
-        "Time Pressure Impact",
-        data.timePressureInsight,
-        severityFromText(data.timePressureInsight)
-      );
-    }
-
-    /* EMOTIONAL */
-
-    if (data.emotionalInsight) {
-      html += card(
-        "Emotional Impact",
-        data.emotionalInsight,
-        severityFromText(data.emotionalInsight)
-      );
-    }
-
-    /* USAGE */
-
-    if (data.usageInsight) {
-      html += card(
-        "Usage vs Satisfaction",
-        data.usageInsight,
-        severityFromText(data.usageInsight)
-      );
-    }
 
     container.innerHTML = html;
 
   } catch (err) {
     console.error(err);
-    container.innerHTML = "<div>Failed to load</div>";
+    container.innerHTML = "Failed to load insights";
   }
 }
 

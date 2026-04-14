@@ -43,7 +43,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 UPDATED — BEHAVIOR ENGINE (ONLY CHANGE) */
+/* 🔴 TIGHTENED BEHAVIOR ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 3) return null;
@@ -71,47 +71,54 @@ function buildBehaviorReport(scores, decisions) {
     const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
     if (avg >= 7) {
-      strengths.push(`Strong performance in ${cat} (avg ${avg}/10)`);
+      strengths.push(`${formatCategory(cat)} (avg ${avg}/10)`);
     }
 
     if (avg <= 4) {
-      riskAreas.push(`Low satisfaction in ${cat} (avg ${avg}/10)`);
+      riskAreas.push(`${formatCategory(cat)} (avg ${avg}/10)`);
 
       recommendedAdjustments.push(
-        `Slow down and evaluate alternatives before making ${cat} decisions`
-      );
-
-      recommendedAdjustments.push(
-        `Test or trial ${cat} options before committing`
+        `Test or trial options before committing in ${formatCategory(cat)} decisions`
       );
     }
   });
 
+  /* Remove duplicate adjustments */
+  const uniqueAdjustments = [...new Set(recommendedAdjustments)];
+
   return {
     decisionProfile:
       scores.length > 10
-        ? "You consistently make decisions across multiple areas"
+        ? "You make decisions across multiple categories with varying outcomes"
         : "You are still building your decision history",
 
     coachingSummary:
       riskAreas.length === 0
-        ? "Your decisions show strong consistency"
-        : "Your results show strong areas with some underperforming categories",
+        ? "Your decisions are consistently strong across categories"
+        : "You perform well in several areas but have consistent underperformance in specific categories",
 
     currentBlindSpot:
       riskAreas.length > 0
-        ? "Specific categories consistently underperform"
-        : "No major blind spots detected",
+        ? riskAreas.join(", ")
+        : "No clear blind spots detected",
 
     bestNextHabit:
       riskAreas.length > 0
-        ? "Focus on improving weaker decision categories"
-        : "Continue reinforcing your strongest decision habits",
+        ? "Apply more deliberate evaluation before committing in weaker categories"
+        : "Continue reinforcing your strongest decision patterns",
 
     strengths,
     riskAreas,
-    recommendedAdjustments
+    recommendedAdjustments: uniqueAdjustments
   };
+}
+
+/* CATEGORY FORMATTER */
+
+function formatCategory(cat) {
+  return cat
+    .replace("_", " ")
+    .replace(/\b\w/g, l => l.toUpperCase());
 }
 
 /* DISTRIBUTION ENGINE */

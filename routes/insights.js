@@ -74,7 +74,6 @@ function buildBehaviorReport(scores) {
 router.get("/", async (req, res) => {
   try {
 
-    // 🔴 CRITICAL FIX — USER SCOPING
     const decisions = await prisma.decision.findMany({
       where: { userId: req.user.id },
       include: { evaluations: true }
@@ -119,7 +118,15 @@ router.get("/", async (req, res) => {
         ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
         : 0;
 
-    /* 🔥 CATEGORY INTELLIGENCE */
+    /* 🔴 NEW — AVERAGE SCORE FIX */
+    const averageRegretScore =
+      scores.length > 0
+        ? Math.round(
+            scores.reduce((sum, s) => sum + s.displayScore, 0) / scores.length
+          )
+        : 0;
+
+    /* CATEGORY INTELLIGENCE */
 
     const categoryMap = {};
 
@@ -149,8 +156,6 @@ router.get("/", async (req, res) => {
         worstCategory = cat;
       }
     });
-
-    /* 🎯 INSIGHT GENERATION */
 
     let primaryPattern = "Not enough data";
     let stability = "Not enough data";
@@ -184,6 +189,9 @@ router.get("/", async (req, res) => {
       evaluatedDecisions,
       evaluationRate,
       followThroughRate,
+
+      /* 🔴 NEW FIELD */
+      averageRegretScore,
 
       primaryPattern,
       stability,

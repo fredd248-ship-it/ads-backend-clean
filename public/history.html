@@ -169,7 +169,7 @@ async function load() {
 
     const avgScore = Math.round(data.averageRegretScore || 0);
 
-    /* MOST USED CATEGORY (simple, no normalization) */
+    /* MOST USED CATEGORY */
     const categoryCount = {};
     (data.scores || []).forEach(s => {
       const cat = s.category || "other";
@@ -206,7 +206,6 @@ async function load() {
           <div class="metric-value">${evalRate}%</div>
         </div>
 
-        <!-- NEW -->
         <div class="metric">
           <div class="metric-title">Average Satisfaction</div>
           <div class="metric-value">${avgScore}/10</div>
@@ -217,21 +216,19 @@ async function load() {
           <div class="metric-value">${total - evaluated}</div>
         </div>
 
-        <!-- NEW -->
         <div class="metric">
           <div class="metric-title">Most Used Category</div>
           <div class="metric-value">${topCategory}</div>
         </div>
-
       </div>
 
       <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
 
       <div class="card">
-        <strong>Behavioral Report</strong><br>
-        Review your decision patterns and coaching insights.<br>
+        <strong>Tips & Coaching</strong><br>
+        Review your personalized coaching insights based on your decision patterns.<br>
         <button class="btn" onclick="goBehavior()">
-          View Behavioral Report
+          View Tips & Coaching
         </button>
       </div>
 

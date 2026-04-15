@@ -42,7 +42,7 @@ body {
 
 .main {
   flex: 1;
-  padding: 24px;
+  padding: 28px;
   max-width: 900px;
   margin: auto;
 }
@@ -51,19 +51,19 @@ body {
 
 .letter {
   background: white;
-  padding: 26px;
+  padding: 28px;
   border-radius: 14px;
-  line-height: 1.8;
-  font-size: 15.5px;
+  line-height: 1.9;
+  font-size: 17px;
   color: #2c2c2c;
 }
 
 .letter p {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .signature {
-  margin-top: 24px;
+  margin-top: 28px;
   font-weight: bold;
   color: #444;
 }
@@ -92,23 +92,44 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-function buildLetter(report) {
+function buildLetter(report, data) {
 
-  const strengths = report.strengths?.join(", ");
+  const strengthsArr = report.strengths ? report.strengths.slice(0, 3) : [];
+  const strengths = strengthsArr.join(", ");
+
   const blindSpot = report.currentBlindSpot;
   const habit = report.bestNextHabit;
   const adjustments = report.recommendedAdjustments || [];
+
+  const distribution = data.distribution;
+  const time = data.timePressureInsight;
+  const emotion = data.emotionalInsight;
+  const usage = data.usageInsight;
+
+  let distributionInsight = "";
+
+  if (distribution) {
+    if (distribution.strong >= 50) {
+      distributionInsight = "A large portion of your decisions are strong, which shows you have a solid decision-making foundation.";
+    } else if (distribution.weak >= 40) {
+      distributionInsight = "A noticeable portion of your decisions are underperforming, which suggests there are a few habits worth tightening.";
+    } else {
+      distributionInsight = "Your results are mixed, suggesting inconsistency rather than lack of ability.";
+    }
+  }
 
   return `
     <div class="letter">
 
       <p>${report.coachingSummary}</p>
 
+      ${distributionInsight ? `<p>${distributionInsight}</p>` : ""}
+
       ${
         blindSpot && blindSpot !== "No clear blind spots detected"
         ? `<p>
-            One pattern worth paying closer attention to is ${blindSpot}.
-            This is where your results have been less consistent, and where even small adjustments could make a noticeable difference.
+            One area worth paying closer attention to is ${blindSpot}.
+            This is where your outcomes have been consistently weaker, and where more deliberate decision-making could create immediate improvement.
           </p>`
         : ""
       }
@@ -116,8 +137,8 @@ function buildLetter(report) {
       ${
         strengths
         ? `<p>
-            At the same time, you’re making strong decisions in areas like ${strengths}.
-            These are situations where your instincts and approach are clearly working well—something you can rely on more intentionally.
+            You’re at your best in areas like ${strengths}, where your decisions tend to produce consistently strong outcomes.
+            These are patterns you can rely on and apply more intentionally elsewhere.
           </p>`
         : ""
       }
@@ -125,8 +146,20 @@ function buildLetter(report) {
       ${
         habit
         ? `<p>
-            Going forward, a useful adjustment would be to ${habit.toLowerCase()}.
-            This kind of shift tends to have an outsized impact, especially in areas that currently underperform.
+            A useful adjustment going forward would be to ${habit.toLowerCase()}.
+            Even a small increase in deliberate evaluation here can significantly improve your results.
+          </p>`
+        : ""
+      }
+
+      ${
+        (time || emotion || usage)
+        ? `<p>
+            There are also patterns in how context affects your decisions.
+            ${time ? time + ". " : ""}
+            ${emotion ? emotion + ". " : ""}
+            ${usage ? usage + ". " : ""}
+            Becoming aware of these patterns can help you avoid predictable mistakes.
           </p>`
         : ""
       }
@@ -134,7 +167,7 @@ function buildLetter(report) {
       ${
         adjustments.length
         ? `<p>
-            If you want to refine things further, consider this approach: ${adjustments
+            If you want to refine your approach further, consider this: ${adjustments
               .map(a => a.toLowerCase())
               .join(", ")}.
           </p>`
@@ -142,8 +175,8 @@ function buildLetter(report) {
       }
 
       <p>
-        Overall, your decision-making foundation is strong. This isn’t about major changes—
-        it’s about being slightly more deliberate in the right moments.
+        Overall, your decision-making is stronger than it may initially appear.
+        This isn’t about making major changes—it’s about tightening a few key behaviors in the right situations.
       </p>
 
       <div class="signature">— Your Decision System</div>
@@ -171,7 +204,7 @@ async function load() {
       return;
     }
 
-    container.innerHTML = buildLetter(report);
+    container.innerHTML = buildLetter(report, data);
 
   } catch (err) {
     console.error(err);

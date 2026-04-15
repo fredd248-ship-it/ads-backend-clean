@@ -13,8 +13,6 @@ body {
   display: flex;
 }
 
-/* SIDEBAR */
-
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -42,16 +40,12 @@ body {
   color: white;
 }
 
-/* MAIN */
-
 .main {
   flex: 1;
   padding: 20px;
   max-width: 850px;
   margin: auto;
 }
-
-/* CARDS */
 
 .card {
   margin-top: 16px;
@@ -77,8 +71,6 @@ body {
   line-height: 1.6;
 }
 
-/* DISTRIBUTION */
-
 .distribution {
   display: flex;
   gap: 10px;
@@ -96,8 +88,6 @@ body {
 .dist-strong { background: #e6f7ec; color: #1b5e20; }
 .dist-average { background: #fff3e0; color: #e65100; }
 .dist-weak { background: #fdecea; color: #b71c1c; }
-
-/* SECTION HEADERS */
 
 .section {
   margin-top: 24px;
@@ -154,13 +144,6 @@ function interpretDistribution(d) {
   return "Your decisions are generally balanced with moderate consistency.";
 }
 
-function severity(text) {
-  if (!text) return "";
-  if (text.includes("low") || text.includes("worse")) return "danger";
-  if (text.includes("vary") || text.includes("inconsistent")) return "warning";
-  return "success";
-}
-
 async function load() {
 
   const container = document.getElementById("content");
@@ -176,9 +159,7 @@ async function load() {
 
     let html = "";
 
-    /* =========================
-       🟦 DISTRIBUTION
-    ========================== */
+    /* DISTRIBUTION */
 
     if (data.distribution) {
       html += card(
@@ -197,9 +178,7 @@ async function load() {
       );
     }
 
-    /* =========================
-       🟨 STRATEGIC INSIGHTS
-    ========================== */
+    /* STRATEGIC */
 
     html += `<div class="section">Strategic Insights</div>`;
 
@@ -207,19 +186,22 @@ async function load() {
       html += card("Primary Pattern", data.primaryPattern, "warning");
     }
 
-    if (data.stability) {
-      html += card("Stability", data.stability, severity(data.stability));
-    }
-
     if (data.recommendedFocus) {
       html += card("Recommended Focus", data.recommendedFocus, "danger");
     }
 
-    /* =========================
-      
-    ========================== */
+    /* 🔴 NEW: Recommended Adjustments (replaces Stability) */
 
-   
+    if (data.behaviorReport && data.behaviorReport.recommendedAdjustments?.length) {
+      html += card(
+        "Recommended Adjustments",
+        data.behaviorReport.recommendedAdjustments
+          .map(item => `• ${item}`)
+          .join("<br>")
+      );
+    }
+
+    /* INSIGHTS */
 
     if (data.timePressureInsight) {
       html += card("Time Pressure Impact", data.timePressureInsight);
@@ -233,9 +215,7 @@ async function load() {
       html += card("Usage vs Satisfaction", data.usageInsight);
     }
 
-    /* =========================
-       📊 CORE METRICS
-    ========================== */
+    /* OVERVIEW */
 
     html += `<div class="section">Overview</div>`;
 

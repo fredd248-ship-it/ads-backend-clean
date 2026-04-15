@@ -1,147 +1,276 @@
-const express = require("express");
-const router = express.Router();
-const { PrismaClient } = require("@prisma/client");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Insights</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-/* 🔴 FIX: GLOBAL PRISMA (PREVENT HANGING CONNECTIONS) */
-let prisma;
-
-if (!global.prisma) {
-  global.prisma = new PrismaClient();
-}
-prisma = global.prisma;
-
-/* 🔴 SAFETY: TIMEOUT WRAPPER */
-async function withTimeout(promise, ms = 8000) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("DB_TIMEOUT")), ms)
-  );
-  return Promise.race([promise, timeout]);
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #eef6fb;
+  display: flex;
 }
 
-/* HELPERS */
-
-function mapFrequency(freq) {
-  if (!freq) return 0;
-  const f = freq.toLowerCase();
-  if (f.includes("day")) return 1.0;
-  if (f.includes("week")) return 0.7;
-  if (f.includes("month")) return 0.4;
-  return 0.1;
+.sidebar {
+  width: 220px;
+  background: #e0e7ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #c7d2fe;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-function formatCategory(cat) {
-  return cat
-    .replace("_", " ")
-    .replace(/\b\w/g, l => l.toUpperCase());
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #312e81;
 }
 
-function getRecencyWeight(date) {
-  const now = new Date();
-  const created = new Date(date);
-  const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+.nav-item:hover { background: #c7d2fe; }
 
-  if (diffDays <= 180) return 1.5;
-  if (diffDays <= 730) return 1.2;
-  return 1.0;
+.active {
+  background: #4338ca;
+  color: white;
 }
 
-function computeQualityScore(evaluation, decision) {
-  const regretNorm = 1 - (evaluation.regretScore / 10);
-  const frequencyNorm = mapFrequency(evaluation.frequencyOfUse);
-  const buyAgainNorm = evaluation.wouldBuyAgain ? 1 : 0;
-
-  const time = (decision.timePressure ?? 5) / 10;
-  const emotion = (decision.emotionalWeight ?? 5) / 10;
-
-  const score =
-    (regretNorm * 0.35) +
-    (frequencyNorm * 0.20) +
-    (buyAgainNorm * 0.20) +
-    ((1 - time * time) * 0.15) +
-    ((1 - emotion * emotion) * 0.10);
-
-  return Math.round(score * 100);
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 850px;
+  margin: auto;
 }
 
-/* 🔴 MATURITY */
-
-function getInsightMaturity(evaluated) {
-  if (evaluated < 3) return "none";
-  if (evaluated < 8) return "early";
-  if (evaluated < 20) return "developing";
-  if (evaluated < 50) return "stable";
-  return "advanced";
+.card {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  background: white;
+  border-left: 5px solid #ccc;
 }
 
-/* ROUTE */
+.card.primary { border-color: #4338ca; background: #f5f7ff; }
+.card.success { border-color: #4caf50; background: #f3faf5; }
+.card.warning { border-color: #ff9800; background: #fff7ed; }
+.card.danger { border-color: #f44336; background: #fdecec; }
 
-router.get("/", async (req, res) => {
+.notice {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.distribution {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.dist-box {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.dist-strong { background: #e6f7ec; color: #1b5e20; }
+.dist-average { background: #fff3e0; color: #e65100; }
+.dist-weak { background: #fdecea; color: #b71c1c; }
+
+.section {
+  margin-top: 24px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item" onclick="goDash()">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item active">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2>Insights</h2>
+  <div id="content"></div>
+</div>
+
+<script>
+
+const API = "https://ads-backend-clean.onrender.com/api/v1";
+const token = localStorage.getItem("ads_token");
+
+function card(title, content, type="") {
+  return `
+    <div class="card ${type}">
+      <div class="title">${title}</div>
+      <div class="text">${content}</div>
+    </div>
+  `;
+}
+
+function interpretDistribution(d) {
+  if (!d) return "";
+
+  if (d.strong >= 60)
+    return "You consistently make strong decisions across most categories.";
+
+  if (d.weak >= 50)
+    return "A large portion of your decisions are underperforming — improvement is needed.";
+
+  if (d.strong >= 30 && d.weak >= 30)
+    return "Your results show a mix of strong and weak outcomes, indicating inconsistency rather than lack of ability.";
+
+  return "Your decisions are generally balanced with moderate consistency.";
+}
+
+async function load() {
+
+  const container = document.getElementById("content");
+  container.innerHTML = "Loading...";
+
   try {
 
-    /* 🔴 SAFE DB CALL */
-    const decisions = await withTimeout(
-      prisma.decision.findMany({
-        where: { userId: req.user.id },
-        include: { evaluations: true }
-      })
-    );
-
-    let scores = [], totalEvaluations = 0, wouldBuyAgainCount = 0;
-
-    decisions.forEach(d => {
-      d.evaluations.forEach(e => {
-        totalEvaluations++;
-        if (e.wouldBuyAgain) wouldBuyAgainCount++;
-      });
-
-      if (d.evaluations.length > 0) {
-        const latest = d.evaluations[d.evaluations.length - 1];
-        const raw = computeQualityScore(latest, d);
-        const displayScore = Math.round(raw / 10);
-        const weight = getRecencyWeight(d.createdAt);
-
-        scores.push({ id: d.id, displayScore, weight });
-      }
+    const res = await fetch(API + "/insights", {
+      headers: { Authorization: "Bearer " + token }
     });
 
-    const totalDecisions = decisions.length;
-    const evaluatedDecisions = scores.length;
+    const data = await res.json();
 
-    const evaluationRate = totalDecisions > 0
-      ? Math.round((evaluatedDecisions / totalDecisions) * 100)
-      : 0;
+    let html = "";
 
-    const followThroughRate = totalEvaluations > 0
-      ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
-      : 0;
+    const evaluated = data.evaluatedDecisions || 0;
 
-    const weightedSum = scores.reduce((sum, s) => sum + s.displayScore * s.weight, 0);
-    const weightTotal = scores.reduce((sum, s) => sum + s.weight, 0);
+    /* 🔒 DATA CONFIDENCE LAYER */
 
-    const averageRegretScore = scores.length > 0
-      ? Math.round(weightedSum / weightTotal)
-      : 0;
-
-    return res.json({
-      totalDecisions,
-      evaluatedDecisions,
-      evaluationRate,
-      followThroughRate,
-      averageRegretScore,
-      insightMaturity: getInsightMaturity(evaluatedDecisions)
-    });
-
-  } catch (err) {
-    console.error("INSIGHTS ERROR:", err);
-
-    if (err.message === "DB_TIMEOUT") {
-      return res.status(503).json({
-        error: "Database timeout — please retry"
-      });
+    if (evaluated < 3) {
+      container.innerHTML = `
+        <div class="notice">
+          You need at least 3 evaluated decisions before meaningful insights can be generated.
+          Start evaluating your decisions to unlock patterns and recommendations.
+        </div>
+      `;
+      return;
     }
 
-    res.status(500).json({ error: "Server error" });
-  }
-});
+    if (evaluated < 8) {
+      html += `
+        <div class="notice">
+          These insights are based on a limited number of decisions.
+          Patterns may not yet be stable and should be interpreted cautiously.
+        </div>
+      `;
+    }
 
-module.exports = router;
+    /* DISTRIBUTION */
+
+    if (data.distribution) {
+      html += card(
+        "Decision Distribution",
+        `
+        <div class="distribution">
+          <div class="dist-box dist-strong">${data.distribution.strong}%<br>Strong</div>
+          <div class="dist-box dist-average">${data.distribution.average}%<br>Average</div>
+          <div class="dist-box dist-weak">${data.distribution.weak}%<br>Weak</div>
+        </div>
+        <div style="margin-top:10px;">
+          ${interpretDistribution(data.distribution)}
+        </div>
+        `,
+        "primary"
+      );
+    }
+
+    html += `<div class="section">Strategic Insights</div>`;
+
+    if (data.primaryPattern) {
+      html += card("Primary Pattern", data.primaryPattern, "warning");
+    }
+
+    if (data.recommendedFocus) {
+      html += card("Recommended Focus", data.recommendedFocus, "danger");
+    }
+
+    if (data.behaviorReport && data.behaviorReport.recommendedAdjustments?.length) {
+      html += card(
+        "Recommended Adjustments",
+        data.behaviorReport.recommendedAdjustments
+          .map(item => `• ${item}`)
+          .join("<br>")
+      );
+    }
+
+    if (data.timePressureInsight) {
+      html += card("Time Pressure Impact", data.timePressureInsight);
+    }
+
+    if (data.emotionalInsight) {
+      html += card("Emotional Impact", data.emotionalInsight);
+    }
+
+    if (data.usageInsight) {
+      html += card("Usage vs Satisfaction", data.usageInsight);
+    }
+
+    html += `<div class="section">Overview</div>`;
+
+    html += card(
+      "Evaluation Rate",
+      `${data.evaluationRate}% of your decisions have been evaluated`
+    );
+
+    html += card(
+      "Follow-Through Rate",
+      `${data.followThroughRate}% of your decisions would be made again`
+    );
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = "Failed to load insights";
+  }
+}
+
+function goDash(){ window.location.href="dashboard.html"; }
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
+</script>
+
+</body>
+</html>

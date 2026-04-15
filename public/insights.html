@@ -60,6 +60,16 @@ body {
 .card.warning { border-color: #ff9800; background: #fff7ed; }
 .card.danger { border-color: #f44336; background: #fdecec; }
 
+.notice {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
 .title {
   font-weight: bold;
   margin-bottom: 8px;
@@ -133,13 +143,13 @@ function interpretDistribution(d) {
   if (!d) return "";
 
   if (d.strong >= 60)
-    return "You consistently make strong decisions across most areas.";
+    return "You consistently make strong decisions across most categories.";
 
   if (d.weak >= 50)
     return "A large portion of your decisions are underperforming — improvement is needed.";
 
   if (d.strong >= 30 && d.weak >= 30)
-    return "Your results show a mix of high-quality and low-quality decisions, indicating inconsistency rather than lack of ability.";
+    return "Your results show a mix of strong and weak outcomes, indicating inconsistency rather than lack of ability.";
 
   return "Your decisions are generally balanced with moderate consistency.";
 }
@@ -158,6 +168,29 @@ async function load() {
     const data = await res.json();
 
     let html = "";
+
+    const evaluated = data.evaluatedDecisions || 0;
+
+    /* 🔒 DATA CONFIDENCE LAYER */
+
+    if (evaluated < 3) {
+      container.innerHTML = `
+        <div class="notice">
+          You need at least 3 evaluated decisions before meaningful insights can be generated.
+          Start evaluating your decisions to unlock patterns and recommendations.
+        </div>
+      `;
+      return;
+    }
+
+    if (evaluated < 8) {
+      html += `
+        <div class="notice">
+          These insights are based on a limited number of decisions.
+          Patterns may not yet be stable and should be interpreted cautiously.
+        </div>
+      `;
+    }
 
     /* DISTRIBUTION */
 
@@ -178,8 +211,6 @@ async function load() {
       );
     }
 
-    /* STRATEGIC */
-
     html += `<div class="section">Strategic Insights</div>`;
 
     if (data.primaryPattern) {
@@ -190,8 +221,6 @@ async function load() {
       html += card("Recommended Focus", data.recommendedFocus, "danger");
     }
 
-    /* 🔴 NEW: Recommended Adjustments (replaces Stability) */
-
     if (data.behaviorReport && data.behaviorReport.recommendedAdjustments?.length) {
       html += card(
         "Recommended Adjustments",
@@ -200,8 +229,6 @@ async function load() {
           .join("<br>")
       );
     }
-
-    /* INSIGHTS */
 
     if (data.timePressureInsight) {
       html += card("Time Pressure Impact", data.timePressureInsight);
@@ -214,8 +241,6 @@ async function load() {
     if (data.usageInsight) {
       html += card("Usage vs Satisfaction", data.usageInsight);
     }
-
-    /* OVERVIEW */
 
     html += `<div class="section">Overview</div>`;
 

@@ -47,8 +47,6 @@ body {
   margin: auto;
 }
 
-/* LETTER STYLE */
-
 .letter {
   background: white;
   padding: 28px;
@@ -67,7 +65,6 @@ body {
   font-weight: bold;
   color: #444;
 }
-
 </style>
 </head>
 
@@ -104,32 +101,67 @@ function buildLetter(report, data) {
   const distribution = data.distribution;
   const time = data.timePressureInsight;
   const emotion = data.emotionalInsight;
-  const usage = data.usageInsight;
 
-  let distributionInsight = "";
+  /* 🧠 ADAPTIVE TONE */
+
+  let toneIntro = "";
 
   if (distribution) {
-    if (distribution.strong >= 50) {
-      distributionInsight = "A large portion of your decisions are strong, which shows you have a solid decision-making foundation.";
-    } else if (distribution.weak >= 40) {
-      distributionInsight = "A noticeable portion of your decisions are underperforming, which suggests there are a few habits worth tightening.";
+    if (distribution.weak >= 40) {
+      toneIntro = "There are some clear patterns in your decision-making that need attention. ";
+    } else if (distribution.strong >= 50) {
+      toneIntro = "You're making consistently strong decisions overall. ";
     } else {
-      distributionInsight = "Your results are mixed, suggesting inconsistency rather than lack of ability.";
+      toneIntro = "Your decision-making shows a mix of strong and weaker outcomes. ";
+    }
+  }
+
+  /* 🧠 CONTEXT INTERPRETATION */
+
+  let contextInsight = "";
+
+  if (time || emotion) {
+
+    let timeMsg = "";
+    let emotionMsg = "";
+
+    if (time && time.includes("High-pressure decisions average")) {
+      timeMsg = "Decisions made under time pressure tend to produce lower satisfaction, suggesting rushed choices may be impacting outcomes.";
+    }
+
+    if (emotion && emotion.includes("High-emotion decisions average")) {
+      emotionMsg = "Emotion-driven decisions appear to reduce overall satisfaction, indicating that emotional weight may be influencing judgment more than intended.";
+    }
+
+    if (timeMsg || emotionMsg) {
+      contextInsight = `${timeMsg} ${emotionMsg}`.trim();
     }
   }
 
   return `
     <div class="letter">
 
-      <p>${report.coachingSummary}</p>
+      <p>${toneIntro}${report.coachingSummary}</p>
 
-      ${distributionInsight ? `<p>${distributionInsight}</p>` : ""}
+      ${
+        distribution
+        ? `<p>
+            ${
+              distribution.strong >= 50
+                ? "A large percentage of your decisions fall into the strong category, reinforcing that your foundation is solid."
+                : distribution.weak >= 40
+                ? "A meaningful percentage of your decisions fall into the weak category, which highlights where improvement will have the biggest impact."
+                : "Your decisions are distributed across strong, average, and weak categories, pointing to inconsistency rather than lack of ability."
+            }
+          </p>`
+        : ""
+      }
 
       ${
         blindSpot && blindSpot !== "No clear blind spots detected"
         ? `<p>
-            One area worth paying closer attention to is ${blindSpot}.
-            This is where your outcomes have been consistently weaker, and where more deliberate decision-making could create immediate improvement.
+            The categories that stand out as underperforming are ${blindSpot}.
+            These are the areas where a more deliberate approach will likely produce immediate gains.
           </p>`
         : ""
       }
@@ -137,8 +169,17 @@ function buildLetter(report, data) {
       ${
         strengths
         ? `<p>
-            You’re at your best in areas like ${strengths}, where your decisions tend to produce consistently strong outcomes.
-            These are patterns you can rely on and apply more intentionally elsewhere.
+            At the same time, you're making strong decisions in categories like ${strengths}.
+            These are patterns worth trusting and applying more consistently elsewhere.
+          </p>`
+        : ""
+      }
+
+      ${
+        contextInsight
+        ? `<p>
+            ${contextInsight}
+            Becoming more aware of these situational patterns can help you avoid predictable decision traps.
           </p>`
         : ""
       }
@@ -146,20 +187,8 @@ function buildLetter(report, data) {
       ${
         habit
         ? `<p>
-            A useful adjustment going forward would be to ${habit.toLowerCase()}.
-            Even a small increase in deliberate evaluation here can significantly improve your results.
-          </p>`
-        : ""
-      }
-
-      ${
-        (time || emotion || usage)
-        ? `<p>
-            There are also patterns in how context affects your decisions.
-            ${time ? time + ". " : ""}
-            ${emotion ? emotion + ". " : ""}
-            ${usage ? usage + ". " : ""}
-            Becoming aware of these patterns can help you avoid predictable mistakes.
+            A practical adjustment going forward would be to ${habit.toLowerCase()}.
+            Small improvements in how you approach these decisions will compound quickly.
           </p>`
         : ""
       }
@@ -167,7 +196,7 @@ function buildLetter(report, data) {
       ${
         adjustments.length
         ? `<p>
-            If you want to refine your approach further, consider this: ${adjustments
+            To take this further, consider this approach: ${adjustments
               .map(a => a.toLowerCase())
               .join(", ")}.
           </p>`
@@ -175,8 +204,8 @@ function buildLetter(report, data) {
       }
 
       <p>
-        Overall, your decision-making is stronger than it may initially appear.
-        This isn’t about making major changes—it’s about tightening a few key behaviors in the right situations.
+        Overall, your decision-making is not far off from being consistently strong.
+        The opportunity here is refinement—being more intentional in the categories and situations where your results currently fall short.
       </p>
 
       <div class="signature">— Your Decision System</div>

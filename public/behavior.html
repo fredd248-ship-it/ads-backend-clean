@@ -46,6 +46,16 @@ body {
   margin: auto;
 }
 
+.notice {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
 .letter {
   background: white;
   padding: 28px;
@@ -100,10 +110,6 @@ function buildLetter(report, data) {
   const adjustments = report.recommendedAdjustments || [];
 
   const distribution = data.distribution || {};
-  const time = data.timePressureInsight || "";
-  const emotion = data.emotionalInsight || "";
-
-  /* 🧠 ADAPTIVE TONE */
 
   let intro = "Your decision-making shows a mix of strong and weaker outcomes. ";
 
@@ -115,25 +121,19 @@ function buildLetter(report, data) {
     intro = "There are clear patterns in your decision-making that need attention, particularly in how certain categories consistently underperform. ";
   }
 
-  /* 🧠 DISTRIBUTION EXPANSION */
-
   let distributionInsight = `
     <p>
       Your decisions are distributed across strong, average, and weak categories. 
       This doesn’t indicate a lack of ability—it indicates variability in how you approach different types of decisions.
-      In other words, when you apply a structured and deliberate approach, your outcomes are strong. 
-      When that structure breaks down—often due to context or speed—your results decline.
+      When you apply a structured approach, outcomes improve. When decisions are rushed or reactive, results decline.
     </p>
   `;
 
-  /* 🧠 CONTEXT ANALYSIS */
-
   let context = `
     <p>
-      A key driver behind this pattern appears to be context. Decisions made under time pressure tend to result in lower satisfaction, 
-      suggesting that speed is working against your decision quality. At the same time, decisions made with higher emotional weight 
-      tend to produce less consistent outcomes, indicating that emotion may be influencing your judgment more than intended in those moments.
-      Recognizing these situations before committing is one of the highest leverage improvements you can make.
+      Context plays a major role in your outcomes. Decisions made under time pressure tend to reduce satisfaction, 
+      while emotionally influenced decisions tend to introduce inconsistency. Recognizing these conditions before committing 
+      can significantly improve your results.
     </p>
   `;
 
@@ -143,22 +143,20 @@ function buildLetter(report, data) {
       <p>
         ${intro}
         You tend to make consistently strong decisions in categories like ${strengths}. 
-        However, your results drop noticeably in ${blindSpot}, where outcomes are less reliable and tend to fall short.
+        However, your results drop noticeably in ${blindSpot}, where outcomes are less reliable.
       </p>
 
       ${distributionInsight}
 
       <p>
-        The categories that consistently underperform—${blindSpot}—represent your greatest opportunity for improvement. 
-        These are not random outcomes; they are patterns, and patterns can be corrected.
+        The categories that consistently underperform—${blindSpot}—represent your greatest opportunity for improvement.
       </p>
 
       ${context}
 
       <p>
         A practical adjustment going forward would be to ${habit.toLowerCase()}, especially in weaker categories 
-        or in situations where you feel time pressure or emotional urgency. Even a small pause to compare alternatives 
-        can significantly improve your outcomes.
+        or when you feel time pressure or emotional urgency.
       </p>
 
       ${
@@ -172,9 +170,7 @@ function buildLetter(report, data) {
       }
 
       <p>
-        Overall, your decision-making foundation is strong. This is not about making major changes—it’s about 
-        becoming more consistent in how you apply good decision-making across all categories. 
-        With a more deliberate approach in the right situations, your results can become reliably strong.
+        Overall, your decision-making foundation is strong. With more consistency in execution, your results can become reliably strong.
       </p>
 
       <div class="signature">— Your Decision System</div>
@@ -196,12 +192,32 @@ async function load(){
     const data = await res.json();
     const report = data.behaviorReport;
 
-    if (!report){
-      container.innerHTML = "Start evaluating more decisions to unlock coaching insights.";
+    const evaluated = data.evaluatedDecisions || 0;
+
+    /* 🔒 DATA CONFIDENCE LAYER */
+
+    if (evaluated < 3) {
+      container.innerHTML = `
+        <div class="notice">
+          You need at least 3 evaluated decisions before meaningful coaching can be generated.
+          Start evaluating your decisions to unlock personalized insights.
+        </div>
+      `;
       return;
     }
 
-    container.innerHTML = buildLetter(report, data);
+    let notice = "";
+
+    if (evaluated < 8) {
+      notice = `
+        <div class="notice">
+          Your coaching insights are based on a limited number of decisions.
+          As you evaluate more decisions, these insights will become more accurate and reliable.
+        </div>
+      `;
+    }
+
+    container.innerHTML = notice + buildLetter(report, data);
 
   }catch(err){
     console.error(err);

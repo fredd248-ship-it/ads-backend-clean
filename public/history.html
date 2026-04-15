@@ -86,6 +86,16 @@ body {
   font-weight: bold;
 }
 
+.notice {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
 .btn {
   margin-top: 10px;
   padding: 10px 14px;
@@ -186,7 +196,29 @@ async function load() {
       }
     });
 
+    /* 🔒 DATA CONFIDENCE LAYER */
+
+    let notice = "";
+
+    if (evaluated < 3) {
+      notice = `
+        <div class="notice">
+          Your data is still very limited. These metrics are not yet reliable.
+          Evaluate more decisions to begin seeing meaningful patterns.
+        </div>
+      `;
+    } else if (evaluated < 8) {
+      notice = `
+        <div class="notice">
+          These insights are based on a small number of decisions.
+          As you evaluate more, your results will become more accurate and stable.
+        </div>
+      `;
+    }
+
     container.innerHTML = `
+
+      ${notice}
 
       <div class="section-title">Overview</div>
 

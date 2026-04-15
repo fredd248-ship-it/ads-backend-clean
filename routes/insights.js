@@ -79,8 +79,6 @@ function buildBehaviorReport(scores, decisions) {
     if (avg <= 4) weakCats.push(formatCategory(cat));
   });
 
-  /* 🧠 Narrative Construction */
-
   let narrative = "";
 
   if (strongCats.length > 0) {
@@ -235,6 +233,16 @@ function buildAdvancedInsights(decisions, scores) {
   };
 }
 
+/* 🔴 NEW: MATURITY DETECTION */
+
+function getInsightMaturity(evaluated) {
+  if (evaluated < 3) return "none";
+  if (evaluated < 8) return "early";
+  if (evaluated < 20) return "developing";
+  if (evaluated < 50) return "stable";
+  return "advanced";
+}
+
 /* ROUTE */
 
 router.get("/", async (req, res) => {
@@ -286,6 +294,8 @@ router.get("/", async (req, res) => {
     const strategic = buildStrategicInsights(categoryData, scores);
     const advanced = buildAdvancedInsights(decisions, scores);
 
+    const insightMaturity = getInsightMaturity(evaluatedDecisions);
+
     return res.json({
       totalDecisions,
       evaluatedDecisions,
@@ -299,7 +309,8 @@ router.get("/", async (req, res) => {
       timePressureInsight: advanced.timePressureInsight,
       emotionalInsight: advanced.emotionalInsight,
       usageInsight: advanced.usageInsight,
-      distribution
+      distribution,
+      insightMaturity   // ✅ NEW FIELD (SAFE)
     });
 
   } catch (err) {

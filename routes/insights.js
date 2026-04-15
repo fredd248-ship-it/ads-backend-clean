@@ -49,7 +49,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 COMPRESSED BEHAVIOR ENGINE */
+/* 🔴 COACHING ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 3) return null;
@@ -68,56 +68,49 @@ function buildBehaviorReport(scores, decisions) {
     categoryMap[cat].push(scoreObj.displayScore);
   });
 
-  const strengths = [];
-  const weakCategories = [];
+  let strongCats = [];
+  let weakCats = [];
 
   Object.keys(categoryMap).forEach(cat => {
     const arr = categoryMap[cat];
     const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
-    if (avg >= 7) {
-      strengths.push(`${formatCategory(cat)} (avg ${avg}/10)`);
-    }
-
-    if (avg <= 4) {
-      weakCategories.push(`${formatCategory(cat)} (avg ${avg}/10)`);
-    }
+    if (avg >= 7) strongCats.push(formatCategory(cat));
+    if (avg <= 4) weakCats.push(formatCategory(cat));
   });
 
-  const recommendedAdjustments = [];
+  /* 🧠 Narrative Construction */
 
-  if (weakCategories.length > 0) {
-    recommendedAdjustments.push(
-      "Test or compare at least two options before committing in weaker categories"
-    );
-    recommendedAdjustments.push(
-      "Avoid rushed decisions — allow time to evaluate alternatives"
-    );
+  let narrative = "";
+
+  if (strongCats.length > 0) {
+    narrative += `You tend to make strong decisions in areas like ${strongCats.join(", ")}. `;
   }
 
+  if (weakCats.length > 0) {
+    narrative += `However, your results drop noticeably in ${weakCats.join(", ")}, where outcomes are consistently lower. `;
+    narrative += `These decisions would benefit from a slower, more deliberate approach—especially taking time to compare options before committing. `;
+  } else {
+    narrative += `Your decision-making is consistently strong across most areas. `;
+  }
+
+  narrative += `Overall, your decision patterns are solid—you’re not far off, just a few adjustments in key areas could significantly improve your results.`;
+
   return {
-    decisionProfile:
-      scores.length > 10
-        ? "You make decisions across multiple categories with inconsistent results"
-        : "You are still building your decision history",
-
-    coachingSummary:
-      weakCategories.length === 0
-        ? "Your decisions are consistently strong across categories"
-        : "Strong performance in several areas, with clear underperformance in a few categories",
-
+    decisionProfile: "Your decision-making shows clear patterns across different areas",
+    coachingSummary: narrative,
     currentBlindSpot:
-      weakCategories.length > 0
-        ? weakCategories.join(", ")
+      weakCats.length > 0
+        ? weakCats.join(", ")
         : "No clear blind spots detected",
-
     bestNextHabit:
-      weakCategories.length > 0
-        ? "Test or compare options before committing in weaker categories"
-        : "Continue reinforcing your strongest decision patterns",
-
-    strengths,
-    recommendedAdjustments
+      weakCats.length > 0
+        ? "Slow down and evaluate options before committing in weaker areas"
+        : "Continue reinforcing your current decision approach",
+    strengths: strongCats.map(c => `${c}`),
+    recommendedAdjustments: weakCats.length > 0
+      ? ["Compare at least two options before committing", "Avoid rushed decisions in weaker areas"]
+      : []
   };
 }
 

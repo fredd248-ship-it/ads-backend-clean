@@ -9,7 +9,7 @@
 body {
   margin: 0;
   font-family: Georgia, serif;
-  background: #eef6fb;
+  background: #f5f7fb;
   display: flex;
 }
 
@@ -21,7 +21,6 @@ body {
   border-right: 1px solid #c7d2fe;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 .nav-item {
@@ -42,8 +41,8 @@ body {
 
 .main {
   flex: 1;
-  padding: 28px;
-  max-width: 900px;
+  padding: 30px;
+  max-width: 850px;
   margin: auto;
 }
 
@@ -81,7 +80,7 @@ body {
 
 <div class="main">
   <h2>Tips & Coaching</h2>
-  <div id="content"></div>
+  <div id="content">Loading...</div>
 </div>
 
 <script>
@@ -91,112 +90,72 @@ const token = localStorage.getItem("ads_token");
 
 function buildLetter(report, data) {
 
-  const strengthsArr = report.strengths ? report.strengths.slice(0, 3) : [];
-  const strengths = strengthsArr.join(", ");
-
+  const strengths = (report.strengths || []).slice(0,3).join(", ");
   const blindSpot = report.currentBlindSpot;
   const habit = report.bestNextHabit;
   const adjustments = report.recommendedAdjustments || [];
 
-  const distribution = data.distribution;
-  const time = data.timePressureInsight;
-  const emotion = data.emotionalInsight;
+  const distribution = data.distribution || {};
+  const time = data.timePressureInsight || "";
+  const emotion = data.emotionalInsight || "";
 
   /* 🧠 ADAPTIVE TONE */
 
-  let toneIntro = "";
+  let intro = "Your decision-making shows a mix of strong and weaker outcomes. ";
 
-  if (distribution) {
-    if (distribution.weak >= 40) {
-      toneIntro = "There are some clear patterns in your decision-making that need attention. ";
-    } else if (distribution.strong >= 50) {
-      toneIntro = "You're making consistently strong decisions overall. ";
-    } else {
-      toneIntro = "Your decision-making shows a mix of strong and weaker outcomes. ";
-    }
+  if (distribution.strong >= 50) {
+    intro = "You're making consistently strong decisions overall. ";
   }
 
-  /* 🧠 CONTEXT INTERPRETATION */
+  if (distribution.weak >= 40) {
+    intro = "There are clear patterns in your decision-making that need attention. ";
+  }
 
-  let contextInsight = "";
+  /* 🧠 CONTEXT ANALYSIS */
 
-  if (time || emotion) {
+  let context = "";
 
-    let timeMsg = "";
-    let emotionMsg = "";
-
-    if (time && time.includes("High-pressure decisions average")) {
-      timeMsg = "Decisions made under time pressure tend to produce lower satisfaction, suggesting rushed choices may be impacting outcomes.";
-    }
-
-    if (emotion && emotion.includes("High-emotion decisions average")) {
-      emotionMsg = "Emotion-driven decisions appear to reduce overall satisfaction, indicating that emotional weight may be influencing judgment more than intended.";
-    }
-
-    if (timeMsg || emotionMsg) {
-      contextInsight = `${timeMsg} ${emotionMsg}`.trim();
-    }
+  if (time.toLowerCase().includes("high") || emotion.toLowerCase().includes("high")) {
+    context = `
+      <p>
+        A key factor influencing your results is how context affects your decisions.
+        Decisions made under time pressure tend to produce lower satisfaction, suggesting rushed choices are working against you.
+        Similarly, decisions made with higher emotional weight tend to lead to weaker outcomes, indicating that emotion may be influencing your judgment more than intended.
+      </p>
+    `;
   }
 
   return `
     <div class="letter">
 
-      <p>${toneIntro}${report.coachingSummary}</p>
+      <p>
+        ${intro}
+        You tend to make consistently strong decisions in categories like ${strengths}.
+        However, your results drop noticeably in ${blindSpot}, where outcomes are less reliable and tend to fall short.
+      </p>
 
-      ${
-        distribution
-        ? `<p>
-            ${
-              distribution.strong >= 50
-                ? "A large percentage of your decisions fall into the strong category, reinforcing that your foundation is solid."
-                : distribution.weak >= 40
-                ? "A meaningful percentage of your decisions fall into the weak category, which highlights where improvement will have the biggest impact."
-                : "Your decisions are distributed across strong, average, and weak categories, pointing to inconsistency rather than lack of ability."
-            }
-          </p>`
-        : ""
-      }
+      <p>
+        Your decisions are distributed across strong, average, and weak categories,
+        which points to inconsistency rather than lack of ability.
+      </p>
 
-      ${
-        blindSpot && blindSpot !== "No clear blind spots detected"
-        ? `<p>
-            The categories that stand out as underperforming are ${blindSpot}.
-            These are the areas where a more deliberate approach will likely produce immediate gains.
-          </p>`
-        : ""
-      }
+      <p>
+        The categories that stand out as underperforming are ${blindSpot}.
+        These categories represent your biggest opportunity for improvement.
+      </p>
 
-      ${
-        strengths
-        ? `<p>
-            At the same time, you're making strong decisions in categories like ${strengths}.
-            These are patterns worth trusting and applying more consistently elsewhere.
-          </p>`
-        : ""
-      }
+      ${context}
 
-      ${
-        contextInsight
-        ? `<p>
-            ${contextInsight}
-            Becoming more aware of these situational patterns can help you avoid predictable decision traps.
-          </p>`
-        : ""
-      }
-
-      ${
-        habit
-        ? `<p>
-            A practical adjustment going forward would be to ${habit.toLowerCase()}.
-            Small improvements in how you approach these decisions will compound quickly.
-          </p>`
-        : ""
-      }
+      <p>
+        A practical adjustment going forward would be to ${habit.toLowerCase()},
+        especially in weaker categories or when you feel time pressure or emotional urgency.
+        Even a small pause to compare alternatives can significantly improve your outcomes.
+      </p>
 
       ${
         adjustments.length
         ? `<p>
-            To take this further, consider this approach: ${adjustments
+            To refine your approach further, focus on ${adjustments
               .map(a => a.toLowerCase())
               .join(", ")}.
           </p>`
@@ -204,8 +163,9 @@ function buildLetter(report, data) {
       }
 
       <p>
-        Overall, your decision-making is not far off from being consistently strong.
-        The opportunity here is refinement—being more intentional in the categories and situations where your results currently fall short.
+        Overall, your decision-making foundation is strong.
+        This is not about changing everything—it’s about becoming more intentional
+        in the categories and situations where your results currently fall short.
       </p>
 
       <div class="signature">— Your Decision System</div>
@@ -214,12 +174,11 @@ function buildLetter(report, data) {
   `;
 }
 
-async function load() {
+async function load(){
 
   const container = document.getElementById("content");
-  container.innerHTML = "Loading...";
 
-  try {
+  try{
 
     const res = await fetch(API + "/insights", {
       headers: { Authorization: "Bearer " + token }
@@ -228,18 +187,20 @@ async function load() {
     const data = await res.json();
     const report = data.behaviorReport;
 
-    if (!report) {
+    if (!report){
       container.innerHTML = "Start evaluating more decisions to unlock coaching insights.";
       return;
     }
 
     container.innerHTML = buildLetter(report, data);
 
-  } catch (err) {
+  }catch(err){
     console.error(err);
     container.innerHTML = "Failed to load coaching insights.";
   }
 }
+
+/* NAVIGATION — UNTOUCHED */
 
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }

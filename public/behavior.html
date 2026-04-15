@@ -90,8 +90,12 @@ const token = localStorage.getItem("ads_token");
 
 function buildLetter(report, data) {
 
-  const strengths = (report.strengths || []).slice(0,3).join(", ");
-  const blindSpot = report.currentBlindSpot;
+  const strengthsArr = (report.strengths || []).slice(0,3);
+  const strengths = strengthsArr.join(", ");
+
+  const blindSpotRaw = report.currentBlindSpot || "";
+  const blindSpot = blindSpotRaw.replace(",", " and");
+
   const habit = report.bestNextHabit;
   const adjustments = report.recommendedAdjustments || [];
 
@@ -104,52 +108,57 @@ function buildLetter(report, data) {
   let intro = "Your decision-making shows a mix of strong and weaker outcomes. ";
 
   if (distribution.strong >= 50) {
-    intro = "You're making consistently strong decisions overall. ";
+    intro = "You're making consistently strong decisions overall, which suggests your core decision-making process is working well. ";
   }
 
   if (distribution.weak >= 40) {
-    intro = "There are clear patterns in your decision-making that need attention. ";
+    intro = "There are clear patterns in your decision-making that need attention, particularly in how certain categories consistently underperform. ";
   }
+
+  /* 🧠 DISTRIBUTION EXPANSION */
+
+  let distributionInsight = `
+    <p>
+      Your decisions are distributed across strong, average, and weak categories. 
+      This doesn’t indicate a lack of ability—it indicates variability in how you approach different types of decisions.
+      In other words, when you apply a structured and deliberate approach, your outcomes are strong. 
+      When that structure breaks down—often due to context or speed—your results decline.
+    </p>
+  `;
 
   /* 🧠 CONTEXT ANALYSIS */
 
-  let context = "";
-
-  if (time.toLowerCase().includes("high") || emotion.toLowerCase().includes("high")) {
-    context = `
-      <p>
-        A key factor influencing your results is how context affects your decisions.
-        Decisions made under time pressure tend to produce lower satisfaction, suggesting rushed choices are working against you.
-        Similarly, decisions made with higher emotional weight tend to lead to weaker outcomes, indicating that emotion may be influencing your judgment more than intended.
-      </p>
-    `;
-  }
+  let context = `
+    <p>
+      A key driver behind this pattern appears to be context. Decisions made under time pressure tend to result in lower satisfaction, 
+      suggesting that speed is working against your decision quality. At the same time, decisions made with higher emotional weight 
+      tend to produce less consistent outcomes, indicating that emotion may be influencing your judgment more than intended in those moments.
+      Recognizing these situations before committing is one of the highest leverage improvements you can make.
+    </p>
+  `;
 
   return `
     <div class="letter">
 
       <p>
         ${intro}
-        You tend to make consistently strong decisions in categories like ${strengths}.
+        You tend to make consistently strong decisions in categories like ${strengths}. 
         However, your results drop noticeably in ${blindSpot}, where outcomes are less reliable and tend to fall short.
       </p>
 
-      <p>
-        Your decisions are distributed across strong, average, and weak categories,
-        which points to inconsistency rather than lack of ability.
-      </p>
+      ${distributionInsight}
 
       <p>
-        The categories that stand out as underperforming are ${blindSpot}.
-        These categories represent your biggest opportunity for improvement.
+        The categories that consistently underperform—${blindSpot}—represent your greatest opportunity for improvement. 
+        These are not random outcomes; they are patterns, and patterns can be corrected.
       </p>
 
       ${context}
 
       <p>
-        A practical adjustment going forward would be to ${habit.toLowerCase()},
-        especially in weaker categories or when you feel time pressure or emotional urgency.
-        Even a small pause to compare alternatives can significantly improve your outcomes.
+        A practical adjustment going forward would be to ${habit.toLowerCase()}, especially in weaker categories 
+        or in situations where you feel time pressure or emotional urgency. Even a small pause to compare alternatives 
+        can significantly improve your outcomes.
       </p>
 
       ${
@@ -163,9 +172,9 @@ function buildLetter(report, data) {
       }
 
       <p>
-        Overall, your decision-making foundation is strong.
-        This is not about changing everything—it’s about becoming more intentional
-        in the categories and situations where your results currently fall short.
+        Overall, your decision-making foundation is strong. This is not about making major changes—it’s about 
+        becoming more consistent in how you apply good decision-making across all categories. 
+        With a more deliberate approach in the right situations, your results can become reliably strong.
       </p>
 
       <div class="signature">— Your Decision System</div>

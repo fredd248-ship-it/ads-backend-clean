@@ -8,7 +8,7 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Georgia, serif;
   background: #eef6fb;
   display: flex;
 }
@@ -47,70 +47,25 @@ body {
   margin: auto;
 }
 
-/* MAIN COACHING BLOCK */
+/* LETTER STYLE */
 
-.coaching-card {
+.letter {
   background: white;
-  padding: 22px;
+  padding: 26px;
   border-radius: 14px;
-  border-left: 6px solid #4338ca;
-  margin-bottom: 20px;
+  line-height: 1.8;
+  font-size: 15.5px;
+  color: #2c2c2c;
 }
 
-.coaching-title {
+.letter p {
+  margin-bottom: 16px;
+}
+
+.signature {
+  margin-top: 24px;
   font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.coaching-text {
-  font-size: 15px;
-  line-height: 1.7;
-  color: #333;
-}
-
-/* SUPPORTING CARDS */
-
-.section {
-  margin-top: 20px;
-  font-size: 13px;
-  font-weight: bold;
-  color: #555;
-  text-transform: uppercase;
-}
-
-.card {
-  margin-top: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  background: white;
-}
-
-.card-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.card-text {
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-/* STRENGTH TAGS */
-
-.tags {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag {
-  background: #e6f7ec;
-  color: #1b5e20;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 13px;
+  color: #444;
 }
 
 </style>
@@ -137,6 +92,66 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
+function buildLetter(report) {
+
+  const strengths = report.strengths?.join(", ");
+  const blindSpot = report.currentBlindSpot;
+  const habit = report.bestNextHabit;
+  const adjustments = report.recommendedAdjustments || [];
+
+  return `
+    <div class="letter">
+
+      <p>${report.coachingSummary}</p>
+
+      ${
+        blindSpot && blindSpot !== "No clear blind spots detected"
+        ? `<p>
+            One pattern worth paying closer attention to is ${blindSpot}.
+            This is where your results have been less consistent, and where even small adjustments could make a noticeable difference.
+          </p>`
+        : ""
+      }
+
+      ${
+        strengths
+        ? `<p>
+            At the same time, you’re making strong decisions in areas like ${strengths}.
+            These are situations where your instincts and approach are clearly working well—something you can rely on more intentionally.
+          </p>`
+        : ""
+      }
+
+      ${
+        habit
+        ? `<p>
+            Going forward, a useful adjustment would be to ${habit.toLowerCase()}.
+            This kind of shift tends to have an outsized impact, especially in areas that currently underperform.
+          </p>`
+        : ""
+      }
+
+      ${
+        adjustments.length
+        ? `<p>
+            If you want to refine things further, consider this approach: ${adjustments
+              .map(a => a.toLowerCase())
+              .join(", ")}.
+          </p>`
+        : ""
+      }
+
+      <p>
+        Overall, your decision-making foundation is strong. This isn’t about major changes—
+        it’s about being slightly more deliberate in the right moments.
+      </p>
+
+      <div class="signature">— Your Decision System</div>
+
+    </div>
+  `;
+}
+
 async function load() {
 
   const container = document.getElementById("content");
@@ -156,69 +171,7 @@ async function load() {
       return;
     }
 
-    let html = "";
-
-    /* 🧠 MAIN COACHING BLOCK */
-
-    html += `
-      <div class="coaching-card">
-        <div class="coaching-title">Your Coaching Summary</div>
-        <div class="coaching-text">${report.coachingSummary}</div>
-      </div>
-    `;
-
-    /* 🎯 FOCUS */
-
-    html += `<div class="section">Where to Focus</div>`;
-
-    html += `
-      <div class="card">
-        <div class="card-title">Current Blind Spot</div>
-        <div class="card-text">${report.currentBlindSpot}</div>
-      </div>
-    `;
-
-    html += `
-      <div class="card">
-        <div class="card-title">Best Next Step</div>
-        <div class="card-text">${report.bestNextHabit}</div>
-      </div>
-    `;
-
-    /* 🟢 STRENGTHS */
-
-    if (report.strengths && report.strengths.length > 0) {
-      html += `<div class="section">What You're Doing Well</div>`;
-
-      html += `
-        <div class="card">
-          <div class="card-title">Your Strong Areas</div>
-          <div class="card-text">
-            You tend to make consistently good decisions in the following areas:
-            <div class="tags">
-              ${report.strengths.map(s => `<span class="tag">${s}</span>`).join("")}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    /* 🧩 GUIDANCE */
-
-    if (report.recommendedAdjustments && report.recommendedAdjustments.length > 0) {
-      html += `<div class="section">Suggestions to Improve</div>`;
-
-      html += `
-        <div class="card">
-          <div class="card-title">Simple Adjustments</div>
-          <div class="card-text">
-            ${report.recommendedAdjustments.map(r => `• ${r}`).join("<br>")}
-          </div>
-        </div>
-      `;
-    }
-
-    container.innerHTML = html;
+    container.innerHTML = buildLetter(report);
 
   } catch (err) {
     console.error(err);

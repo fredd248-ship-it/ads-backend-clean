@@ -74,9 +74,9 @@ async function load() {
 
     const avgScore = Math.round(data?.averageRegretScore ?? 0);
 
-    /* ✅ FIXED: REAL CATEGORY DERIVATION */
-    const topCategory = data?.primaryPattern
-      ? data.primaryPattern.split(" ")[4] || "N/A"
+    /* ✅ CORRECT — STRUCTURED FIELD */
+    const topCategory = data?.mostUsedCategory
+      ? data.mostUsedCategory.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())
       : "N/A";
 
     let notice = "";

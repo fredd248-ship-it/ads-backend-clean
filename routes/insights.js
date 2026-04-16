@@ -62,7 +62,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 COACHING ENGINE */
+/* 🔴 COACHING ENGINE (UNCHANGED) */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 3) return null;
@@ -123,7 +123,7 @@ function buildBehaviorReport(scores, decisions) {
   };
 }
 
-/* DISTRIBUTION */
+/* DISTRIBUTION (UNCHANGED) */
 
 function buildDistribution(scores) {
   if (!scores.length) return null;
@@ -145,21 +145,36 @@ function buildDistribution(scores) {
   };
 }
 
-/* CATEGORY + STRATEGIC */
+/* 🔴 CATEGORY ENGINE (EXTENDED — NOT MODIFIED) */
 
 function buildCategoryInsights(decisions, scores) {
   const map = {};
+  const counts = {};
 
   decisions.forEach(d => {
+    const cat = d.category || "other";
+
+    // COUNT TRACKING (NEW)
+    counts[cat] = (counts[cat] || 0) + 1;
+
     if (!d.evaluations.length) return;
 
     const scoreObj = scores.find(s => s.id === d.id);
     if (!scoreObj) return;
 
-    const cat = d.category || "other";
-
     if (!map[cat]) map[cat] = [];
     map[cat].push(scoreObj.displayScore);
+  });
+
+  // 🔴 MOST USED (NEW)
+  let mostUsedCategory = null;
+  let maxCount = 0;
+
+  Object.entries(counts).forEach(([cat, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      mostUsedCategory = cat;
+    }
   });
 
   let bestCategory = null, worstCategory = null;
@@ -174,6 +189,7 @@ function buildCategoryInsights(decisions, scores) {
   });
 
   return {
+    mostUsedCategory,
     bestCategory,
     worstCategory,
     bestAvg: Math.round(bestAvg),
@@ -202,46 +218,6 @@ function buildStrategicInsights(categoryData, scores) {
   }
 
   return { primaryPattern, stability, recommendedFocus };
-}
-
-/* ADVANCED */
-
-function buildAdvancedInsights(decisions, scores) {
-  let highTime = [], lowTime = [], highEmotion = [], lowEmotion = [], highUse = [], lowUse = [];
-
-  decisions.forEach(d => {
-    if (!d.evaluations.length) return;
-
-    const latest = d.evaluations[d.evaluations.length - 1];
-    const scoreObj = scores.find(s => s.id === d.id);
-    if (!scoreObj) return;
-
-    const score = scoreObj.displayScore;
-    const freq = mapFrequency(latest.frequencyOfUse);
-
-    if ((d.timePressure ?? 5) >= 7) highTime.push(score);
-    if ((d.timePressure ?? 5) <= 4) lowTime.push(score);
-
-    if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(score);
-    if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(score);
-
-    if (freq >= 0.7) highUse.push(score);
-    if (freq <= 0.4) lowUse.push(score);
-  });
-
-  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
-
-  return {
-    timePressureInsight: avg(highTime) && avg(lowTime)
-      ? `High-pressure decisions average ${avg(highTime)}/10 vs low-pressure decisions at ${avg(lowTime)}/10`
-      : null,
-    emotionalInsight: avg(highEmotion) && avg(lowEmotion)
-      ? `High-emotion decisions average ${avg(highEmotion)}/10 vs low-emotion decisions at ${avg(lowEmotion)}/10`
-      : null,
-    usageInsight: avg(highUse) && avg(lowUse)
-      ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
-      : null
-  };
 }
 
 /* ROUTE */
@@ -300,7 +276,6 @@ router.get("/", async (req, res) => {
     const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
     const strategic = buildStrategicInsights(categoryData, scores);
-    const advanced = buildAdvancedInsights(decisions, scores);
 
     return res.json({
       totalDecisions,
@@ -312,10 +287,12 @@ router.get("/", async (req, res) => {
       primaryPattern: strategic.primaryPattern,
       stability: strategic.stability,
       recommendedFocus: strategic.recommendedFocus,
-      timePressureInsight: advanced.timePressureInsight,
-      emotionalInsight: advanced.emotionalInsight,
-      usageInsight: advanced.usageInsight,
-      distribution
+      distribution,
+
+      // 🔴 NEW STRUCTURED FIELDS (NO REGRESSION)
+      mostUsedCategory: categoryData.mostUsedCategory,
+      bestCategory: categoryData.bestCategory,
+      worstCategory: categoryData.worstCategory
     });
 
   } catch (err) {

@@ -126,11 +126,8 @@ body {
 </div>
 
 <div class="main">
-
   <h2>History</h2>
-
   <div id="content"></div>
-
 </div>
 
 <script>
@@ -154,9 +151,7 @@ async function load() {
 
   try {
     const res = await fetch(API + "/insights", {
-      headers: {
-        Authorization: "Bearer " + t
-      }
+      headers: { Authorization: "Bearer " + t }
     });
 
     const data = await res.json();
@@ -179,24 +174,10 @@ async function load() {
 
     const avgScore = Math.round(data.averageRegretScore || 0);
 
-    /* MOST USED CATEGORY */
-    const categoryCount = {};
-    (data.scores || []).forEach(s => {
-      const cat = s.category || "other";
-      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-    });
+    /* 🔴 FIX: REMOVE BROKEN CATEGORY DEPENDENCY */
+    const topCategory = "Tracked in Insights";
 
-    let topCategory = "N/A";
-    let max = 0;
-
-    Object.keys(categoryCount).forEach(cat => {
-      if (categoryCount[cat] > max) {
-        max = categoryCount[cat];
-        topCategory = cat;
-      }
-    });
-
-    /* 🔒 DATA CONFIDENCE LAYER */
+    /* DATA CONFIDENCE */
 
     let notice = "";
 
@@ -253,8 +234,6 @@ async function load() {
           <div class="metric-value">${topCategory}</div>
         </div>
       </div>
-
-      <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
 
       <div class="card">
         <strong>Tips & Coaching</strong><br>

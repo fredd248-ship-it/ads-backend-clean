@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 
-/* 🔴 STABLE PRISMA (FIX) */
+/* 🔴 STABLE PRISMA */
 let prisma;
 if (!global.prisma) {
   global.prisma = new PrismaClient();
 }
 prisma = global.prisma;
 
-/* 🔴 TIMEOUT SAFETY */
+/* 🔴 TIMEOUT */
 async function withTimeout(promise, ms = 8000) {
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("DB_TIMEOUT")), ms)
@@ -17,7 +17,7 @@ async function withTimeout(promise, ms = 8000) {
   return Promise.race([promise, timeout]);
 }
 
-/* HELPERS (UNCHANGED) */
+/* HELPERS */
 
 function mapFrequency(freq) {
   if (!freq) return 0;
@@ -62,12 +62,30 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 COACHING ENGINE (UNCHANGED) */
+/* 🔴 RESTORED FUNCTIONS */
 
-function buildBehaviorReport(scores, decisions) {
-  if (!scores || scores.length < 3) return null;
+function buildDistribution(scores) {
+  if (!scores.length) return null;
 
-  const categoryMap = {};
+  let strong = 0, average = 0, weak = 0;
+
+  scores.forEach(s => {
+    if (s.displayScore >= 8) strong++;
+    else if (s.displayScore >= 5) average++;
+    else weak++;
+  });
+
+  const total = scores.length;
+
+  return {
+    strong: Math.round((strong / total) * 100),
+    average: Math.round((average / total) * 100),
+    weak: Math.round((weak / total) * 100)
+  };
+}
+
+function buildCategoryInsights(decisions, scores) {
+  const map = {};
 
   decisions.forEach(d => {
     if (!d.evaluations.length) return;
@@ -77,63 +95,95 @@ function buildBehaviorReport(scores, decisions) {
 
     const cat = d.category || "other";
 
-    if (!categoryMap[cat]) categoryMap[cat] = [];
-    categoryMap[cat].push(scoreObj.displayScore);
+    if (!map[cat]) map[cat] = [];
+    map[cat].push(scoreObj.displayScore);
   });
 
-  let strongCats = [];
-  let weakCats = [];
+  let bestCategory = null, worstCategory = null;
+  let bestAvg = -Infinity, worstAvg = Infinity;
 
-  Object.keys(categoryMap).forEach(cat => {
-    const arr = categoryMap[cat];
-    const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  Object.keys(map).forEach(cat => {
+    const arr = map[cat];
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
 
-    if (avg >= 7) strongCats.push(formatCategory(cat));
-    if (avg <= 4) weakCats.push(formatCategory(cat));
+    if (avg > bestAvg) { bestAvg = avg; bestCategory = cat; }
+    if (avg < worstAvg) { worstAvg = avg; worstCategory = cat; }
   });
-
-  let narrative = "";
-
-  if (strongCats.length > 0) {
-    narrative += `You tend to make strong decisions in categories like ${strongCats.join(", ")}. `;
-  }
-
-  if (weakCats.length > 0) {
-    narrative += `However, your results drop noticeably in ${weakCats.join(" and ")}, where outcomes are consistently lower. `;
-    narrative += `These decisions would benefit from a slower, more deliberate approach—especially taking time to compare options before committing. `;
-  } else {
-    narrative += `Your decision-making is consistently strong across most categories. `;
-  }
-
-  narrative += `Overall, your decision patterns are solid—you’re not far off, just a few adjustments in key categories could significantly improve your results.`;
 
   return {
-    decisionProfile: "Your decision-making shows clear patterns across different categories",
-    coachingSummary: narrative,
-    currentBlindSpot:
-      weakCats.length > 0
-        ? weakCats.join(", ")
-        : "No clear blind spots detected",
-    bestNextHabit:
-      weakCats.length > 0
-        ? "Slow down and evaluate options before committing in weaker categories"
-        : "Continue reinforcing your current decision approach",
-    strengths: strongCats,
-    recommendedAdjustments: weakCats.length > 0
-      ? ["Compare at least two options before committing", "Avoid rushed decisions in weaker categories"]
-      : []
+    bestCategory,
+    worstCategory,
+    bestAvg: Math.round(bestAvg),
+    worstAvg: Math.round(worstAvg)
   };
 }
 
-/* DISTRIBUTION, CATEGORY, STRATEGIC, ADVANCED — UNCHANGED */
-/* (keeping exactly as your original file) */
+function buildStrategicInsights(categoryData, scores) {
+  let primaryPattern = null, stability = null, recommendedFocus = null;
+
+  if (categoryData.bestCategory && categoryData.worstCategory) {
+    primaryPattern = `You perform strongly in ${categoryData.bestCategory} decisions but less effectively in ${categoryData.worstCategory}`;
+    recommendedFocus = `Focus on improving decisions in ${categoryData.worstCategory}`;
+  }
+
+  if (scores.length > 1) {
+    const vals = scores.map(s => s.displayScore);
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+
+    const variance = vals.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / vals.length;
+
+    stability =
+      variance > 4
+        ? "Your decision quality varies significantly by category"
+        : "Your decision-making is relatively consistent";
+  }
+
+  return { primaryPattern, stability, recommendedFocus };
+}
+
+function buildAdvancedInsights(decisions, scores) {
+  let highTime = [], lowTime = [], highEmotion = [], lowEmotion = [], highUse = [], lowUse = [];
+
+  decisions.forEach(d => {
+    if (!d.evaluations.length) return;
+
+    const latest = d.evaluations[d.evaluations.length - 1];
+    const scoreObj = scores.find(s => s.id === d.id);
+    if (!scoreObj) return;
+
+    const score = scoreObj.displayScore;
+    const freq = mapFrequency(latest.frequencyOfUse);
+
+    if ((d.timePressure ?? 5) >= 7) highTime.push(score);
+    if ((d.timePressure ?? 5) <= 4) lowTime.push(score);
+
+    if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(score);
+    if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(score);
+
+    if (freq >= 0.7) highUse.push(score);
+    if (freq <= 0.4) lowUse.push(score);
+  });
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+
+  return {
+    timePressureInsight: avg(highTime) && avg(lowTime)
+      ? `High-pressure decisions average ${avg(highTime)}/10 vs low-pressure decisions at ${avg(lowTime)}/10`
+      : null,
+    emotionalInsight: avg(highEmotion) && avg(lowEmotion)
+      ? `High-emotion decisions average ${avg(highEmotion)}/10 vs low-emotion decisions at ${avg(lowEmotion)}/10`
+      : null,
+    usageInsight: avg(highUse) && avg(lowUse)
+      ? `Frequently used decisions average ${avg(highUse)}/10 vs rarely used decisions at ${avg(lowUse)}/10`
+      : null
+  };
+}
 
 /* ROUTE */
 
 router.get("/", async (req, res) => {
   try {
 
-    /* 🔴 AUTH GUARD */
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -181,7 +231,6 @@ router.get("/", async (req, res) => {
       ? Math.round(weightedSum / weightTotal)
       : 0;
 
-    const behaviorReport = buildBehaviorReport(scores, decisions);
     const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
     const strategic = buildStrategicInsights(categoryData, scores);
@@ -193,7 +242,6 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
-      behaviorReport,
       primaryPattern: strategic.primaryPattern,
       stability: strategic.stability,
       recommendedFocus: strategic.recommendedFocus,
@@ -207,7 +255,7 @@ router.get("/", async (req, res) => {
     console.error("INSIGHTS ERROR:", err);
 
     if (err.message === "DB_TIMEOUT") {
-      return res.status(503).json({ error: "Database timeout — retry" });
+      return res.status(503).json({ error: "Database timeout" });
     }
 
     res.status(500).json({ error: "Server error" });

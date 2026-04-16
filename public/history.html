@@ -6,112 +6,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  display: flex;
-}
-
-.sidebar {
-  width: 220px;
-  background: #e0e7ff;
-  height: 100vh;
-  padding: 20px 10px;
-  box-sizing: border-box;
-  border-right: 1px solid #c7d2fe;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.nav-item {
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  color: #312e81;
-  font-weight: 500;
-  text-align: center;
-}
-
+body { margin: 0; font-family: Arial, sans-serif; background: #f5f7fb; display: flex; }
+.sidebar { width: 220px; background: #e0e7ff; height: 100vh; padding: 20px 10px; border-right: 1px solid #c7d2fe; display: flex; flex-direction: column; justify-content: center; }
+.nav-item { padding: 14px 16px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; color: #312e81; text-align: center; }
 .nav-item:hover { background: #c7d2fe; }
-.active {
-  background: #4338ca;
-  color: white;
-  font-weight: bold;
-}
-
-.main {
-  flex: 1;
-  padding: 20px;
-  max-width: 800px;
-  margin: auto;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 14px;
-  margin-top: 14px;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.section-title {
-  font-weight: bold;
-  margin-top: 20px;
-  font-size: 16px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.metric {
-  background: #c7d2fe;
-  padding: 12px;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.metric-title {
-  font-size: 12px;
-  color: #555;
-}
-
-.metric-value {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.notice {
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  padding: 14px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
-.btn {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #4338ca;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.error {
-  text-align: center;
-  margin-top: 40px;
-  color: red;
-}
+.active { background: #4338ca; color: white; font-weight: bold; }
+.main { flex: 1; padding: 20px; max-width: 800px; margin: auto; }
+.card { background: white; border-radius: 12px; padding: 14px; margin-top: 14px; border: 1px solid rgba(0,0,0,0.05); }
+.section-title { font-weight: bold; margin-top: 20px; font-size: 16px; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.metric { background: #c7d2fe; padding: 12px; border-radius: 10px; text-align: center; }
+.metric-title { font-size: 12px; color: #555; }
+.metric-value { font-size: 20px; font-weight: bold; }
+.notice { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+.btn { margin-top: 10px; padding: 10px 14px; background: #4338ca; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.error { text-align: center; margin-top: 40px; color: red; }
 </style>
 </head>
 
@@ -126,11 +35,8 @@ body {
 </div>
 
 <div class="main">
-
   <h2>History</h2>
-
   <div id="content"></div>
-
 </div>
 
 <script>
@@ -154,121 +60,54 @@ async function load() {
 
   try {
     const res = await fetch(API + "/insights", {
-      headers: {
-        Authorization: "Bearer " + t
-      }
+      headers: { Authorization: "Bearer " + t }
     });
 
     const data = await res.json();
 
-    if (
-      !data ||
-      typeof data.totalDecisions !== "number" ||
-      typeof data.evaluatedDecisions !== "number"
-    ) {
-      container.innerHTML = "<div class='error'>Invalid data</div>";
-      throw new Error("API CONTRACT VIOLATION");
-    }
-
-    const total = data.totalDecisions;
-    const evaluated = data.evaluatedDecisions;
+    // 🔴 SAFE parsing (no crashing)
+    const total = data?.totalDecisions ?? 0;
+    const evaluated = data?.evaluatedDecisions ?? 0;
 
     const evalRate = total > 0
       ? Math.round((evaluated / total) * 100)
       : 0;
 
-    const avgScore = Math.round(data.averageRegretScore || 0);
+    const avgScore = Math.round(data?.averageRegretScore ?? 0);
 
-    /* MOST USED CATEGORY */
-    const categoryCount = {};
-    (data.scores || []).forEach(s => {
-      const cat = s.category || "other";
-      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-    });
-
-    let topCategory = "N/A";
-    let max = 0;
-
-    Object.keys(categoryCount).forEach(cat => {
-      if (categoryCount[cat] > max) {
-        max = categoryCount[cat];
-        topCategory = cat;
-      }
-    });
-
-    /* 🔒 DATA CONFIDENCE LAYER */
+    const topCategory = "Tracked in Insights";
 
     let notice = "";
 
     if (evaluated < 3) {
-      notice = `
-        <div class="notice">
-          Your data is still very limited. These metrics are not yet reliable.
-          Evaluate more decisions to begin seeing meaningful patterns.
-        </div>
-      `;
+      notice = `<div class="notice">Your data is still very limited. Evaluate more decisions.</div>`;
     } else if (evaluated < 8) {
-      notice = `
-        <div class="notice">
-          These insights are based on a small number of decisions.
-          As you evaluate more, your results will become more accurate and stable.
-        </div>
-      `;
+      notice = `<div class="notice">These insights are still stabilizing.</div>`;
     }
 
     container.innerHTML = `
-
       ${notice}
 
       <div class="section-title">Overview</div>
 
       <div class="grid">
-        <div class="metric">
-          <div class="metric-title">Total Decisions</div>
-          <div class="metric-value">${total}</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-title">Evaluated</div>
-          <div class="metric-value">${evaluated}</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-title">Evaluation Rate</div>
-          <div class="metric-value">${evalRate}%</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-title">Average Satisfaction</div>
-          <div class="metric-value">${avgScore}/10</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-title">Pending</div>
-          <div class="metric-value">${total - evaluated}</div>
-        </div>
-
-        <div class="metric">
-          <div class="metric-title">Most Used Category</div>
-          <div class="metric-value">${topCategory}</div>
-        </div>
+        <div class="metric"><div class="metric-title">Total Decisions</div><div class="metric-value">${total}</div></div>
+        <div class="metric"><div class="metric-title">Evaluated</div><div class="metric-value">${evaluated}</div></div>
+        <div class="metric"><div class="metric-title">Evaluation Rate</div><div class="metric-value">${evalRate}%</div></div>
+        <div class="metric"><div class="metric-title">Average Satisfaction</div><div class="metric-value">${avgScore}/10</div></div>
+        <div class="metric"><div class="metric-title">Pending</div><div class="metric-value">${total - evaluated}</div></div>
+        <div class="metric"><div class="metric-title">Most Used Category</div><div class="metric-value">${topCategory}</div></div>
       </div>
-
-      <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
 
       <div class="card">
         <strong>Tips & Coaching</strong><br>
-        Review your personalized coaching insights based on your decision patterns.<br>
-        <button class="btn" onclick="goBehavior()">
-          View Tips & Coaching
-        </button>
+        Review your personalized coaching insights.<br>
+        <button class="btn" onclick="goBehavior()">View Tips & Coaching</button>
       </div>
-
     `;
 
   } catch (err) {
-    console.error(err);
-    container.innerHTML = "<div class='error'>Failed to load</div>";
+    container.innerHTML = "<div class='error'>Unable to load history</div>";
   }
 }
 

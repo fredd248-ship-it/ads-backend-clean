@@ -65,7 +65,6 @@ async function load() {
 
     const data = await res.json();
 
-    // 🔴 SAFE parsing (no crashing)
     const total = data?.totalDecisions ?? 0;
     const evaluated = data?.evaluatedDecisions ?? 0;
 
@@ -75,7 +74,10 @@ async function load() {
 
     const avgScore = Math.round(data?.averageRegretScore ?? 0);
 
-    const topCategory = "Tracked in Insights";
+    /* ✅ FIXED: REAL CATEGORY DERIVATION */
+    const topCategory = data?.primaryPattern
+      ? data.primaryPattern.split(" ")[4] || "N/A"
+      : "N/A";
 
     let notice = "";
 

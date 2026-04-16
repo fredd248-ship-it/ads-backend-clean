@@ -62,7 +62,68 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 RESTORED FUNCTIONS */
+/* 🔴 COACHING ENGINE */
+
+function buildBehaviorReport(scores, decisions) {
+  if (!scores || scores.length < 3) return null;
+
+  const categoryMap = {};
+
+  decisions.forEach(d => {
+    if (!d.evaluations.length) return;
+
+    const scoreObj = scores.find(s => s.id === d.id);
+    if (!scoreObj) return;
+
+    const cat = d.category || "other";
+
+    if (!categoryMap[cat]) categoryMap[cat] = [];
+    categoryMap[cat].push(scoreObj.displayScore);
+  });
+
+  let strongCats = [];
+  let weakCats = [];
+
+  Object.keys(categoryMap).forEach(cat => {
+    const arr = categoryMap[cat];
+    const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+
+    if (avg >= 7) strongCats.push(formatCategory(cat));
+    if (avg <= 4) weakCats.push(formatCategory(cat));
+  });
+
+  let narrative = "";
+
+  if (strongCats.length > 0) {
+    narrative += `You tend to make strong decisions in categories like ${strongCats.join(", ")}. `;
+  }
+
+  if (weakCats.length > 0) {
+    narrative += `However, your results drop noticeably in ${weakCats.join(" and ")}, where outcomes are consistently lower. `;
+    narrative += `These decisions would benefit from a slower, more deliberate approach—especially taking time to compare options before committing. `;
+  } else {
+    narrative += `Your decision-making is consistently strong across most categories. `;
+  }
+
+  narrative += `Overall, your decision patterns are solid—you’re not far off, just a few adjustments in key categories could significantly improve your results.`;
+
+  return {
+    decisionProfile: "Your decision-making shows clear patterns across different categories",
+    coachingSummary: narrative,
+    currentBlindSpot:
+      weakCats.length > 0 ? weakCats.join(", ") : "No clear blind spots detected",
+    bestNextHabit:
+      weakCats.length > 0
+        ? "Slow down and evaluate options before committing in weaker categories"
+        : "Continue reinforcing your current decision approach",
+    strengths: strongCats,
+    recommendedAdjustments: weakCats.length > 0
+      ? ["Compare at least two options before committing", "Avoid rushed decisions in weaker categories"]
+      : []
+  };
+}
+
+/* DISTRIBUTION */
 
 function buildDistribution(scores) {
   if (!scores.length) return null;
@@ -83,6 +144,8 @@ function buildDistribution(scores) {
     weak: Math.round((weak / total) * 100)
   };
 }
+
+/* CATEGORY + STRATEGIC */
 
 function buildCategoryInsights(decisions, scores) {
   const map = {};
@@ -140,6 +203,8 @@ function buildStrategicInsights(categoryData, scores) {
 
   return { primaryPattern, stability, recommendedFocus };
 }
+
+/* ADVANCED */
 
 function buildAdvancedInsights(decisions, scores) {
   let highTime = [], lowTime = [], highEmotion = [], lowEmotion = [], highUse = [], lowUse = [];
@@ -231,6 +296,7 @@ router.get("/", async (req, res) => {
       ? Math.round(weightedSum / weightTotal)
       : 0;
 
+    const behaviorReport = buildBehaviorReport(scores, decisions);
     const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
     const strategic = buildStrategicInsights(categoryData, scores);
@@ -242,6 +308,7 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
+      behaviorReport,
       primaryPattern: strategic.primaryPattern,
       stability: strategic.stability,
       recommendedFocus: strategic.recommendedFocus,

@@ -31,9 +31,7 @@ function mapFrequency(freq) {
 }
 
 function formatCategory(cat) {
-  return cat
-    .replace("_", " ")
-    .replace(/\b\w/g, l => l.toUpperCase());
+  return cat.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function getRecencyWeight(date) {
@@ -64,7 +62,7 @@ function computeQualityScore(evaluation, decision) {
   return Math.round(score * 100);
 }
 
-/* 🔴 TEMPORAL DISTRIBUTION (NOW PRIMARY) */
+/* 🔴 TEMPORAL DISTRIBUTION */
 
 function buildDistribution(scores) {
   if (!scores.length) return null;
@@ -87,7 +85,7 @@ function buildDistribution(scores) {
   };
 }
 
-/* 🔴 CATEGORY ENGINE (NOW TEMPORAL) */
+/* 🔴 CATEGORY ENGINE (TEMPORAL) */
 
 function buildCategoryInsights(decisions, scores) {
   const map = {};
@@ -137,12 +135,14 @@ function buildCategoryInsights(decisions, scores) {
   };
 }
 
-/* 🔴 COACHING ENGINE (UNCHANGED FOR SAFETY) */
+/* 🔴 NEW — TEMPORAL COACHING ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 3) return null;
 
   const categoryMap = {};
+  let highTime = [], lowTime = [];
+  let highEmotion = [], lowEmotion = [];
 
   decisions.forEach(d => {
     if (!d.evaluations.length) return;
@@ -153,53 +153,76 @@ function buildBehaviorReport(scores, decisions) {
     const cat = d.category || "other";
 
     if (!categoryMap[cat]) categoryMap[cat] = [];
-    categoryMap[cat].push(scoreObj.displayScore);
+    categoryMap[cat].push({
+      score: scoreObj.displayScore,
+      weight: scoreObj.weight,
+      createdAt: d.createdAt
+    });
+
+    const latest = d.evaluations[d.evaluations.length - 1];
+
+    if ((d.timePressure ?? 5) >= 7) highTime.push(scoreObj.displayScore);
+    if ((d.timePressure ?? 5) <= 4) lowTime.push(scoreObj.displayScore);
+
+    if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(scoreObj.displayScore);
+    if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(scoreObj.displayScore);
   });
 
-  let strongCats = [];
-  let weakCats = [];
+  const strong = [];
+  const weak = [];
 
-  Object.keys(categoryMap).forEach(cat => {
-    const arr = categoryMap[cat];
-    const avg = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  Object.entries(categoryMap).forEach(([cat, arr]) => {
+    const weightedSum = arr.reduce((s, a) => s + a.score * a.weight, 0);
+    const totalWeight = arr.reduce((s, a) => s + a.weight, 0);
+    const avg = weightedSum / totalWeight;
 
-    if (avg >= 7) strongCats.push(formatCategory(cat));
-    if (avg <= 4) weakCats.push(formatCategory(cat));
+    if (avg >= 7) strong.push(formatCategory(cat));
+    if (avg <= 4) weak.push(formatCategory(cat));
   });
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+
+  const timeInsight =
+    avg(highTime) && avg(lowTime)
+      ? `Decisions made under higher time pressure tend to perform worse (${avg(highTime)}/10) compared to lower-pressure decisions (${avg(lowTime)}/10).`
+      : "";
+
+  const emotionInsight =
+    avg(highEmotion) && avg(lowEmotion)
+      ? `Higher emotional weight decisions also show different outcomes (${avg(highEmotion)}/10 vs ${avg(lowEmotion)}/10), suggesting emotional context influences your results.`
+      : "";
+
+  let narrative = "";
+
+  narrative += `Your decision-making shows a mix of strong and weaker outcomes across different categories. `;
+
+  if (strong.length) {
+    narrative += `You consistently perform well in categories like ${strong.slice(0,3).join(", ")}, where outcomes remain stable and reliable. `;
+  }
+
+  if (weak.length) {
+    narrative += `However, categories such as ${weak.join(" and ")} show consistently lower outcomes, particularly in your more recent decisions. `;
+  }
+
+  narrative += `Recent decisions now carry more weight in your overall results, meaning your current habits are becoming the dominant factor in your performance. `;
+
+  if (timeInsight) narrative += timeInsight + " ";
+  if (emotionInsight) narrative += emotionInsight + " ";
+
+  narrative += `The opportunity here is refinement rather than overhaul—slowing down in weaker categories and applying the same deliberate approach you use in stronger areas will likely produce immediate gains.`;
 
   return {
-    decisionProfile: "Your decision-making shows clear patterns across different categories",
-    coachingSummary: "Your results reflect evolving patterns shaped more by your recent decisions.",
-    currentBlindSpot: weakCats.join(", ") || "No clear blind spots detected",
-    bestNextHabit: "Be more deliberate in categories where recent outcomes are weaker",
-    strengths: strongCats,
-    recommendedAdjustments: weakCats.length > 0
-      ? ["Slow down before committing", "Compare multiple options"]
+    decisionProfile: "Your decision-making reflects evolving patterns influenced by recent behavior",
+    coachingSummary: narrative,
+    currentBlindSpot: weak.join(", ") || "No clear blind spots detected",
+    bestNextHabit: weak.length
+      ? "Slow down and evaluate multiple options in weaker categories"
+      : "Continue reinforcing your current approach",
+    strengths: strong,
+    recommendedAdjustments: weak.length
+      ? ["Compare at least two options", "Avoid rushed decisions under pressure"]
       : []
   };
-}
-
-function buildStrategicInsights(categoryData, scores) {
-  let primaryPattern = null, stability = null, recommendedFocus = null;
-
-  if (categoryData.bestCategory && categoryData.worstCategory) {
-    primaryPattern = `You perform strongly in ${categoryData.bestCategory} decisions but less effectively in ${categoryData.worstCategory}`;
-    recommendedFocus = `Focus on improving decisions in ${categoryData.worstCategory}`;
-  }
-
-  if (scores.length > 1) {
-    const vals = scores.map(s => s.displayScore);
-    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-
-    const variance = vals.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / vals.length;
-
-    stability =
-      variance > 4
-        ? "Your decision quality varies significantly by category"
-        : "Your decision-making is relatively consistent";
-  }
-
-  return { primaryPattern, stability, recommendedFocus };
 }
 
 /* ROUTE */
@@ -257,7 +280,6 @@ router.get("/", async (req, res) => {
     const behaviorReport = buildBehaviorReport(scores, decisions);
     const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
-    const strategic = buildStrategicInsights(categoryData, scores);
 
     return res.json({
       totalDecisions,
@@ -266,9 +288,6 @@ router.get("/", async (req, res) => {
       followThroughRate,
       averageRegretScore,
       behaviorReport,
-      primaryPattern: strategic.primaryPattern,
-      stability: strategic.stability,
-      recommendedFocus: strategic.recommendedFocus,
       distribution,
       mostUsedCategory: categoryData.mostUsedCategory,
       bestCategory: categoryData.bestCategory,

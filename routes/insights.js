@@ -74,7 +74,7 @@ function buildDistribution(scores) {
   };
 }
 
-/* CATEGORY + SIGNAL EXTRACTION */
+/* SIGNAL EXTRACTION */
 
 function extractSignals(decisions, scores) {
   const categoryMap = {};
@@ -93,14 +93,11 @@ function extractSignals(decisions, scores) {
     if (!s) return;
 
     if (!categoryMap[cat]) {
-      categoryMap[cat] = { weighted: 0, weight: 0, recent: [], older: [] };
+      categoryMap[cat] = { weighted: 0, weight: 0 };
     }
 
     categoryMap[cat].weighted += s.displayScore * s.weight;
     categoryMap[cat].weight += s.weight;
-
-    if (isRecent(d.createdAt)) categoryMap[cat].recent.push(s.displayScore);
-    else categoryMap[cat].older.push(s.displayScore);
 
     if ((d.timePressure ?? 5) >= 7) highTime.push(s.displayScore);
     if ((d.timePressure ?? 5) <= 4) lowTime.push(s.displayScore);
@@ -120,7 +117,6 @@ function extractSignals(decisions, scores) {
   });
 
   return {
-    categoryMap,
     counts,
     best,
     worst,
@@ -131,59 +127,41 @@ function extractSignals(decisions, scores) {
   };
 }
 
-/* 🧠 COACHING ENGINE V2 */
+/* 🧠 COACHING ENGINE (TIGHTENED ONLY) */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 2) return null;
 
   const signals = extractSignals(decisions, scores);
 
-  const strong = [];
-  const weak = [];
-
-  if (signals.best) strong.push(formatCategory(signals.best));
-  if (signals.worst && signals.worst !== signals.best) {
-    weak.push(formatCategory(signals.worst));
-  }
+  const strong = signals.best ? [formatCategory(signals.best)] : [];
+  const weak =
+    signals.worst && signals.worst !== signals.best
+      ? [formatCategory(signals.worst)]
+      : [];
 
   const blocks = [];
 
-  /* Opening */
   blocks.push(
-    "Your decision-making shows a mix of strong and weaker outcomes. Overall, your core process is working, but results vary depending on how different decisions are approached."
+    "You’re making consistently strong decisions overall, which suggests your core decision-making process is working well."
   );
 
-  /* Strengths */
   if (strong.length) {
     blocks.push(
-      `You consistently perform well in categories like ${strong.join(", ")}, where your outcomes are more stable and reliable.`
+      `You tend to perform reliably in categories like ${strong.join(", ")}, where outcomes remain stable.`
     );
   }
 
-  /* Weakness */
   if (weak.length) {
     blocks.push(
-      `At the same time, categories such as ${weak.join(" and ")} show lower or less consistent results, indicating an opportunity to refine your approach.`
+      `However, results in categories such as ${weak.join(" and ")} are less consistent, indicating an opportunity to refine your approach.`
     );
   }
 
-  /* Temporal Insight */
-  let temporalLine = "";
+  blocks.push(
+    "This variation reflects inconsistency in execution rather than a lack of ability—your results improve when decisions are made more deliberately."
+  );
 
-  Object.entries(signals.categoryMap).forEach(([cat, obj]) => {
-    if (obj.recent.length && obj.older.length) {
-      const r = obj.recent.reduce((a,b)=>a+b,0)/obj.recent.length;
-      const o = obj.older.reduce((a,b)=>a+b,0)/obj.older.length;
-
-      if (r < o - 1) {
-        temporalLine = `${formatCategory(cat)} shows weaker performance in your more recent decisions, suggesting a shift in how those decisions are being made.`;
-      }
-    }
-  });
-
-  if (temporalLine) blocks.push(temporalLine);
-
-  /* Behavioral Insight */
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
 
   const timeHigh = avg(signals.highTime);
@@ -191,7 +169,7 @@ function buildBehaviorReport(scores, decisions) {
 
   if (timeHigh && timeLow && timeHigh < timeLow) {
     blocks.push(
-      "Decisions made under higher time pressure tend to produce lower satisfaction outcomes, indicating that rushed decisions may be impacting your results."
+      "Your recent decisions suggest that time pressure is reducing outcome quality, with rushed decisions tending to perform worse."
     );
   }
 
@@ -200,18 +178,22 @@ function buildBehaviorReport(scores, decisions) {
 
   if (emoHigh && emoLow && emoHigh !== emoLow) {
     blocks.push(
-      "Emotional intensity also appears to influence your outcomes, introducing more variability when decisions carry higher emotional weight."
+      "Emotional intensity also appears to introduce variability, making outcomes less predictable when decisions carry higher emotional weight."
     );
   }
 
-  /* Action */
-  blocks.push(
-    "A practical adjustment would be to slow down key decisions and compare multiple options before committing, especially in situations where you feel pressure or urgency."
-  );
+  if (weak.length) {
+    blocks.push(
+      `Focusing on a more deliberate approach in ${weak.join(" and ")}—such as comparing options before committing—will likely produce immediate gains.`
+    );
+  } else {
+    blocks.push(
+      "Continuing to apply a structured and deliberate approach will help maintain and strengthen your results."
+    );
+  }
 
-  /* Closing */
   blocks.push(
-    "Overall, your decision-making foundation is strong. Improving consistency in how you approach different situations will likely produce the biggest gains."
+    "Overall, your decision-making foundation is strong. Improving consistency in execution is the key to achieving more reliable outcomes."
   );
 
   return {

@@ -31,20 +31,25 @@ function getRecencyWeight(date) {
 
 function computeQualityScore(evaluation, decision) {
   const regret = 1 - (evaluation.regretScore / 10);
-  const freq = evaluation.frequencyOfUse === "High" ? 1 :
-               evaluation.frequencyOfUse === "Medium" ? 0.6 : 0.2;
+  const freq =
+    evaluation.frequencyOfUse === "High"
+      ? 1
+      : evaluation.frequencyOfUse === "Medium"
+      ? 0.6
+      : 0.2;
   const buy = evaluation.wouldBuyAgain ? 1 : 0;
 
   const time = (decision.timePressure ?? 5) / 10;
   const emotion = (decision.emotionalWeight ?? 5) / 10;
 
-  return Math.round((
-    regret * 0.35 +
-    freq * 0.20 +
-    buy * 0.20 +
-    (1 - time * time) * 0.15 +
-    (1 - emotion * emotion) * 0.10
-  ) * 100);
+  return Math.round(
+    (regret * 0.35 +
+      freq * 0.2 +
+      buy * 0.2 +
+      (1 - time * time) * 0.15 +
+      (1 - emotion * emotion) * 0.1) *
+      100
+  );
 }
 
 /* DISTRIBUTION */
@@ -52,9 +57,12 @@ function computeQualityScore(evaluation, decision) {
 function buildDistribution(scores) {
   if (!scores.length) return null;
 
-  let strong = 0, avg = 0, weak = 0, total = 0;
+  let strong = 0,
+    avg = 0,
+    weak = 0,
+    total = 0;
 
-  scores.forEach(s => {
+  scores.forEach((s) => {
     total += s.weight;
     if (s.displayScore >= 8) strong += s.weight;
     else if (s.displayScore >= 5) avg += s.weight;
@@ -64,7 +72,7 @@ function buildDistribution(scores) {
   return {
     strong: Math.round((strong / total) * 100),
     average: Math.round((avg / total) * 100),
-    weak: Math.round((weak / total) * 100)
+    weak: Math.round((weak / total) * 100),
   };
 }
 
@@ -74,16 +82,18 @@ function extractSignals(decisions, scores) {
   const categoryMap = {};
   const counts = {};
 
-  let highTime = [], lowTime = [];
-  let highEmotion = [], lowEmotion = [];
+  let highTime = [],
+    lowTime = [];
+  let highEmotion = [],
+    lowEmotion = [];
 
-  decisions.forEach(d => {
+  decisions.forEach((d) => {
     const cat = d.category || "other";
     counts[cat] = (counts[cat] || 0) + 1;
 
     if (!d.evaluations.length) return;
 
-    const s = scores.find(x => x.id === d.id);
+    const s = scores.find((x) => x.id === d.id);
     if (!s) return;
 
     if (!categoryMap[cat]) {
@@ -100,14 +110,22 @@ function extractSignals(decisions, scores) {
     if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(s.displayScore);
   });
 
-  let best = null, worst = null;
-  let bestVal = -Infinity, worstVal = Infinity;
+  let best = null,
+    worst = null;
+  let bestVal = -Infinity,
+    worstVal = Infinity;
 
   Object.entries(categoryMap).forEach(([cat, obj]) => {
     const avg = obj.weight ? obj.weighted / obj.weight : 0;
 
-    if (avg > bestVal) { bestVal = avg; best = cat; }
-    if (avg < worstVal) { worstVal = avg; worst = cat; }
+    if (avg > bestVal) {
+      bestVal = avg;
+      best = cat;
+    }
+    if (avg < worstVal) {
+      worstVal = avg;
+      worst = cat;
+    }
   });
 
   return {
@@ -117,7 +135,7 @@ function extractSignals(decisions, scores) {
     highTime,
     lowTime,
     highEmotion,
-    lowEmotion
+    lowEmotion,
   };
 }
 
@@ -136,87 +154,72 @@ function buildBehaviorReport(scores, decisions) {
 
   const blocks = [];
 
-  /* Opening */
   blocks.push(
-    "You’re making consistently strong decisions overall, which suggests your core decision-making process is working well."
+    "You're making consistently strong decisions overall, which suggests your core decision-making process is working well."
   );
 
-  /* Strengths */
   if (strong.length) {
     blocks.push(
-      `You tend to perform reliably in categories like ${strong.join(", ")}, where outcomes remain stable.`
+      `You tend to make consistently strong decisions in categories like ${strong.join(
+        ", "
+      )}, where outcomes remain stable.`
     );
   }
 
-  /* Weakness */
   if (weak.length) {
     blocks.push(
-      `However, results in categories such as ${weak.join(" and ")} are less consistent, indicating an opportunity to refine your approach.`
+      `However, your results drop noticeably in ${weak.join(
+        " and "
+      )}, where outcomes are less reliable.`
     );
   }
 
-  /* Variation */
   blocks.push(
-    "This variation reflects inconsistency in execution rather than a lack of ability—your results improve when decisions are made more deliberately."
+    "Your decisions are distributed across strong, average, and weak categories. This does not indicate a lack of ability—it indicates variability in how you approach different types of decisions."
   );
 
-  /* Behavioral */
-  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-
-  const timeHigh = avg(signals.highTime);
-  const timeLow = avg(signals.lowTime);
-
-  if (timeHigh && timeLow && timeHigh < timeLow) {
+  /* 🔴 FIXED SENTENCE (ONLY ONE SOURCE EXISTS NOW) */
+  if (weak.length === 1) {
     blocks.push(
-      "Your recent decisions suggest that time pressure is reducing outcome quality, with rushed decisions tending to perform worse."
+      `The category that consistently underperforms—${weak[0]}—represents your greatest opportunity for improvement.`
+    );
+  } else if (weak.length > 1) {
+    blocks.push(
+      `The categories that consistently underperform—${weak.join(
+        " and "
+      )}—represent your greatest opportunity for improvement.`
     );
   }
 
-  const emoHigh = avg(signals.highEmotion);
-  const emoLow = avg(signals.lowEmotion);
-
-  if (emoHigh && emoLow && emoHigh !== emoLow) {
-    blocks.push(
-      "Emotional intensity also appears to introduce variability, making outcomes less predictable when decisions carry higher emotional weight."
-    );
-  }
-
-  /* 🔴 FIXED GRAMMAR (singular/plural aware) */
-  if (weak.length) {
-    const label = weak.length === 1 ? "category" : "categories";
-
-    blocks.push(
-      `The ${label} that ${weak.length === 1 ? "underperforms" : "underperform"}—${weak.join(" and ")}—represent${weak.length === 1 ? "s" : ""} your greatest opportunity for improvement.`
-    );
-  }
-
-  /* Action */
-  if (weak.length) {
-    blocks.push(
-      `Focusing on a more deliberate approach in ${weak.join(" and ")}—such as comparing options before committing—will likely produce immediate gains.`
-    );
-  } else {
-    blocks.push(
-      "Continuing to apply a structured and deliberate approach will help maintain and strengthen your results."
-    );
-  }
-
-  /* Closing */
   blocks.push(
-    "Overall, your decision-making foundation is strong. Improving consistency in execution is the key to achieving more reliable outcomes."
+    "Context plays a major role in your outcomes. Decisions made under time pressure tend to reduce satisfaction, while emotionally influenced decisions tend to introduce inconsistency."
+  );
+
+  if (weak.length) {
+    blocks.push(
+      `A practical adjustment going forward would be to slow down and evaluate multiple options before committing, especially in ${weak.join(
+        " and "
+      )} or when you feel time pressure or emotional urgency.`
+    );
+  }
+
+  blocks.push(
+    "Overall, your decision-making foundation is strong. With more consistency in execution, your results can become reliably strong."
   );
 
   return {
-    decisionProfile: "Your decision-making reflects patterns that can be refined over time",
+    decisionProfile:
+      "Your decision-making reflects patterns that can be refined over time",
     coachingSummary: blocks.join(" "),
     currentBlindSpot: weak.length ? weak.join(", ") : null,
-    bestNextHabit: "Be more deliberate before committing to important decisions",
+    bestNextHabit:
+      "Be more deliberate before committing to important decisions",
     strengths: strong,
     recommendedAdjustments: [
       "Compare at least two options",
       "Avoid rushed decisions",
-      "Be aware of time pressure and emotional influence"
-    ]
+      "Be aware of time pressure and emotional influence",
+    ],
   };
 }
 
@@ -224,19 +227,22 @@ function buildBehaviorReport(scores, decisions) {
 
 router.get("/", async (req, res) => {
   try {
-    if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+    if (!req.user?.id)
+      return res.status(401).json({ error: "Unauthorized" });
 
     const decisions = await withTimeout(
       prisma.decision.findMany({
         where: { userId: req.user.id },
-        include: { evaluations: true }
+        include: { evaluations: true },
       })
     );
 
-    let scores = [], totalEval = 0, buyAgain = 0;
+    let scores = [],
+      totalEval = 0,
+      buyAgain = 0;
 
-    decisions.forEach(d => {
-      d.evaluations.forEach(e => {
+    decisions.forEach((d) => {
+      d.evaluations.forEach((e) => {
         totalEval++;
         if (e.wouldBuyAgain) buyAgain++;
       });
@@ -248,7 +254,7 @@ router.get("/", async (req, res) => {
         scores.push({
           id: d.id,
           displayScore: Math.round(raw / 10),
-          weight: getRecencyWeight(d.createdAt)
+          weight: getRecencyWeight(d.createdAt),
         });
       }
     });
@@ -258,20 +264,25 @@ router.get("/", async (req, res) => {
     res.json({
       totalDecisions: decisions.length,
       evaluatedDecisions: scores.length,
-      evaluationRate: Math.round((scores.length / (decisions.length || 1)) * 100),
-      followThroughRate: Math.round((buyAgain / (totalEval || 1)) * 100),
+      evaluationRate: Math.round(
+        (scores.length / (decisions.length || 1)) * 100
+      ),
+      followThroughRate: Math.round(
+        (buyAgain / (totalEval || 1)) * 100
+      ),
       averageRegretScore: scores.length
-        ? Math.round(scores.reduce((s,x)=>s+x.displayScore*x.weight,0) /
-                     scores.reduce((s,x)=>s+x.weight,0))
+        ? Math.round(
+            scores.reduce((s, x) => s + x.displayScore * x.weight, 0) /
+              scores.reduce((s, x) => s + x.weight, 0)
+          )
         : 0,
       distribution: buildDistribution(scores),
       mostUsedCategory: Object.entries(signals.counts)
-        .sort((a,b)=>b[1]-a[1])[0]?.[0] || null,
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || null,
       bestCategory: signals.best,
       worstCategory: signals.worst,
-      behaviorReport: buildBehaviorReport(scores, decisions)
+      behaviorReport: buildBehaviorReport(scores, decisions),
     });
-
   } catch (err) {
     console.error("INSIGHTS ERROR:", err);
     res.status(500).json({ error: "Server error" });

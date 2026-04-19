@@ -155,56 +155,47 @@ function buildBehaviorReport(scores, decisions) {
   const blocks = [];
 
   blocks.push(
-    "You're making consistently strong decisions overall, which suggests your core decision-making process is working well."
+    "You're making consistently strong decisions overall, which indicates that your core decision-making process is sound."
   );
 
   if (strong.length) {
     blocks.push(
-      `You tend to make consistently strong decisions in categories like ${strong.join(
+      `You consistently perform well in categories like ${strong.join(
         ", "
-      )}, where outcomes remain stable.`
+      )}, where your approach appears more structured and reliable.`
     );
   }
 
   if (weak.length) {
     blocks.push(
-      `However, your results drop noticeably in ${weak.join(
+      `In contrast, your results drop in ${weak.join(
         " and "
-      )}, where outcomes are less reliable.`
+      )}, where outcomes are less predictable.`
     );
   }
 
   blocks.push(
-    "Your decisions are distributed across strong, average, and weak categories. This does not indicate a lack of ability—it indicates variability in how you approach different types of decisions."
+    "Your decisions are distributed across strong, average, and weak categories. This doesn’t point to a lack of ability—it points to inconsistency in execution."
   );
 
-  /* 🔴 FIXED SENTENCE (ONLY ONE SOURCE EXISTS NOW) */
   if (weak.length === 1) {
     blocks.push(
-      `The category that consistently underperforms—${weak[0]}—represents your greatest opportunity for improvement.`
+      `The category that consistently underperforms—${weak[0]}—represents your clearest opportunity for improvement right now.`
     );
   } else if (weak.length > 1) {
     blocks.push(
       `The categories that consistently underperform—${weak.join(
         " and "
-      )}—represent your greatest opportunity for improvement.`
+      )}—represent your clearest opportunities for improvement right now.`
     );
   }
 
   blocks.push(
-    "Context plays a major role in your outcomes. Decisions made under time pressure tend to reduce satisfaction, while emotionally influenced decisions tend to introduce inconsistency."
+    "Your recent decisions suggest that your outcomes are closely tied to how you approach decisions in the moment."
   );
 
-  if (weak.length) {
-    blocks.push(
-      `A practical adjustment going forward would be to slow down and evaluate multiple options before committing, especially in ${weak.join(
-        " and "
-      )} or when you feel time pressure or emotional urgency.`
-    );
-  }
-
   blocks.push(
-    "Overall, your decision-making foundation is strong. With more consistency in execution, your results can become reliably strong."
+    "Time pressure and emotional weight are the two factors that most often influence your results."
   );
 
   return {
@@ -213,12 +204,14 @@ function buildBehaviorReport(scores, decisions) {
     coachingSummary: blocks.join(" "),
     currentBlindSpot: weak.length ? weak.join(", ") : null,
     bestNextHabit:
-      "Be more deliberate before committing to important decisions",
+      "Slow down and evaluate your options before committing to important decisions",
     strengths: strong,
+
+    /* ✅ NORMALIZED LANGUAGE */
     recommendedAdjustments: [
-      "Compare at least two options",
-      "Avoid rushed decisions",
-      "Be aware of time pressure and emotional influence",
+      "Comparing at least two options before committing",
+      "Avoiding rushed decisions",
+      "Being aware of time pressure and emotional influence",
     ],
   };
 }

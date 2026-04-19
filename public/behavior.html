@@ -120,7 +120,7 @@ function buildLetter(report, data) {
   const adjustments = report.recommendedAdjustments || [];
   const distribution = data.distribution || {};
 
-  /* INTRO LOGIC */
+  /* INTRO */
 
   let intro = "Your decision-making shows a mix of strong and weaker outcomes. ";
 
@@ -132,7 +132,7 @@ function buildLetter(report, data) {
     intro = "There are clear patterns in your decision-making that need attention, particularly in how certain categories consistently underperform. ";
   }
 
-  /* 🔴 FIXED GRAMMAR SENTENCE */
+  /* GRAMMAR FIX */
 
   let weakSentence = "";
 
@@ -141,6 +141,26 @@ function buildLetter(report, data) {
   } else if (weakArr.length > 1) {
     weakSentence = `The categories that consistently underperform—${weakFormatted}—represent your greatest opportunity for improvement.`;
   }
+
+  /* TEMPORAL / TREND INSIGHT */
+
+  let temporalInsight = `
+    <p>
+      Your decision patterns are not static—they evolve over time. More recent decisions tend to reflect your current habits,
+      while older decisions show where your patterns began. Paying attention to whether your recent decisions feel more deliberate
+      or more reactive can help you identify whether you are improving or repeating past behaviors.
+    </p>
+  `;
+
+  /* CONTEXT */
+
+  let context = `
+    <p>
+      Context plays a major role in your outcomes. Decisions made under time pressure tend to reduce satisfaction,
+      while emotionally influenced decisions tend to introduce inconsistency. Recognizing these conditions before committing
+      allows you to interrupt weaker patterns before they take hold.
+    </p>
+  `;
 
   return `
     <div class="letter">
@@ -152,22 +172,21 @@ function buildLetter(report, data) {
       </p>
 
       <p>
-        Your decisions are distributed across strong, average, and weak categories. 
+        Your decisions are distributed across strong, average, and weak categories.
         This does not indicate a lack of ability—it indicates variability in how you approach different types of decisions.
         When you apply a structured approach, outcomes improve. When decisions are rushed or reactive, results decline.
       </p>
 
       ${weakSentence ? `<p>${weakSentence}</p>` : ""}
 
-      <p>
-        Context plays a major role in your outcomes. Decisions made under time pressure tend to reduce satisfaction, 
-        while emotionally influenced decisions tend to introduce inconsistency. Recognizing these conditions before committing 
-        can significantly improve your results.
-      </p>
+      ${temporalInsight}
+
+      ${context}
 
       <p>
-        A practical adjustment going forward would be to ${habit.toLowerCase()}, 
+        A practical adjustment going forward would be to ${habit.toLowerCase()},
         especially when you feel time pressure or emotional urgency.
+        These are the moments where small changes in approach can produce the largest improvements in outcome.
       </p>
 
       ${
@@ -181,7 +200,8 @@ function buildLetter(report, data) {
       }
 
       <p>
-        Overall, your decision-making foundation is strong. With more consistency in execution, your results can become reliably strong.
+        Overall, your decision-making foundation is strong. The opportunity now is not learning what to do,
+        but applying it more consistently—especially in the moments that challenge your usual decision process.
       </p>
 
       <div class="signature">— Your Decision System</div>

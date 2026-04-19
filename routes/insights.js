@@ -145,7 +145,30 @@ function buildDistribution(scores) {
   };
 }
 
-/* 🔴 CATEGORY ENGINE (EXTENDED — NOT MODIFIED) */
+/* 🔴 NEW — TEMPORAL DISTRIBUTION */
+
+function buildTemporalDistribution(scores) {
+  if (!scores.length) return null;
+
+  let strong = 0, average = 0, weak = 0;
+  let totalWeight = 0;
+
+  scores.forEach(s => {
+    totalWeight += s.weight;
+
+    if (s.displayScore >= 8) strong += s.weight;
+    else if (s.displayScore >= 5) average += s.weight;
+    else weak += s.weight;
+  });
+
+  return {
+    strong: Math.round((strong / totalWeight) * 100),
+    average: Math.round((average / totalWeight) * 100),
+    weak: Math.round((weak / totalWeight) * 100)
+  };
+}
+
+/* CATEGORY ENGINE */
 
 function buildCategoryInsights(decisions, scores) {
   const map = {};
@@ -153,8 +176,6 @@ function buildCategoryInsights(decisions, scores) {
 
   decisions.forEach(d => {
     const cat = d.category || "other";
-
-    // COUNT TRACKING (NEW)
     counts[cat] = (counts[cat] || 0) + 1;
 
     if (!d.evaluations.length) return;
@@ -166,7 +187,6 @@ function buildCategoryInsights(decisions, scores) {
     map[cat].push(scoreObj.displayScore);
   });
 
-  // 🔴 MOST USED (NEW)
   let mostUsedCategory = null;
   let maxCount = 0;
 
@@ -190,6 +210,43 @@ function buildCategoryInsights(decisions, scores) {
 
   return {
     mostUsedCategory,
+    bestCategory,
+    worstCategory,
+    bestAvg: Math.round(bestAvg),
+    worstAvg: Math.round(worstAvg)
+  };
+}
+
+/* 🔴 NEW — TEMPORAL CATEGORY */
+
+function buildTemporalCategoryInsights(decisions, scores) {
+  const map = {};
+
+  decisions.forEach(d => {
+    if (!d.evaluations.length) return;
+
+    const scoreObj = scores.find(s => s.id === d.id);
+    if (!scoreObj) return;
+
+    const cat = d.category || "other";
+
+    if (!map[cat]) map[cat] = { weightedSum: 0, weight: 0 };
+
+    map[cat].weightedSum += scoreObj.displayScore * scoreObj.weight;
+    map[cat].weight += scoreObj.weight;
+  });
+
+  let bestCategory = null, worstCategory = null;
+  let bestAvg = -Infinity, worstAvg = Infinity;
+
+  Object.entries(map).forEach(([cat, obj]) => {
+    const avg = obj.weight > 0 ? obj.weightedSum / obj.weight : 0;
+
+    if (avg > bestAvg) { bestAvg = avg; bestCategory = cat; }
+    if (avg < worstAvg) { worstAvg = avg; worstCategory = cat; }
+  });
+
+  return {
     bestCategory,
     worstCategory,
     bestAvg: Math.round(bestAvg),
@@ -274,7 +331,11 @@ router.get("/", async (req, res) => {
 
     const behaviorReport = buildBehaviorReport(scores, decisions);
     const distribution = buildDistribution(scores);
+    const temporalDistribution = buildTemporalDistribution(scores);
+
     const categoryData = buildCategoryInsights(decisions, scores);
+    const temporalCategoryData = buildTemporalCategoryInsights(decisions, scores);
+
     const strategic = buildStrategicInsights(categoryData, scores);
 
     return res.json({
@@ -283,16 +344,22 @@ router.get("/", async (req, res) => {
       evaluationRate,
       followThroughRate,
       averageRegretScore,
+
       behaviorReport,
+
       primaryPattern: strategic.primaryPattern,
       stability: strategic.stability,
       recommendedFocus: strategic.recommendedFocus,
-      distribution,
 
-      // 🔴 NEW STRUCTURED FIELDS (NO REGRESSION)
+      distribution,
+      temporalDistribution,
+
       mostUsedCategory: categoryData.mostUsedCategory,
       bestCategory: categoryData.bestCategory,
-      worstCategory: categoryData.worstCategory
+      worstCategory: categoryData.worstCategory,
+
+      temporalBestCategory: temporalCategoryData.bestCategory,
+      temporalWorstCategory: temporalCategoryData.worstCategory
     });
 
   } catch (err) {

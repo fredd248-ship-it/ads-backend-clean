@@ -29,12 +29,6 @@ function getRecencyWeight(date) {
   return 1.0;
 }
 
-function isRecent(date) {
-  const now = new Date();
-  const created = new Date(date);
-  return (now - created) / (1000 * 60 * 60 * 24) <= 180;
-}
-
 function computeQualityScore(evaluation, decision) {
   const regret = 1 - (evaluation.regretScore / 10);
   const freq = evaluation.frequencyOfUse === "High" ? 1 :
@@ -127,7 +121,7 @@ function extractSignals(decisions, scores) {
   };
 }
 
-/* 🧠 COACHING ENGINE (TIGHTENED ONLY) */
+/* 🧠 COACHING ENGINE */
 
 function buildBehaviorReport(scores, decisions) {
   if (!scores || scores.length < 2) return null;
@@ -142,26 +136,31 @@ function buildBehaviorReport(scores, decisions) {
 
   const blocks = [];
 
+  /* Opening */
   blocks.push(
     "You’re making consistently strong decisions overall, which suggests your core decision-making process is working well."
   );
 
+  /* Strengths */
   if (strong.length) {
     blocks.push(
       `You tend to perform reliably in categories like ${strong.join(", ")}, where outcomes remain stable.`
     );
   }
 
+  /* Weakness */
   if (weak.length) {
     blocks.push(
       `However, results in categories such as ${weak.join(" and ")} are less consistent, indicating an opportunity to refine your approach.`
     );
   }
 
+  /* Variation */
   blocks.push(
     "This variation reflects inconsistency in execution rather than a lack of ability—your results improve when decisions are made more deliberately."
   );
 
+  /* Behavioral */
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
 
   const timeHigh = avg(signals.highTime);
@@ -182,6 +181,16 @@ function buildBehaviorReport(scores, decisions) {
     );
   }
 
+  /* 🔴 FIXED GRAMMAR (singular/plural aware) */
+  if (weak.length) {
+    const label = weak.length === 1 ? "category" : "categories";
+
+    blocks.push(
+      `The ${label} that ${weak.length === 1 ? "underperforms" : "underperform"}—${weak.join(" and ")}—represent${weak.length === 1 ? "s" : ""} your greatest opportunity for improvement.`
+    );
+  }
+
+  /* Action */
   if (weak.length) {
     blocks.push(
       `Focusing on a more deliberate approach in ${weak.join(" and ")}—such as comparing options before committing—will likely produce immediate gains.`
@@ -192,6 +201,7 @@ function buildBehaviorReport(scores, decisions) {
     );
   }
 
+  /* Closing */
   blocks.push(
     "Overall, your decision-making foundation is strong. Improving consistency in execution is the key to achieving more reliable outcomes."
   );

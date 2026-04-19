@@ -1,17 +1,15 @@
-// (FULL FILE — COMPLETE REPLACEMENT)
+// FULL FILE — TRUE TEMPORAL COACHING ENGINE
 
 const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 
-/* 🔴 STABLE PRISMA */
 let prisma;
 if (!global.prisma) {
   global.prisma = new PrismaClient();
 }
 prisma = global.prisma;
 
-/* 🔴 TIMEOUT */
 async function withTimeout(promise, ms = 8000) {
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("DB_TIMEOUT")), ms)
@@ -20,15 +18,6 @@ async function withTimeout(promise, ms = 8000) {
 }
 
 /* HELPERS */
-
-function mapFrequency(freq) {
-  if (!freq) return 0;
-  const f = freq.toLowerCase();
-  if (f.includes("day")) return 1.0;
-  if (f.includes("week")) return 0.7;
-  if (f.includes("month")) return 0.4;
-  return 0.1;
-}
 
 function formatCategory(cat) {
   return cat.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase());
@@ -44,48 +33,54 @@ function getRecencyWeight(date) {
   return 1.0;
 }
 
+function isRecent(date) {
+  const now = new Date();
+  const created = new Date(date);
+  const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+  return diffDays <= 180;
+}
+
 function computeQualityScore(evaluation, decision) {
   const regretNorm = 1 - (evaluation.regretScore / 10);
-  const frequencyNorm = mapFrequency(evaluation.frequencyOfUse);
-  const buyAgainNorm = evaluation.wouldBuyAgain ? 1 : 0;
+  const freq = evaluation.frequencyOfUse === "High" ? 1 :
+               evaluation.frequencyOfUse === "Medium" ? 0.6 : 0.2;
+  const buy = evaluation.wouldBuyAgain ? 1 : 0;
 
   const time = (decision.timePressure ?? 5) / 10;
   const emotion = (decision.emotionalWeight ?? 5) / 10;
 
   const score =
-    (regretNorm * 0.35) +
-    (frequencyNorm * 0.20) +
-    (buyAgainNorm * 0.20) +
-    ((1 - time * time) * 0.15) +
-    ((1 - emotion * emotion) * 0.10);
+    regretNorm * 0.35 +
+    freq * 0.20 +
+    buy * 0.20 +
+    (1 - time * time) * 0.15 +
+    (1 - emotion * emotion) * 0.10;
 
   return Math.round(score * 100);
 }
 
-/* 🔴 TEMPORAL DISTRIBUTION */
+/* TEMPORAL DISTRIBUTION */
 
 function buildDistribution(scores) {
   if (!scores.length) return null;
 
-  let strong = 0, average = 0, weak = 0;
-  let totalWeight = 0;
+  let strong = 0, avg = 0, weak = 0, total = 0;
 
   scores.forEach(s => {
-    totalWeight += s.weight;
-
+    total += s.weight;
     if (s.displayScore >= 8) strong += s.weight;
-    else if (s.displayScore >= 5) average += s.weight;
+    else if (s.displayScore >= 5) avg += s.weight;
     else weak += s.weight;
   });
 
   return {
-    strong: Math.round((strong / totalWeight) * 100),
-    average: Math.round((average / totalWeight) * 100),
-    weak: Math.round((weak / totalWeight) * 100)
+    strong: Math.round((strong / total) * 100),
+    average: Math.round((avg / total) * 100),
+    weak: Math.round((weak / total) * 100)
   };
 }
 
-/* 🔴 CATEGORY ENGINE (TEMPORAL) */
+/* CATEGORY + TREND */
 
 function buildCategoryInsights(decisions, scores) {
   const map = {};
@@ -97,131 +92,105 @@ function buildCategoryInsights(decisions, scores) {
 
     if (!d.evaluations.length) return;
 
-    const scoreObj = scores.find(s => s.id === d.id);
-    if (!scoreObj) return;
+    const s = scores.find(x => x.id === d.id);
+    if (!s) return;
 
-    if (!map[cat]) map[cat] = { weightedSum: 0, weight: 0 };
+    if (!map[cat]) map[cat] = { recent: [], older: [], weightedSum: 0, weight: 0 };
 
-    map[cat].weightedSum += scoreObj.displayScore * scoreObj.weight;
-    map[cat].weight += scoreObj.weight;
-  });
+    map[cat].weightedSum += s.displayScore * s.weight;
+    map[cat].weight += s.weight;
 
-  let mostUsedCategory = null;
-  let maxCount = 0;
-
-  Object.entries(counts).forEach(([cat, count]) => {
-    if (count > maxCount) {
-      maxCount = count;
-      mostUsedCategory = cat;
-    }
+    if (isRecent(d.createdAt)) map[cat].recent.push(s.displayScore);
+    else map[cat].older.push(s.displayScore);
   });
 
   let bestCategory = null, worstCategory = null;
-  let bestAvg = -Infinity, worstAvg = Infinity;
+  let best = -Infinity, worst = Infinity;
+
+  const trends = {};
 
   Object.entries(map).forEach(([cat, obj]) => {
     const avg = obj.weight > 0 ? obj.weightedSum / obj.weight : 0;
 
-    if (avg > bestAvg) { bestAvg = avg; bestCategory = cat; }
-    if (avg < worstAvg) { worstAvg = avg; worstCategory = cat; }
+    if (avg > best) { best = avg; bestCategory = cat; }
+    if (avg < worst) { worst = avg; worstCategory = cat; }
+
+    if (obj.recent.length && obj.older.length) {
+      const r = obj.recent.reduce((a,b)=>a+b,0)/obj.recent.length;
+      const o = obj.older.reduce((a,b)=>a+b,0)/obj.older.length;
+
+      if (r > o + 1) trends[cat] = "improving";
+      else if (r < o - 1) trends[cat] = "declining";
+      else trends[cat] = "stable";
+    }
   });
+
+  let mostUsedCategory = Object.entries(counts)
+    .sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
 
   return {
     mostUsedCategory,
     bestCategory,
     worstCategory,
-    bestAvg: Math.round(bestAvg),
-    worstAvg: Math.round(worstAvg)
+    trends
   };
 }
 
-/* 🔴 NEW — TEMPORAL COACHING ENGINE */
+/* 🔴 TRUE TEMPORAL COACHING ENGINE */
 
-function buildBehaviorReport(scores, decisions) {
+function buildBehaviorReport(scores, decisions, categoryData) {
   if (!scores || scores.length < 3) return null;
-
-  const categoryMap = {};
-  let highTime = [], lowTime = [];
-  let highEmotion = [], lowEmotion = [];
-
-  decisions.forEach(d => {
-    if (!d.evaluations.length) return;
-
-    const scoreObj = scores.find(s => s.id === d.id);
-    if (!scoreObj) return;
-
-    const cat = d.category || "other";
-
-    if (!categoryMap[cat]) categoryMap[cat] = [];
-    categoryMap[cat].push({
-      score: scoreObj.displayScore,
-      weight: scoreObj.weight,
-      createdAt: d.createdAt
-    });
-
-    const latest = d.evaluations[d.evaluations.length - 1];
-
-    if ((d.timePressure ?? 5) >= 7) highTime.push(scoreObj.displayScore);
-    if ((d.timePressure ?? 5) <= 4) lowTime.push(scoreObj.displayScore);
-
-    if ((d.emotionalWeight ?? 5) >= 7) highEmotion.push(scoreObj.displayScore);
-    if ((d.emotionalWeight ?? 5) <= 4) lowEmotion.push(scoreObj.displayScore);
-  });
 
   const strong = [];
   const weak = [];
 
-  Object.entries(categoryMap).forEach(([cat, arr]) => {
-    const weightedSum = arr.reduce((s, a) => s + a.score * a.weight, 0);
-    const totalWeight = arr.reduce((s, a) => s + a.weight, 0);
-    const avg = weightedSum / totalWeight;
-
-    if (avg >= 7) strong.push(formatCategory(cat));
-    if (avg <= 4) weak.push(formatCategory(cat));
+  Object.entries(categoryData.trends || {}).forEach(([cat]) => {
+    if (cat === categoryData.bestCategory) strong.push(formatCategory(cat));
+    if (cat === categoryData.worstCategory) weak.push(formatCategory(cat));
   });
 
-  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+  let trendLine = "";
 
-  const timeInsight =
-    avg(highTime) && avg(lowTime)
-      ? `Decisions made under higher time pressure tend to perform worse (${avg(highTime)}/10) compared to lower-pressure decisions (${avg(lowTime)}/10).`
-      : "";
-
-  const emotionInsight =
-    avg(highEmotion) && avg(lowEmotion)
-      ? `Higher emotional weight decisions also show different outcomes (${avg(highEmotion)}/10 vs ${avg(lowEmotion)}/10), suggesting emotional context influences your results.`
-      : "";
+  Object.entries(categoryData.trends).forEach(([cat, trend]) => {
+    if (trend === "declining") {
+      trendLine += `${formatCategory(cat)} shows declining recent performance. `;
+    }
+    if (trend === "improving") {
+      trendLine += `${formatCategory(cat)} is improving over time. `;
+    }
+  });
 
   let narrative = "";
 
-  narrative += `Your decision-making shows a mix of strong and weaker outcomes across different categories. `;
+  narrative += "Your decision-making shows a mix of strong and weaker outcomes across different categories. ";
 
   if (strong.length) {
-    narrative += `You consistently perform well in categories like ${strong.slice(0,3).join(", ")}, where outcomes remain stable and reliable. `;
+    narrative += `You consistently perform well in categories like ${strong.join(", ")}, where results remain stable over time. `;
   }
 
   if (weak.length) {
-    narrative += `However, categories such as ${weak.join(" and ")} show consistently lower outcomes, particularly in your more recent decisions. `;
+    narrative += `However, categories such as ${weak.join(" and ")} show lower outcomes, particularly in your more recent decisions. `;
   }
 
-  narrative += `Recent decisions now carry more weight in your overall results, meaning your current habits are becoming the dominant factor in your performance. `;
+  narrative += trendLine;
 
-  if (timeInsight) narrative += timeInsight + " ";
-  if (emotionInsight) narrative += emotionInsight + " ";
+  narrative += "Recent decisions now carry more weight in your results, meaning your current habits are actively shaping your performance. ";
 
-  narrative += `The opportunity here is refinement rather than overhaul—slowing down in weaker categories and applying the same deliberate approach you use in stronger areas will likely produce immediate gains.`;
+  narrative += "Decisions made under time pressure or emotional urgency tend to reduce consistency and satisfaction. ";
+
+  narrative += "Focusing on slowing down and applying a structured approach in weaker categories will likely produce immediate improvements.";
 
   return {
-    decisionProfile: "Your decision-making reflects evolving patterns influenced by recent behavior",
+    decisionProfile: "Your decision-making is evolving over time",
     coachingSummary: narrative,
-    currentBlindSpot: weak.join(", ") || "No clear blind spots detected",
-    bestNextHabit: weak.length
-      ? "Slow down and evaluate multiple options in weaker categories"
-      : "Continue reinforcing your current approach",
+    currentBlindSpot: weak.join(", ") || "None",
+    bestNextHabit: "Be more deliberate in weaker categories",
     strengths: strong,
-    recommendedAdjustments: weak.length
-      ? ["Compare at least two options", "Avoid rushed decisions under pressure"]
-      : []
+    recommendedAdjustments: [
+      "Compare at least two options",
+      "Avoid rushed decisions",
+      "Be aware of time pressure and emotional influence"
+    ]
   };
 }
 
@@ -229,8 +198,7 @@ function buildBehaviorReport(scores, decisions) {
 
 router.get("/", async (req, res) => {
   try {
-
-    if (!req.user || !req.user.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -241,66 +209,45 @@ router.get("/", async (req, res) => {
       })
     );
 
-    let scores = [], totalEvaluations = 0, wouldBuyAgainCount = 0;
+    let scores = [], totalEval = 0, buyAgain = 0;
 
     decisions.forEach(d => {
       d.evaluations.forEach(e => {
-        totalEvaluations++;
-        if (e.wouldBuyAgain) wouldBuyAgainCount++;
+        totalEval++;
+        if (e.wouldBuyAgain) buyAgain++;
       });
 
-      if (d.evaluations.length > 0) {
-        const latest = d.evaluations[d.evaluations.length - 1];
-        const raw = computeQualityScore(latest, d);
-        const displayScore = Math.round(raw / 10);
-        const weight = getRecencyWeight(d.createdAt);
-
-        scores.push({ id: d.id, displayScore, weight });
+      if (d.evaluations.length) {
+        const e = d.evaluations.at(-1);
+        const raw = computeQualityScore(e, d);
+        scores.push({
+          id: d.id,
+          displayScore: Math.round(raw / 10),
+          weight: getRecencyWeight(d.createdAt)
+        });
       }
     });
 
-    const totalDecisions = decisions.length;
-    const evaluatedDecisions = scores.length;
-
-    const evaluationRate = totalDecisions > 0
-      ? Math.round((evaluatedDecisions / totalDecisions) * 100)
-      : 0;
-
-    const followThroughRate = totalEvaluations > 0
-      ? Math.round((wouldBuyAgainCount / totalEvaluations) * 100)
-      : 0;
-
-    const weightedSum = scores.reduce((sum, s) => sum + s.displayScore * s.weight, 0);
-    const weightTotal = scores.reduce((sum, s) => sum + s.weight, 0);
-
-    const averageRegretScore = scores.length > 0
-      ? Math.round(weightedSum / weightTotal)
-      : 0;
-
-    const behaviorReport = buildBehaviorReport(scores, decisions);
-    const distribution = buildDistribution(scores);
     const categoryData = buildCategoryInsights(decisions, scores);
 
     return res.json({
-      totalDecisions,
-      evaluatedDecisions,
-      evaluationRate,
-      followThroughRate,
-      averageRegretScore,
-      behaviorReport,
-      distribution,
+      totalDecisions: decisions.length,
+      evaluatedDecisions: scores.length,
+      evaluationRate: Math.round((scores.length / (decisions.length || 1)) * 100),
+      followThroughRate: Math.round((buyAgain / (totalEval || 1)) * 100),
+      averageRegretScore: scores.length
+        ? Math.round(scores.reduce((s,x)=>s+x.displayScore*x.weight,0) /
+                     scores.reduce((s,x)=>s+x.weight,0))
+        : 0,
+      distribution: buildDistribution(scores),
       mostUsedCategory: categoryData.mostUsedCategory,
       bestCategory: categoryData.bestCategory,
-      worstCategory: categoryData.worstCategory
+      worstCategory: categoryData.worstCategory,
+      behaviorReport: buildBehaviorReport(scores, decisions, categoryData)
     });
 
   } catch (err) {
     console.error("INSIGHTS ERROR:", err);
-
-    if (err.message === "DB_TIMEOUT") {
-      return res.status(503).json({ error: "Database timeout" });
-    }
-
     res.status(500).json({ error: "Server error" });
   }
 });

@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Enter Invite - OutcomeClarity</title>
+<title>Enter Access Code - OutcomeClarity</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
   font-family: Arial;
   background: #f5f7fb;
+  margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  margin: 0;
 }
 
 .card {
@@ -22,28 +22,47 @@ body {
   border-radius: 12px;
   width: 320px;
   text-align: center;
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 input {
   width: 100%;
   padding: 10px;
   margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 button {
   width: 100%;
   padding: 12px;
   margin-top: 15px;
-  background: #4338ca;
-  color: white;
-  border: none;
   border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  font-weight: bold;
   cursor: pointer;
+}
+
+button:hover {
+  background: #4338ca;
 }
 
 .error {
   color: red;
   margin-top: 10px;
+  font-size: 14px;
+}
+
+.link {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.link a {
+  color: #2563eb;
+  text-decoration: none;
 }
 </style>
 </head>
@@ -51,38 +70,56 @@ button {
 <body>
 
 <div class="card">
-  <h2>Enter Beta Access</h2>
+  <h2>Enter Access Code</h2>
 
-  <input id="code" placeholder="Invite Code" />
+  <input id="code" placeholder="Access Code" />
+
   <button onclick="submitCode()">Continue</button>
 
   <div id="error" class="error"></div>
+
+  <div class="link">
+    Already have an account? <a href="login.html">Log in</a>
+  </div>
 </div>
 
 <script>
 
+const API = "/api/v1";
+
 async function submitCode() {
-  const code = document.getElementById("code").value;
+
+  const code = document.getElementById("code").value.trim();
+
+  if (!code) {
+    document.getElementById("error").innerText = "Enter a code";
+    return;
+  }
 
   try {
-    const res = await fetch("/api/v1/invite/validate", {
+
+    const res = await fetch(API + "/invite/verify", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ code })
     });
 
-    if (res.ok) {
-      // ✅ STORE BOTH FLAGS
-      localStorage.setItem("invite_valid", "true");
-      localStorage.setItem("invite_code", code);
+    const data = await res.json();
 
-      window.location.href = "login.html";
+    if (res.ok && data.success) {
+
+      localStorage.setItem("invite_valid", "true");
+
+      window.location.href = "register.html";
+
     } else {
-      document.getElementById("error").innerText = "Invalid invite code";
+      document.getElementById("error").innerText = "Invalid access code";
     }
 
   } catch (err) {
-    document.getElementById("error").innerText = "Server error";
+    document.getElementById("error").innerText = "Server error. Try again.";
   }
 }
 

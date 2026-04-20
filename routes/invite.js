@@ -18,16 +18,19 @@ const validCodes = [
 ];
 
 /* =========================
-   VERIFY (HARDENED)
+   VERIFY (BODY-AGNOSTIC)
 ========================= */
 router.post("/verify", (req, res) => {
   try {
 
-    // 🔥 HANDLE MULTIPLE INPUT TYPES SAFELY
+    // 🔥 FALLBACK CHAIN (this is the fix)
     let code =
       req.body?.code ||
       req.query?.code ||
+      req.headers["x-invite-code"] ||
       "";
+
+    code = String(code).trim().toUpperCase();
 
     if (!code) {
       return res.status(400).json({
@@ -35,9 +38,6 @@ router.post("/verify", (req, res) => {
         error: "No code provided"
       });
     }
-
-    // normalize
-    code = String(code).trim().toUpperCase();
 
     if (!validCodes.includes(code)) {
       return res.status(400).json({
@@ -49,7 +49,7 @@ router.post("/verify", (req, res) => {
     return res.json({ success: true });
 
   } catch (err) {
-    console.error("Invite error:", err);
+    console.error(err);
     return res.status(500).json({
       success: false,
       error: "Server error"

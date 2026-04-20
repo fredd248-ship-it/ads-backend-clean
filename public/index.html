@@ -2,30 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ADS</title>
+<title>OutcomeClarity</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  font-family: Arial;
-  background: #f5f7fb;
   margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 
-.card {
+.container {
   background: white;
-  padding: 30px;
-  border-radius: 12px;
-  text-align: center;
-  width: 320px;
+  padding: 40px;
+  border-radius: 14px;
+  width: 420px;
   border: 1px solid rgba(0,0,0,0.05);
+  text-align: center;
 }
 
-h1 { margin-bottom: 10px; }
+h1 {
+  margin-bottom: 10px;
+}
 
 .sub {
   font-size: 14px;
@@ -33,42 +35,134 @@ h1 { margin-bottom: 10px; }
   margin-bottom: 20px;
 }
 
-.btn {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: white;
-  font-weight: bold;
+.section {
+  text-align: left;
+  margin-bottom: 20px;
 }
 
-.login { background: #4f46e5; }
-.register { background: #10b981; }
+.section-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.section-text {
+  font-size: 14px;
+  color: #444;
+}
+
+.steps {
+  font-size: 14px;
+  color: #444;
+  margin-top: 10px;
+}
+
+.steps div {
+  margin-bottom: 4px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 8px;
+  border: none;
+  background: #4338ca;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3730a3;
+}
+
+.alt-link {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.alt-link a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.alt-link a:hover {
+  text-decoration: underline;
+}
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h1>ADS</h1>
+<div class="container">
+
+  <h1>OutcomeClarity</h1>
   <div class="sub">
-    Track decisions → detect patterns → improve outcomes
+    A simple system for improving real-world decision making over time.
   </div>
 
-  <!-- 🔧 FIXED LINKS -->
-  <a href="login.html" class="btn login">Login</a>
-  <a href="register.html" class="btn register">Create Account</a>
+  <div class="section">
+    <div class="section-title">What this does</div>
+    <div class="section-text">
+      OutcomeClarity helps you evaluate your real decisions after you live with them —
+      so you can learn what actually works, not what you think will.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">How it works</div>
+    <div class="steps">
+      <div>1. Record a decision</div>
+      <div>2. Live with the outcome</div>
+      <div>3. Evaluate it later</div>
+      <div>4. Let the system detect patterns</div>
+    </div>
+  </div>
+
+  <input id="code" placeholder="Enter Access Code" />
+
+  <button onclick="enter()">Continue</button>
+
+  <div class="alt-link">
+    Already have an account?<br>
+    <a href="login.html">Log in</a>
+  </div>
+
 </div>
 
 <script>
 
-/* 🔧 FIXED REDIRECT */
+// ✅ If already logged in → skip landing
 const token = localStorage.getItem("ads_token");
 
-if (token && token !== "undefined" && token !== "null") {
+if (token && token !== "null" && token !== "undefined") {
   window.location.href = "dashboard.html";
+}
+
+// 🔐 Invite logic (unchanged)
+async function enter() {
+  const code = document.getElementById("code").value;
+
+  const res = await fetch("/api/v1/invite/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  });
+
+  if (res.ok) {
+    localStorage.setItem("invite_valid", "true");
+    window.location.href = "register.html";
+  } else {
+    alert("Invalid access code");
+  }
 }
 
 </script>

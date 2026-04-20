@@ -15,10 +15,10 @@ body {
 
 .sidebar {
   width: 220px;
-  background: #eef2ff;
+  background: #e0e7ff;
   height: 100vh;
   padding: 20px 10px;
-  border-right: 1px solid #d1d5db;
+  border-right: 1px solid #c7d2fe;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -30,11 +30,15 @@ body {
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
-  color: #3730a3;
+  color: #312e81;
 }
 
 .nav-item:hover { background: #c7d2fe; }
-.active { background: #4f46e5; color: white; }
+
+.active {
+  background: #4338ca;
+  color: white;
+}
 
 .main {
   flex: 1;
@@ -92,17 +96,21 @@ body {
 
 <div class="main">
   <h2 id="title">Loading...</h2>
+  <div id="meta" class="small"></div>
   <div id="list"></div>
 </div>
 
 <script>
 
-/* ✅ FIXED BACKEND */
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 
-/* 🔧 FIXED AUTH */
 function token(){
   return localStorage.getItem("ads_token");
+}
+
+function formatCost(cost){
+  if(cost === null || cost === undefined) return "";
+  return "$" + Number(cost).toLocaleString();
 }
 
 const t = token();
@@ -115,11 +123,6 @@ if(!t || t === "null" || t === "undefined"){
 const params = new URLSearchParams(window.location.search);
 const decisionId = params.get("id");
 
-if(!decisionId){
-  document.getElementById("title").innerText = "Invalid decision";
-}
-
-/* LOAD */
 async function load(){
 
   const res = await fetch(API + "/decisions", {
@@ -135,7 +138,11 @@ async function load(){
     return;
   }
 
+  // ✅ TITLE + CONTEXT
   document.getElementById("title").innerText = decision.title;
+
+  document.getElementById("meta").innerText =
+    `${decision.category || ""} ${decision.cost ? "• " + formatCost(decision.cost) : ""}`;
 
   const container = document.getElementById("list");
   container.innerHTML = "";
@@ -157,7 +164,7 @@ async function load(){
     if(e.frequencyOfUse === "High") usageClass = "high";
 
     const doClass = e.wouldBuyAgain ? "do" : "not-do";
-    const doText = e.wouldBuyAgain ? "Would Do" : "Would Not Do";
+    const doText = e.wouldBuyAgain ? "Would Do Again" : "Would Not Do Again";
 
     const date = new Date(e.createdAt).toLocaleDateString();
 

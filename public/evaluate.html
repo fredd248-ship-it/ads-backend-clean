@@ -13,7 +13,6 @@ body {
   display: flex;
 }
 
-/* SIDEBAR */
 .sidebar {
   width: 220px;
   background: #eef2ff;
@@ -37,7 +36,6 @@ body {
 .nav-item:hover { background: #c7d2fe; }
 .active { background: #4f46e5; color: white; }
 
-/* MAIN */
 .main {
   flex: 1;
   max-width: 600px;
@@ -139,10 +137,8 @@ select {
 
 <script>
 
-/* ✅ FIXED BACKEND */
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 
-/* 🔧 FIXED AUTH */
 function token() {
   return localStorage.getItem("ads_token");
 }
@@ -158,7 +154,6 @@ const decisionId = params.get("id");
 
 let wouldBuyAgain = true;
 
-/* LOAD */
 async function load() {
 
   if (!decisionId) {
@@ -182,7 +177,6 @@ async function load() {
   document.getElementById("title").innerText = decision.title;
 }
 
-/* SLIDER */
 const slider = document.getElementById("slider");
 const sliderValue = document.getElementById("sliderValue");
 
@@ -190,14 +184,12 @@ slider.oninput = () => {
   sliderValue.innerText = slider.value;
 };
 
-/* TOGGLE */
 function setAgain(val) {
   wouldBuyAgain = val;
   document.getElementById("yesBtn").classList.toggle("active", val);
   document.getElementById("noBtn").classList.toggle("active", !val);
 }
 
-/* SAVE */
 async function save() {
 
   const btn = document.getElementById("saveBtn");
@@ -234,7 +226,6 @@ async function save() {
   }
 }
 
-/* NAV */
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }

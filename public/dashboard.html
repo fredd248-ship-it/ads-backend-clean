@@ -106,61 +106,21 @@ body {
   margin: 100px auto;
   padding: 20px;
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  color: #312e81;
-}
-
-.modal-content label {
-  font-size: 13px;
-  margin-top: 10px;
-  display: block;
-  color: #444;
 }
 
 .modal-content input,
 .modal-content select {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
   padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
 }
 
 .modal-content button {
   margin-top: 10px;
   width: 100%;
   padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
 }
 
-.save-btn {
-  background: #4338ca;
-  color: white;
-}
-
-.cancel-btn {
-  background: #e5e7eb;
-  color: #333;
-}
-/* 🔴 REMOVE NUMBER INPUT ARROWS */
-
-/* Chrome, Safari, Edge */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Firefox */
-input[type="number"] {
-  -moz-appearance: textfield;
-}
 </style>
 </head>
 
@@ -196,55 +156,30 @@ input[type="number"] {
 
     <select id="category">
       <option value="">Select Category</option>
-      <option value="home_office">Home Office</option>
-      <option value="travel">Travel</option>
-      <option value="relationship">Relationship</option>
-      <option value="job">Job</option>
-      <option value="lawn_garden">Lawn and Garden</option>
       <option value="electronics">Electronics</option>
       <option value="home">Home</option>
-      <option value="outdoors_patio">Outdoors and Patio</option>
       <option value="vehicle">Vehicle</option>
-      <option value="moving">Moving</option>
-      <option value="work">Work</option>
       <option value="business">Business</option>
-      <option value="tools">Tools</option>
-      <option value="clothing">Clothing</option>
-      <option value="decor">Decor</option>
-      <option value="dining">Dining</option>
-      <option value="medical">Medical</option>
-      <option value="pets">Pets</option>
       <option value="other">Other</option>
     </select>
 
-    <label>Time Pressure</label>
-    <input type="range" id="timePressure" min="1" max="5">
-
-    <label>Emotional Weight</label>
-    <input type="range" id="emotionalWeight" min="1" max="5">
-
-    <button class="save-btn" onclick="createDecision()">Save</button>
-    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    <button onclick="createDecision()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
 
   </div>
 </div>
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* 🔴 FIX */
-function resetForm(){
-  document.getElementById("title").value = "";
-  document.getElementById("cost").value = "";
-  document.getElementById("category").value = "";
-  document.getElementById("timePressure").value = 3;
-  document.getElementById("emotionalWeight").value = 3;
+function formatCost(cost){
+  if(cost === null || cost === undefined) return "";
+  return "$" + Number(cost).toLocaleString();
 }
 
 function openModal(){
-  resetForm();
   document.getElementById("createModal").style.display = "block";
 }
 
@@ -253,11 +188,6 @@ function closeModal(){
 }
 
 async function createDecision(){
-  const title = document.getElementById("title").value;
-  const cost = parseFloat(document.getElementById("cost").value);
-  const category = document.getElementById("category").value;
-  const timePressure = parseInt(document.getElementById("timePressure").value);
-  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
 
   await fetch(API + "/decisions", {
     method: "POST",
@@ -266,15 +196,12 @@ async function createDecision(){
       Authorization:"Bearer "+token
     },
     body: JSON.stringify({
-      title,
-      cost,
-      category,
-      timePressure,
-      emotionalWeight
+      title: document.getElementById("title").value,
+      cost: parseFloat(document.getElementById("cost").value),
+      category: document.getElementById("category").value
     })
   });
 
-  resetForm();
   closeModal();
   load();
 }
@@ -287,6 +214,7 @@ function getUseClass(freq){
 }
 
 async function load(){
+
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
   });
@@ -294,17 +222,21 @@ async function load(){
   const data = await res.json();
   const content = document.getElementById("content");
 
-  content.innerHTML = data.data.map(d => {
+  content.innerHTML = (data.data || []).map(d => {
 
     let freq = null;
+
     if (d.evaluations && d.evaluations.length){
-      freq = d.evaluations[d.evaluations.length-1].frequencyOfUse;
+      freq = d.evaluations[d.evaluations.length - 1].frequencyOfUse;
     }
 
     return `
       <div class="card ${getUseClass(freq)}" onclick="goEvaluate('${d.id}')">
         <strong>${d.title}</strong><br>
-        ${d.category || ""}
+        <span style="font-size:13px; color:#555;">
+          ${d.category || ""}
+          ${d.cost ? " • " + formatCost(d.cost) : ""}
+        </span>
       </div>
     `;
 

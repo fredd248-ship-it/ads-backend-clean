@@ -95,118 +95,111 @@ body {
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 const token = localStorage.getItem("ads_token");
 
 function formatList(str) {
   if (!str) return "";
   const arr = str.split(",").map(s => s.trim());
-  if (arr.length === 1) return arr[0];
-  return arr.join(" and ");
+  return arr.join(", ");
 }
 
 function buildLetter(report, data) {
 
-  const strengthsArr = (report.strengths || []).slice(0,3);
-  const strengths = strengthsArr.join(", ");
-
-  const weakArr = report.currentBlindSpot
-    ? report.currentBlindSpot.split(",").map(x => x.trim())
-    : [];
-
-  const weakFormatted = formatList(report.currentBlindSpot);
-
-  const habit = report.bestNextHabit;
+  const strengths = (report.strengths || []).slice(0,3).join(", ");
+  const weak = formatList(report.currentBlindSpot);
   const adjustments = report.recommendedAdjustments || [];
   const distribution = data.distribution || {};
+  const cost = data.costInsights || {};
 
-  /* INTRO (more intelligent tone) */
+  /* INTRO */
 
-  let intro = "Your results show a mix of strong and less consistent outcomes across different types of decisions. ";
+  let intro = "Your results show a mix of strong and less consistent outcomes across different types of decisions.";
 
   if (distribution.strong >= 50) {
-    intro = "You're making consistently strong decisions overall, which indicates that your core decision-making process is sound. ";
+    intro = "You're making consistently strong decisions overall, which indicates that your core decision-making process is sound.";
   }
 
   if (distribution.weak >= 40) {
-    intro = "There are clear patterns in your decision-making that point to specific areas where your approach is breaking down. ";
+    intro = "There are clear patterns in your decision-making that point to specific areas where your approach is breaking down.";
   }
 
-  /* GRAMMAR FIX */
+  /* CATEGORY INSIGHT */
 
-  let weakSentence = "";
+  const categoryInsight = weak
+    ? `The category that consistently underperforms—${weak}—represents your clearest opportunity for improvement right now.`
+    : "";
 
-  if (weakArr.length === 1) {
-    weakSentence = `The category that consistently underperforms—${weakArr[0]}—represents your clearest opportunity for improvement right now.`;
-  } else if (weakArr.length > 1) {
-    weakSentence = `The categories that consistently underperform—${weakFormatted}—represent your clearest opportunities for improvement right now.`;
+  /* TEMPORAL INTELLIGENCE */
+
+  const temporal = `
+Your recent decisions show a consistent relationship between how decisions are made and how they perform. When decisions are approached deliberately, outcomes improve. When they are made under time pressure or urgency, results become less consistent. This pattern is a primary driver of your variability.
+`;
+
+  /* CONTEXT */
+
+  const context = `
+Time pressure and emotional weight are the two strongest behavioral forces influencing your outcomes. Decisions made quickly tend to reduce satisfaction, while emotionally driven decisions introduce inconsistency. Recognizing these conditions before committing creates an opportunity to improve results.
+`;
+
+  /* COST INTELLIGENCE (DEEP) */
+
+  let costInsight = "";
+
+  if (cost.expensiveMistakes > cost.expensiveWins) {
+    costInsight = `
+A clear financial pattern is emerging. Higher-cost decisions are more likely to result in lower satisfaction. This suggests that as stakes increase, your process becomes less structured or more reactive. These outcomes are not random—they reflect a shift in decision behavior under pressure.
+
+Improving your process specifically for higher-cost decisions would have a disproportionately large impact on your overall results, as these decisions carry greater consequence.
+`;
   }
 
-  /* PERSONALIZED TEMPORAL INSIGHT */
+  if (cost.expensiveWins > cost.expensiveMistakes && cost.expensiveWins > 2) {
+    costInsight = `
+One of your strongest behavioral signals appears in higher-cost decisions. When you take time to evaluate significant commitments carefully, your outcomes are consistently strong. This indicates that your decision-making process is highly effective when applied deliberately.
 
-  let temporalInsight = `
-    <p>
-      Your recent decisions suggest that your outcomes are closely tied to how you approach decisions in the moment. 
-      When you slow down and evaluate options, your results tend to improve. When decisions are made under pressure or urgency, 
-      your outcomes become less consistent. This pattern is where most of your variability is coming from.
-    </p>
-  `;
-
-  /* CONTEXT (linked to behavior) */
-
-  let context = `
-    <p>
-      Time pressure and emotional weight are the two factors that most often influence your results. 
-      Decisions made quickly tend to reduce satisfaction, while emotionally driven decisions introduce inconsistency. 
-      Recognizing these moments before committing gives you the opportunity to shift your approach and improve the outcome.
-    </p>
-  `;
+The opportunity is not to change your process—but to apply that same level of structure consistently, even in lower-stakes or faster decisions.
+`;
+  }
 
   return `
-    <div class="letter">
+  <div class="letter">
 
+    <p>
+      ${intro}
+      ${strengths ? ` You consistently perform well in categories like ${strengths}, where your approach appears more structured and reliable.` : ""}
+      ${weak ? ` In contrast, your results drop in ${weak}, where outcomes are less predictable.` : ""}
+    </p>
+
+    <p>
+      Your decisions are distributed across strong, average, and weak outcomes. This does not indicate a lack of ability—it indicates inconsistency in execution. When your process is structured, results improve. When it becomes reactive, results decline.
+    </p>
+
+    ${categoryInsight ? `<p>${categoryInsight}</p>` : ""}
+
+    <p>${temporal}</p>
+
+    <p>${context}</p>
+
+    ${costInsight ? `<p>${costInsight}</p>` : ""}
+
+    <p>
+      A practical adjustment going forward is to deliberately slow down and evaluate your options before committing—especially in moments of time pressure or emotional urgency. These are the moments where small changes in approach produce the largest improvements in outcome.
+    </p>
+
+    ${adjustments.length ? `
       <p>
-        ${intro}
-        ${strengths ? `You consistently perform well in categories like ${strengths}, where your approach appears more structured and reliable.` : ""}
-        ${weakFormatted ? ` In contrast, your results drop in ${weakFormatted}, where outcomes are less predictable.` : ""}
+        To strengthen your decision-making further, focus on ${adjustments.map(a => a.toLowerCase()).join(", ")}.
       </p>
+    ` : ""}
 
-      <p>
-        Your decisions are distributed across strong, average, and weak categories. 
-        This doesn’t point to a lack of ability—it points to inconsistency in execution. 
-        When your process is deliberate, results improve. When it becomes reactive, results decline.
-      </p>
+    <p>
+      Overall, your foundation is strong. The opportunity now is refinement—applying the same level of clarity, structure, and discipline to the situations where your results currently fall short.
+    </p>
 
-      ${weakSentence ? `<p>${weakSentence}</p>` : ""}
+    <div class="signature">— Your Decision System</div>
 
-      ${temporalInsight}
-
-      ${context}
-
-      <p>
-        A practical adjustment going forward would be to slow down and evaluate your options before committing, 
-        especially when you feel time pressure or emotional urgency. These are the moments where small changes 
-        in how you approach a decision can produce meaningful improvements in outcome.
-      </p>
-
-      ${
-        adjustments.length
-        ? `<p>
-            To strengthen your decision-making further, focus on ${adjustments
-              .map(a => a.toLowerCase())
-              .join(", ")}.
-          </p>`
-        : ""
-      }
-
-      <p>
-        Overall, your foundation is strong. The opportunity now is refinement—applying the same level of clarity 
-        and structure you use in your strongest categories to the situations where your results currently fall short.
-      </p>
-
-      <div class="signature">— Your Decision System</div>
-
-    </div>
+  </div>
   `;
 }
 
@@ -226,33 +219,22 @@ async function load(){
     const evaluated = data.evaluatedDecisions || 0;
 
     if (evaluated < 3) {
-      container.innerHTML = `
-        <div class="notice">
-          You need at least 3 evaluated decisions before meaningful coaching can be generated.
-        </div>
-      `;
+      container.innerHTML = `<div class="notice">Not enough data yet.</div>`;
       return;
     }
 
     let notice = "";
 
     if (evaluated < 8) {
-      notice = `
-        <div class="notice">
-          Your coaching insights are still developing and will become more precise as more decisions are evaluated.
-        </div>
-      `;
+      notice = `<div class="notice">Insights are stabilizing and will become more precise with additional data.</div>`;
     }
 
     container.innerHTML = notice + buildLetter(report, data);
 
-  }catch(err){
-    console.error(err);
-    container.innerHTML = "Failed to load coaching insights.";
+  } catch (err){
+    container.innerHTML = "Failed to load coaching.";
   }
 }
-
-/* NAVIGATION */
 
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }

@@ -13,7 +13,6 @@ body {
   display: flex;
 }
 
-/* SIDEBAR (STANDARDIZED) */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -44,7 +43,6 @@ body {
   font-weight: bold;
 }
 
-/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -117,10 +115,15 @@ body {
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 
 function token(){
   return localStorage.getItem("ads_token");
+}
+
+function formatCost(cost){
+  if(cost === null || cost === undefined) return "";
+  return "$" + Number(cost).toLocaleString();
 }
 
 const t = token();
@@ -129,7 +132,6 @@ if(!t || t === "null" || t === "undefined"){
   throw new Error("STOP");
 }
 
-/* LOAD */
 async function load(){
 
   const res = await fetch(API + "/decisions", {
@@ -165,6 +167,11 @@ async function load(){
         </button>
       </div>
 
+      <div class="small">
+        ${d.category || ""}
+        ${d.cost ? " • " + formatCost(d.cost) : ""}
+      </div>
+
       <div class="small">Latest satisfaction: ${satisfaction}/10</div>
       <div class="tag ${usageClass}">${latest.frequencyOfUse} Use</div>
     `;
@@ -184,7 +191,6 @@ function goHistoryPage(e, id){
   window.location.href = "evaluation-history.html?id=" + id;
 }
 
-/* NAV */
 function goDash(){ window.location.href="dashboard.html"; }
 function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }

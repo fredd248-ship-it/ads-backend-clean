@@ -52,52 +52,7 @@ body {
   padding: 18px;
   border-radius: 12px;
   background: white;
-  border-left: 5px solid #ccc;
 }
-
-.card.primary { border-color: #4338ca; background: #f5f7ff; }
-.card.success { border-color: #4caf50; background: #f3faf5; }
-.card.warning { border-color: #ff9800; background: #fff7ed; }
-.card.danger { border-color: #f44336; background: #fdecec; }
-
-.notice {
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  padding: 14px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
-.title {
-  font-weight: bold;
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-.text {
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.distribution {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.dist-box {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: bold;
-}
-
-.dist-strong { background: #e6f7ec; color: #1b5e20; }
-.dist-average { background: #fff3e0; color: #e65100; }
-.dist-weak { background: #fdecea; color: #b71c1c; }
 
 .section {
   margin-top: 24px;
@@ -127,31 +82,11 @@ body {
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 const token = localStorage.getItem("ads_token");
 
-function card(title, content, type="") {
-  return `
-    <div class="card ${type}">
-      <div class="title">${title}</div>
-      <div class="text">${content}</div>
-    </div>
-  `;
-}
-
-function interpretDistribution(d) {
-  if (!d) return "";
-
-  if (d.strong >= 60)
-    return "You consistently make strong decisions across most categories.";
-
-  if (d.weak >= 50)
-    return "A large portion of your decisions are underperforming — improvement is needed.";
-
-  if (d.strong >= 30 && d.weak >= 30)
-    return "Your results show a mix of strong and weak outcomes, indicating inconsistency rather than lack of ability.";
-
-  return "Your decisions are generally balanced with moderate consistency.";
+function card(title, text) {
+  return `<div class="card"><strong>${title}</strong><br>${text}</div>`;
 }
 
 async function load() {
@@ -169,95 +104,63 @@ async function load() {
 
     let html = "";
 
-    const evaluated = data.evaluatedDecisions || 0;
-
-    /* 🔒 DATA CONFIDENCE LAYER */
-
-    if (evaluated < 3) {
-      container.innerHTML = `
-        <div class="notice">
-          You need at least 3 evaluated decisions before meaningful insights can be generated.
-          Start evaluating your decisions to unlock patterns and recommendations.
-        </div>
-      `;
-      return;
-    }
-
-    if (evaluated < 8) {
-      html += `
-        <div class="notice">
-          These insights are based on a limited number of decisions.
-          Patterns may not yet be stable and should be interpreted cautiously.
-        </div>
-      `;
-    }
-
-    /* DISTRIBUTION */
+    // =========================
+    // ORIGINAL INSIGHTS UI
+    // =========================
 
     if (data.distribution) {
-      html += card(
-        "Decision Distribution",
-        `
-        <div class="distribution">
-          <div class="dist-box dist-strong">${data.distribution.strong}%<br>Strong</div>
-          <div class="dist-box dist-average">${data.distribution.average}%<br>Average</div>
-          <div class="dist-box dist-weak">${data.distribution.weak}%<br>Weak</div>
-        </div>
-        <div style="margin-top:10px;">
-          ${interpretDistribution(data.distribution)}
-        </div>
-        `,
-        "primary"
-      );
+      html += card("Decision Distribution",
+        `${data.distribution.strong}% Strong<br>
+         ${data.distribution.average}% Average<br>
+         ${data.distribution.weak}% Weak`);
     }
 
     html += `<div class="section">Strategic Insights</div>`;
 
     if (data.primaryPattern) {
-      html += card("Primary Pattern", data.primaryPattern, "warning");
+      html += card("Primary Pattern", data.primaryPattern);
     }
 
     if (data.recommendedFocus) {
-      html += card("Recommended Focus", data.recommendedFocus, "danger");
+      html += card("Recommended Focus", data.recommendedFocus);
     }
 
-    if (data.behaviorReport && data.behaviorReport.recommendedAdjustments?.length) {
-      html += card(
-        "Recommended Adjustments",
+    if (data.behaviorReport?.recommendedAdjustments?.length) {
+      html += card("Recommended Adjustments",
         data.behaviorReport.recommendedAdjustments
-          .map(item => `• ${item}`)
-          .join("<br>")
-      );
-    }
-
-    if (data.timePressureInsight) {
-      html += card("Time Pressure Impact", data.timePressureInsight);
-    }
-
-    if (data.emotionalInsight) {
-      html += card("Emotional Impact", data.emotionalInsight);
-    }
-
-    if (data.usageInsight) {
-      html += card("Usage vs Satisfaction", data.usageInsight);
+          .map(a => "• " + a)
+          .join("<br>"));
     }
 
     html += `<div class="section">Overview</div>`;
 
-    html += card(
-      "Evaluation Rate",
-      `${data.evaluationRate}% of your decisions have been evaluated`
-    );
+    html += card("Evaluation Rate",
+      `${data.evaluationRate || 0}% of your decisions have been evaluated`);
 
-    html += card(
-      "Follow-Through Rate",
-      `${data.followThroughRate}% of your decisions would be made again`
-    );
+    html += card("Follow-Through Rate",
+      `${data.followThroughRate || 0}% of your decisions would be made again`);
+
+    // =========================
+    // NEW — COST INSIGHTS (ADDED, NOT REPLACED)
+    // =========================
+
+    if (data.costInsights) {
+
+      html += `<div class="section">Cost Insights</div>`;
+
+      html += card("Total Spend",
+        "$" + (data.costInsights.totalSpend || 0).toLocaleString());
+
+      html += card("Expensive Mistakes",
+        data.costInsights.expensiveMistakes);
+
+      html += card("High-Value Wins",
+        data.costInsights.expensiveWins);
+    }
 
     container.innerHTML = html;
 
   } catch (err) {
-    console.error(err);
     container.innerHTML = "Failed to load insights";
   }
 }

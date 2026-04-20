@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login - OutcomeClarity</title>
+<title>Enter Invite - OutcomeClarity</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -34,9 +34,11 @@ button {
   width: 100%;
   padding: 12px;
   margin-top: 15px;
-  background: #4f46e5;
+  background: #4338ca;
   color: white;
   border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .error {
@@ -49,44 +51,41 @@ button {
 <body>
 
 <div class="card">
-  <h1>Login</h1>
+  <h2>Enter Beta Access</h2>
 
-  <input id="email" placeholder="Email" />
-  <input id="password" type="password" placeholder="Password" />
-
-  <button onclick="login()">Login</button>
+  <input id="code" placeholder="Invite Code" />
+  <button onclick="submitCode()">Continue</button>
 
   <div id="error" class="error"></div>
-
-  <p>
-    Don’t have an account? <a href="register.html">Create one</a>
-  </p>
 </div>
 
 <script>
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+
+async function submitCode() {
+  const code = document.getElementById("code").value;
 
   try {
-    const res = await fetch("/api/v1/auth/login", {
+    const res = await fetch("/api/v1/invite/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ code })
     });
 
     if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem("ads_token", data.token);
-      localStorage.removeItem("invite_valid");
-      window.location.href = "dashboard.html";
+      // ✅ STORE BOTH FLAGS
+      localStorage.setItem("invite_valid", "true");
+      localStorage.setItem("invite_code", code);
+
+      window.location.href = "login.html";
     } else {
-      document.getElementById("error").innerText = "Invalid email or password";
+      document.getElementById("error").innerText = "Invalid invite code";
     }
+
   } catch (err) {
     document.getElementById("error").innerText = "Server error";
   }
 }
+
 </script>
 
 </body>

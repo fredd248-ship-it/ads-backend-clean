@@ -36,32 +36,42 @@ body { margin: 0; font-family: Arial, sans-serif; background: #f5f7fb; display: 
 
 <div class="main">
   <h2>History</h2>
-  <div id="content"></div>
+  <div id="content">Loading...</div>
 </div>
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+const API = "/api/v1";
 
-function token() {
+function getToken() {
   return localStorage.getItem("ads_token");
 }
 
-const t = token();
-if (!t || t === "null" || t === "undefined") {
-  window.location.href = "login.html";
-  throw new Error("STOP");
+function ensureAuth() {
+  const t = getToken();
+  if (!t || t === "null" || t === "undefined") {
+    window.location.href = "login.html";
+    throw new Error("STOP");
+  }
 }
 
 async function load() {
 
+  ensureAuth();
+
+  const token = getToken();
   const container = document.getElementById("content");
-  container.innerHTML = "Loading...";
 
   try {
+
     const res = await fetch(API + "/insights", {
-      headers: { Authorization: "Bearer " + t }
+      headers: { Authorization: "Bearer " + token }
     });
+
+    if (!res.ok) {
+      container.innerHTML = "<div class='error'>Failed to load data</div>";
+      return;
+    }
 
     const data = await res.json();
 
@@ -74,7 +84,6 @@ async function load() {
 
     const avgScore = Math.round(data?.averageRegretScore ?? 0);
 
-    /* ✅ CORRECT — STRUCTURED FIELD */
     const topCategory = data?.mostUsedCategory
       ? data.mostUsedCategory.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())
       : "N/A";

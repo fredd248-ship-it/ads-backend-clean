@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 /* =========================
-   INVITE CODES (CASE SAFE)
+   INVITE CODES
 ========================= */
 const validCodes = [
   "OC-BETA-01",
@@ -18,11 +18,16 @@ const validCodes = [
 ];
 
 /* =========================
-   VERIFY
+   VERIFY (HARDENED)
 ========================= */
 router.post("/verify", (req, res) => {
   try {
-    let { code } = req.body;
+
+    // 🔥 HANDLE MULTIPLE INPUT TYPES SAFELY
+    let code =
+      req.body?.code ||
+      req.query?.code ||
+      "";
 
     if (!code) {
       return res.status(400).json({
@@ -31,8 +36,8 @@ router.post("/verify", (req, res) => {
       });
     }
 
-    // normalize fully
-    code = code.trim().toUpperCase();
+    // normalize
+    code = String(code).trim().toUpperCase();
 
     if (!validCodes.includes(code)) {
       return res.status(400).json({
@@ -41,12 +46,10 @@ router.post("/verify", (req, res) => {
       });
     }
 
-    return res.json({
-      success: true
-    });
+    return res.json({ success: true });
 
   } catch (err) {
-    console.error(err);
+    console.error("Invite error:", err);
     return res.status(500).json({
       success: false,
       error: "Server error"

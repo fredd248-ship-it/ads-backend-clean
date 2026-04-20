@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 /* =========================
-   INVITE CODE LIST
+   INVITE CODES (CASE SAFE)
 ========================= */
 const validCodes = [
   "OC-BETA-01",
@@ -18,11 +18,11 @@ const validCodes = [
 ];
 
 /* =========================
-   VERIFY INVITE CODE
+   VERIFY
 ========================= */
 router.post("/verify", (req, res) => {
   try {
-    const { code } = req.body;
+    let { code } = req.body;
 
     if (!code) {
       return res.status(400).json({
@@ -31,11 +31,10 @@ router.post("/verify", (req, res) => {
       });
     }
 
-    // normalize input (trim spaces)
-    const cleanedCode = code.trim();
+    // normalize fully
+    code = code.trim().toUpperCase();
 
-    // check against valid codes
-    if (!validCodes.includes(cleanedCode)) {
+    if (!validCodes.includes(code)) {
       return res.status(400).json({
         success: false,
         error: "Invalid invite code"
@@ -47,7 +46,7 @@ router.post("/verify", (req, res) => {
     });
 
   } catch (err) {
-    console.error("Invite verify error:", err);
+    console.error(err);
     return res.status(500).json({
       success: false,
       error: "Server error"

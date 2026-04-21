@@ -6,20 +6,28 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-/* 🔐 INVITE CODES (SIMPLE VERSION) */
-const VALID_CODES = ["TEST123", "BETA2026"];
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 /* =========================
-   REGISTER (LOCKED)
+   REGISTER (DB INVITE SYSTEM)
 ========================= */
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, inviteCode } = req.body;
+    const { email, password, inviteToken } = req.body;
 
-    // 🔒 REQUIRE INVITE CODE
-    if (!inviteCode || !VALID_CODES.includes(inviteCode)) {
-      return res.status(403).json({
-        error: "Valid invite code required"
+    // Require fields
+    if (!email || !password || !inviteToken) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
+    // 🔍 Check invite in DB
+    const invite = await prisma.invite.findUnique({
+      where: { token: inviteToken }
+    });
+
+    if (!invite || invite.used) {
+      return res.status(400).json({
+        error: "Invalid access code"
       });
     }
 
@@ -45,6 +53,12 @@ router.post("/register", async (req, res) => {
       }
     });
 
+    // 🔐 Mark invite as used
+    await prisma.invite.update({
+      where: { token: inviteToken },
+      data: { used: true }
+    });
+
     return res.json({
       success: true
     });
@@ -58,7 +72,7 @@ router.post("/register", async (req, res) => {
 });
 
 /* =========================
-   LOGIN (UNCHANGED)
+   LOGIN
 ========================= */
 router.post("/login", async (req, res) => {
   try {
@@ -80,7 +94,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || "secret",
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 

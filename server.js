@@ -37,9 +37,9 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   FALLBACK (IMPORTANT)
+   SAFE FALLBACK (FIXED)
 ========================= */
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 

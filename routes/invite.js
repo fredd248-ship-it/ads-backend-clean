@@ -4,25 +4,21 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-// 🔒 ADMIN KEY (keep this secret)
 const ADMIN_KEY = "your_custom_secret_here";
 
-// ✅ SAFE CHARACTER SET (no O, 0, I, l)
+// Safe charset (no O, 0, I, l)
 const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ123456789";
 
-// Generate safe token
 function generateToken(length = 8) {
   let token = "";
   for (let i = 0; i < length; i++) {
-    const index = Math.floor(Math.random() * CHARSET.length);
-    token += CHARSET[index];
+    token += CHARSET[Math.floor(Math.random() * CHARSET.length)];
   }
   return token;
 }
 
 /**
- * POST /api/v1/invite/create
- * Headers: x-admin-key
+ * CREATE INVITE
  */
 router.post("/create", async (req, res) => {
   try {
@@ -33,30 +29,30 @@ router.post("/create", async (req, res) => {
     }
 
     let token;
-    let exists = true;
+    let attempts = 0;
 
-    // Ensure uniqueness
-    while (exists) {
+    // Prevent infinite loop
+    while (attempts < 5) {
       token = generateToken(8);
 
       const existing = await prisma.invite.findUnique({
         where: { token }
       });
 
-      if (!existing) {
-        exists = false;
-      }
+      if (!existing) break;
+
+      attempts++;
+    }
+
+    if (!token) {
+      return res.status(500).json({ error: "Failed to generate token" });
     }
 
     const invite = await prisma.invite.create({
-      data: {
-        token
-      }
+      data: { token }
     });
 
-    return res.json({
-      token: invite.token
-    });
+    return res.json({ token });
 
   } catch (error) {
     console.error("INVITE CREATE ERROR:", error);
@@ -65,8 +61,7 @@ router.post("/create", async (req, res) => {
 });
 
 /**
- * POST /api/v1/invite/validate
- * Body: { token }
+ * VALIDATE INVITE
  */
 router.post("/validate", async (req, res) => {
   try {

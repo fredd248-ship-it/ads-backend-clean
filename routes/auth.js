@@ -9,21 +9,28 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 /* =========================
-   REGISTER (DB INVITE SYSTEM)
+   REGISTER (HARDENED)
 ========================= */
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, inviteToken } = req.body;
+    let { email, password, inviteToken } = req.body;
 
-    // Require fields
+    // Normalize input
+    if (inviteToken) {
+      inviteToken = inviteToken.trim().toUpperCase();
+    }
+
     if (!email || !password || !inviteToken) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
-    // 🔍 Check invite in DB
+    console.log("REGISTER ATTEMPT TOKEN:", inviteToken);
+
     const invite = await prisma.invite.findUnique({
       where: { token: inviteToken }
     });
+
+    console.log("DB LOOKUP RESULT:", invite);
 
     if (!invite || invite.used) {
       return res.status(400).json({
@@ -31,7 +38,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Check existing user
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -42,10 +48,8 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await prisma.user.create({
       data: {
         email,
@@ -53,21 +57,16 @@ router.post("/register", async (req, res) => {
       }
     });
 
-    // 🔐 Mark invite as used
     await prisma.invite.update({
       where: { token: inviteToken },
       data: { used: true }
     });
 
-    return res.json({
-      success: true
-    });
+    return res.json({ success: true });
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    return res.status(500).json({
-      error: "Server error"
-    });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -102,9 +101,7 @@ router.post("/login", async (req, res) => {
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-    return res.status(500).json({
-      error: "Server error"
-    });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 

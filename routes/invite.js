@@ -2,13 +2,17 @@ const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 
+console.log("INVITE ROUTE VERSION 3 LOADED");
+
 const prisma = new PrismaClient();
 
+// 🔒 ADMIN KEY
 const ADMIN_KEY = "your_custom_secret_here";
 
-// Safe charset (no O, 0, I, l)
+// ✅ SAFE CHARACTER SET (no O, 0, I, l)
 const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ123456789";
 
+// 🔁 Generate token
 function generateToken(length = 8) {
   let token = "";
   for (let i = 0; i < length; i++) {
@@ -18,7 +22,7 @@ function generateToken(length = 8) {
 }
 
 /**
- * CREATE INVITE (REAL)
+ * POST /api/v1/invite/create
  */
 router.post("/create", async (req, res) => {
   try {
@@ -28,19 +32,20 @@ router.post("/create", async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    let token;
-    let attempts = 0;
+    let token = null;
 
-    while (attempts < 5) {
-      token = generateToken(8);
+    // Try up to 5 times to avoid rare collisions
+    for (let i = 0; i < 5; i++) {
+      const candidate = generateToken(8);
 
       const existing = await prisma.invite.findUnique({
-        where: { token }
+        where: { token: candidate }
       });
 
-      if (!existing) break;
-
-      attempts++;
+      if (!existing) {
+        token = candidate;
+        break;
+      }
     }
 
     if (!token) {
@@ -60,7 +65,7 @@ router.post("/create", async (req, res) => {
 });
 
 /**
- * VALIDATE INVITE
+ * POST /api/v1/invite/validate
  */
 router.post("/validate", async (req, res) => {
   try {

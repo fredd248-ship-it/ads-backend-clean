@@ -1,59 +1,38 @@
 const express = require("express");
 const router = express.Router();
+const { PrismaClient } = require("@prisma/client");
 
-/* =========================
-   INVITE CODES
-========================= */
-const validCodes = [
-  "OC-BETA-01",
-  "OC-BETA-02",
-  "OC-BETA-03",
-  "OC-BETA-04",
-  "OC-BETA-05",
-  "OC-BETA-06",
-  "OC-BETA-07",
-  "OC-BETA-08",
-  "OC-BETA-09",
-  "OC-BETA-10"
-];
+const prisma = new PrismaClient();
 
-/* =========================
-   VERIFY (BODY-AGNOSTIC)
-========================= */
-router.post("/verify", (req, res) => {
+/**
+ * POST /api/v1/invite/validate
+ * Body: { token }
+ */
+router.post("/validate", async (req, res) => {
   try {
+    const { token } = req.body;
 
-    // 🔥 FALLBACK CHAIN (this is the fix)
-    let code =
-      req.body?.code ||
-      req.query?.code ||
-      req.headers["x-invite-code"] ||
-      "";
-
-    code = String(code).trim().toUpperCase();
-
-    if (!code) {
-      return res.status(400).json({
-        success: false,
-        error: "No code provided"
-      });
+    if (!token) {
+      return res.status(400).json({ valid: false, error: "Token required" });
     }
 
-    if (!validCodes.includes(code)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid invite code"
-      });
-    }
-
-    return res.json({ success: true });
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      error: "Server error"
+    const invite = await prisma.invite.findUnique({
+      where: { token }
     });
+
+    if (!invite) {
+      return res.json({ valid: false });
+    }
+
+    if (invite.used) {
+      return res.json({ valid: false });
+    }
+
+    return res.json({ valid: true });
+
+  } catch (error) {
+    console.error("INVITE VALIDATION ERROR:", error);
+    return res.status(500).json({ valid: false });
   }
 });
 

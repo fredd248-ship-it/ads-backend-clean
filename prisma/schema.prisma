@@ -17,30 +17,35 @@ model User {
 }
 
 model Decision {
-  id              String   @id @default(uuid())
+  id              String       @id @default(uuid())
   title           String
   category        String?
   cost            Float?
   timePressure    Int?
   emotionalWeight Int?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime     @default(now())
 
-  // 🔴 CRITICAL — USER OWNERSHIP
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User @relation(fields: [userId], references: [id])
 
-  evaluations     Evaluation[]
+  evaluations Evaluation[]
 }
 
 model Evaluation {
-  id              String   @id @default(uuid())
-  decisionId      String
-  regretScore     Int
-  frequencyOfUse  String
-  wouldBuyAgain   Boolean
-  timePressure    Int?
-  emotionalWeight Int?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(uuid())
+  regretScore    Int
+  frequencyOfUse Int?
+  wouldBuyAgain  Boolean?
+  createdAt      DateTime @default(now())
 
-  decision        Decision @relation(fields: [decisionId], references: [id])
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id])
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
 }

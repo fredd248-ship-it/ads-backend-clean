@@ -37,6 +37,13 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
+   FALLBACK (IMPORTANT)
+========================= */
+app.get("*", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
+
+/* =========================
    START SERVER
 ========================= */
 const PORT = process.env.PORT || 5000;

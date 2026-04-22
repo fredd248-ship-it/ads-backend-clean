@@ -86,11 +86,26 @@ body {
   align-items: center;
 }
 
-/* NEW COLOR SYSTEM */
+/* COLOR SYSTEM */
 .clay { background: #c4a484; }
 .good { background: #16a34a; color: white; }
 .mid { background: #2563eb; color: white; }
 .bad { background: #dc2626; color: white; }
+
+/* TEXT STRUCTURE */
+.card-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+.card-meta {
+  font-size: 12px;
+  opacity: 0.85;
+}
 
 /* MODAL */
 #createModal {
@@ -181,9 +196,7 @@ button {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* =========================
-   COLOR LOGIC (NEW)
-========================= */
+/* COLOR LOGIC */
 function getColorClass(decision){
   if(!decision.evaluations.length) return "clay";
 
@@ -245,11 +258,19 @@ async function load(){
   }
 
   content.innerHTML = decisions.map(d => {
+
+    const category = d.category || "Uncategorized";
+    const cost = d.cost ? "$" + d.cost : "";
+
     return `
       <div class="card ${getColorClass(d)}">
-        <span>${d.title}</span>
+        <div class="card-left">
+          <div class="card-title">${d.title}</div>
+          <div class="card-meta">${category} ${cost ? "• " + cost : ""}</div>
+        </div>
       </div>
     `;
+
   }).join("");
 }
 

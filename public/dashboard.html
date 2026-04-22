@@ -97,8 +97,6 @@ function getLatestEvaluation(decision) {
   if (!decision.evaluations || decision.evaluations.length === 0) {
     return null;
   }
-
-  // Always take most recent (last)
   return decision.evaluations[decision.evaluations.length - 1];
 }
 
@@ -109,25 +107,24 @@ function getSatisfaction(evaluation) {
   if (!evaluation || evaluation.regretScore === null || evaluation.regretScore === undefined) {
     return null;
   }
-
   return 10 - evaluation.regretScore;
 }
 
 /* =========================
-   COLOR LOGIC (FIXED)
+   COLOR LOGIC
 ========================= */
 function getDecisionColor(decision) {
   const evalData = getLatestEvaluation(decision);
 
-  if (!evalData) return "#c4a484"; // clay
+  if (!evalData) return "#c4a484";
 
   const satisfaction = getSatisfaction(evalData);
 
   if (satisfaction === null) return "#c4a484";
 
-  if (satisfaction <= 3) return "#dc2626"; // red
-  if (satisfaction <= 6) return "#2563eb"; // blue
-  return "#16a34a"; // green
+  if (satisfaction <= 3) return "#dc2626";
+  if (satisfaction <= 6) return "#2563eb";
+  return "#16a34a";
 }
 
 function getDecisionLabel(decision) {
@@ -145,11 +142,11 @@ function getDecisionLabel(decision) {
 }
 
 /* =========================
-   LOAD DATA
+   LOAD DATA (FIXED URL)
 ========================= */
 async function loadDecisions() {
   try {
-    const res = await fetch("/api/v1/decisions", {
+    const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/decisions", {
       headers: {
         Authorization: "Bearer " + token
       }
@@ -159,6 +156,11 @@ async function loadDecisions() {
 
     const container = document.getElementById("decisions");
     container.innerHTML = "";
+
+    if (!Array.isArray(decisions) || decisions.length === 0) {
+      container.innerHTML = "<p>No decisions yet.</p>";
+      return;
+    }
 
     decisions.forEach(decision => {
       const color = getDecisionColor(decision);

@@ -44,11 +44,6 @@ body {
   text-align: center;
 }
 
-.create-label {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
 .create-btn {
   width: 50px;
   height: 50px;
@@ -65,15 +60,6 @@ body {
   padding: 20px;
   max-width: 800px;
   margin: auto;
-  position: relative;
-}
-
-.top-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: #4338ca;
-  cursor: pointer;
 }
 
 .card {
@@ -81,29 +67,33 @@ body {
   padding: 16px;
   margin-top: 14px;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.clay { background: #c4a484; }
+.clay { background: #e7d8c9; color:#333; }
 .good { background: #16a34a; color: white; }
 .mid { background: #2563eb; color: white; }
 .bad { background: #dc2626; color: white; }
 
-.card-left {
-  display: flex;
-  flex-direction: column;
+.card-title { font-weight: bold; }
+.card-meta { font-size: 12px; opacity: 0.8; }
+
+/* MODAL */
+#evalModal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
 }
 
-.card-title {
-  font-weight: bold;
+.modal-content {
+  background:white;
+  width:400px;
+  margin:100px auto;
+  padding:20px;
+  border-radius:12px;
 }
 
-.card-meta {
-  font-size: 12px;
-  opacity: 0.85;
-}
 </style>
 </head>
 
@@ -116,17 +106,39 @@ body {
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
-
-  <div class="create-section">
-    <div class="create-label">New Decision</div>
-    <button class="create-btn" onclick="openModal()">+</button>
-  </div>
 </div>
 
 <div class="main">
-  <div class="top-link" onclick="goHow()">How it works</div>
   <h2>Decisions</h2>
   <div id="content">Loading...</div>
+</div>
+
+<!-- EVALUATION MODAL -->
+<div id="evalModal">
+  <div class="modal-content">
+
+    <h3 id="modalTitle"></h3>
+
+    <label>Satisfaction (0–10)</label>
+    <input type="range" min="0" max="10" value="5" id="slider">
+
+    <label>Frequency</label>
+    <select id="frequency">
+      <option>Low</option>
+      <option selected>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Would you buy again?</label>
+    <select id="again">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+
+    <button onclick="saveEval()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
+
+  </div>
 </div>
 
 <script>
@@ -134,21 +146,47 @@ body {
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-/* CLICK HANDLER (FIXED) */
-function openDecision(id){
-  window.location.href = "evaluations.html?id=" + id;
+let activeDecisionId = null;
+
+function getColorClass(d){
+  if(!d.evaluations.length) return "clay";
+  const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
+  if(s <=3) return "bad";
+  if(s <=6) return "mid";
+  return "good";
 }
 
-/* COLOR LOGIC */
-function getColorClass(decision){
-  if(!decision.evaluations.length) return "clay";
+function openModal(d){
+  activeDecisionId = d.id;
+  document.getElementById("modalTitle").innerText = d.title;
+  document.getElementById("evalModal").style.display = "block";
+}
 
-  const evalData = decision.evaluations[decision.evaluations.length-1];
-  const satisfaction = 10 - evalData.regretScore;
+function closeModal(){
+  document.getElementById("evalModal").style.display = "none";
+}
 
-  if(satisfaction <= 3) return "bad";
-  if(satisfaction <= 6) return "mid";
-  return "good";
+async function saveEval(){
+  const satisfaction = Number(document.getElementById("slider").value);
+  const regretScore = 10 - satisfaction;
+  const frequency = document.getElementById("frequency").value;
+  const again = document.getElementById("again").value === "true";
+
+  await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      regretScore,
+      frequencyOfUse: frequency,
+      wouldBuyAgain: again
+    })
+  });
+
+  closeModal();
+  load();
 }
 
 async function load(){
@@ -156,30 +194,21 @@ async function load(){
     headers:{ Authorization:"Bearer "+token }
   });
 
-  const result = await res.json();
-  const decisions = result.data || [];
+  const data = await res.json();
+  const decisions = data.data || [];
 
   const content = document.getElementById("content");
 
-  if(decisions.length === 0){
-    content.innerHTML = "<p>No decisions yet.</p>";
-    return;
-  }
-
   content.innerHTML = decisions.map(d => {
-
-    const category = d.category || "Uncategorized";
-    const cost = d.cost ? "$" + d.cost : "";
+    const cat = d.category || "Uncategorized";
+    const cost = d.cost ? "$"+d.cost : "";
 
     return `
-      <div class="card ${getColorClass(d)}" onclick="openDecision('${d.id}')">
-        <div class="card-left">
-          <div class="card-title">${d.title}</div>
-          <div class="card-meta">${category} ${cost ? "• " + cost : ""}</div>
-        </div>
+      <div class="card ${getColorClass(d)}" onclick='openModal(${JSON.stringify(d)})'>
+        <div class="card-title">${d.title}</div>
+        <div class="card-meta">${cat} ${cost ? "• "+cost : ""}</div>
       </div>
     `;
-
   }).join("");
 }
 
@@ -188,7 +217,6 @@ function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
-function goHow(){ window.location.href="how-it-works.html"; }
 
 load();
 

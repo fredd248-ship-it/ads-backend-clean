@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ADS Dashboard</title>
+<title>Dashboard - OutcomeClarity</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,252 +10,158 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f5f7fb;
-  display: flex;
 }
 
-.sidebar {
-  width: 220px;
-  background: #e0e7ff;
-  height: 100vh;
-  padding: 20px 10px;
-  border-right: 1px solid #c7d2fe;
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-item {
-  padding: 14px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-  color: #312e81;
-}
-
-.nav-item:hover { background: #c7d2fe; }
-
-.active {
-  background: #4338ca;
+.header {
+  padding: 15px;
+  background: #111827;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.create-section {
-  margin-top: 40px;
-  text-align: center;
-}
-
-.create-label {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.create-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #4338ca;
-  color: white;
-  font-size: 24px;
-  border: none;
-  cursor: pointer;
-}
-
-.main {
-  flex: 1;
+.container {
   padding: 20px;
-  max-width: 800px;
-  margin: auto;
-  position: relative;
-}
-
-.top-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: #4338ca;
-  cursor: pointer;
 }
 
 .card {
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 14px;
+  background: white;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tag {
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+}
+
+button {
+  padding: 6px 10px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  border-radius: 5px;
   cursor: pointer;
-  transition: transform 0.1s ease;
 }
-
-.card:hover {
-  transform: scale(1.02);
-}
-
-.low-use { background: #fde68a; }
-.medium-use { background: #bfdbfe; }
-.high-use { background: #bbf7d0; }
-
-#createModal {
-  display: none;
-  position: fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.5);
-}
-
-.modal-content {
-  background: linear-gradient(135deg, #ffffff, #eef2ff);
-  width: 360px;
-  margin: 100px auto;
-  padding: 20px;
-  border-radius: 14px;
-}
-
-.modal-content input,
-.modal-content select {
-  width: 100%;
-  margin-top: 10px;
-  padding: 8px;
-}
-
-.modal-content button {
-  margin-top: 10px;
-  width: 100%;
-  padding: 10px;
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-  <div class="nav-item active">Dashboard</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
-  <div class="nav-item" onclick="goHistory()">History</div>
-  <div class="nav-item" onclick="goInsights()">Insights</div>
-  <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
-  <div class="nav-item" onclick="goSettings()">Settings</div>
-
-  <div class="create-section">
-    <div class="create-label">New Decision</div>
-    <button class="create-btn" onclick="openModal()">+</button>
+<div class="header">
+  <div>OutcomeClarity</div>
+  <div>
+    <button onclick="goToSettings()">Settings</button>
+    <button onclick="logout()">Logout</button>
   </div>
 </div>
 
-<div class="main">
-  <div class="top-link" onclick="goHow()">How it works</div>
-  <h2>Decisions</h2>
-  <div id="content">Loading...</div>
-</div>
-
-<div id="createModal">
-  <div class="modal-content">
-
-    <h3>Create Decision</h3>
-
-    <input id="title" placeholder="Title">
-    <input id="cost" type="number" placeholder="Cost">
-
-    <select id="category">
-      <option value="">Select Category</option>
-      <option value="electronics">Electronics</option>
-      <option value="home">Home</option>
-      <option value="vehicle">Vehicle</option>
-      <option value="business">Business</option>
-      <option value="other">Other</option>
-    </select>
-
-    <button onclick="createDecision()">Save</button>
-    <button onclick="closeModal()">Cancel</button>
-
-  </div>
+<div class="container">
+  <h2>Your Decisions</h2>
+  <div id="decisions"></div>
 </div>
 
 <script>
-
-const API = "/api/v1";
+/* =========================
+   AUTH PROTECTION
+========================= */
 const token = localStorage.getItem("ads_token");
 
-function formatCost(cost){
-  if(cost === null || cost === undefined) return "";
-  return "$" + Number(cost).toLocaleString();
+if (!token) {
+  window.location.href = "/onboard.html";
 }
 
-function openModal(){
-  document.getElementById("createModal").style.display = "block";
+/* =========================
+   NAVIGATION
+========================= */
+function logout() {
+  localStorage.removeItem("ads_token");
+  window.location.href = "/onboard.html";
 }
 
-function closeModal(){
-  document.getElementById("createModal").style.display = "none";
+function goToSettings() {
+  window.location.href = "/settings.html";
 }
 
-async function createDecision(){
+/* =========================
+   COLOR LOGIC (FINAL)
+========================= */
+function getDecisionColor(decision) {
+  if (!decision.evaluations || decision.evaluations.length === 0) {
+    return "#c4a484"; // clay
+  }
 
-  await fetch(API + "/decisions", {
-    method: "POST",
-    headers: {
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body: JSON.stringify({
-      title: document.getElementById("title").value,
-      cost: parseFloat(document.getElementById("cost").value),
-      category: document.getElementById("category").value
-    })
-  });
+  const score = decision.evaluations[0].satisfaction;
 
-  closeModal();
-  load();
+  if (score <= 3) return "#dc2626";   // red
+  if (score <= 6) return "#2563eb";   // blue
+  return "#16a34a";                  // green
 }
 
-function getUseClass(freq){
-  if(freq==="Low") return "low-use";
-  if(freq==="Medium") return "medium-use";
-  if(freq==="High") return "high-use";
-  return "";
+function getDecisionLabel(decision) {
+  if (!decision.evaluations || decision.evaluations.length === 0) {
+    return "Not evaluated";
+  }
+
+  const score = decision.evaluations[0].satisfaction;
+
+  if (score <= 3) return "Poor";
+  if (score <= 6) return "Mixed";
+  return "Good";
 }
 
-async function load(){
+/* =========================
+   LOAD DATA
+========================= */
+async function loadDecisions() {
+  try {
+    const res = await fetch("/api/v1/decisions", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
 
-  const res = await fetch(API + "/decisions", {
-    headers:{ Authorization:"Bearer "+token }
-  });
+    const decisions = await res.json();
 
-  const data = await res.json();
-  const content = document.getElementById("content");
+    const container = document.getElementById("decisions");
+    container.innerHTML = "";
 
-  content.innerHTML = (data.data || []).map(d => {
+    decisions.forEach(decision => {
+      const color = getDecisionColor(decision);
+      const label = getDecisionLabel(decision);
 
-    let freq = null;
+      const div = document.createElement("div");
+      div.className = "card";
 
-    if (d.evaluations && d.evaluations.length){
-      freq = d.evaluations[d.evaluations.length - 1].frequencyOfUse;
-    }
+      div.innerHTML = `
+        <div>
+          <strong>${decision.title}</strong><br>
+          <small>${decision.category || ""}</small>
+        </div>
+        <div class="tag" style="background:${color}">
+          ${label}
+        </div>
+      `;
 
-    return `
-      <div class="card ${getUseClass(freq)}" onclick="goEvaluate('${d.id}')">
-        <strong>${d.title}</strong><br>
-        <span style="font-size:13px; color:#555;">
-          ${d.category || ""}
-          ${d.cost ? " • " + formatCost(d.cost) : ""}
-        </span>
-      </div>
-    `;
+      container.appendChild(div);
+    });
 
-  }).join("");
+  } catch (err) {
+    console.error("LOAD ERROR:", err);
+  }
 }
 
-function goEvaluate(id){
-  window.location.href = "evaluate.html?id=" + id;
-}
-
-function goEvaluations(){ window.location.href="evaluations.html"; }
-function goHistory(){ window.location.href="history.html"; }
-function goInsights(){ window.location.href="insights.html"; }
-function goBehavior(){ window.location.href="behavior.html"; }
-function goSettings(){ window.location.href="settings.html"; }
-function goHow(){ window.location.href="how-it-works.html"; }
-
-load();
-
+/* =========================
+   INIT
+========================= */
+loadDecisions();
 </script>
 
 </body>

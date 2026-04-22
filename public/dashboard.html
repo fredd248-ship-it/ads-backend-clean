@@ -67,21 +67,14 @@ button {
   <h2>Your Decisions</h2>
   <div id="decisions"></div>
 </div>
-<h2>Your Decisions (NEW VERSION)</h2>
 
 <script>
-/* =========================
-   AUTH PROTECTION
-========================= */
 const token = localStorage.getItem("ads_token");
 
 if (!token) {
   window.location.href = "/onboard.html";
 }
 
-/* =========================
-   NAVIGATION
-========================= */
 function logout() {
   localStorage.removeItem("ads_token");
   window.location.href = "/onboard.html";
@@ -91,9 +84,6 @@ function goToSettings() {
   window.location.href = "/settings.html";
 }
 
-/* =========================
-   SAFE EVALUATION ACCESS
-========================= */
 function getLatestEvaluation(decision) {
   if (!decision.evaluations || decision.evaluations.length === 0) {
     return null;
@@ -101,9 +91,6 @@ function getLatestEvaluation(decision) {
   return decision.evaluations[decision.evaluations.length - 1];
 }
 
-/* =========================
-   CONVERT SCORE
-========================= */
 function getSatisfaction(evaluation) {
   if (!evaluation || evaluation.regretScore === null || evaluation.regretScore === undefined) {
     return null;
@@ -111,16 +98,11 @@ function getSatisfaction(evaluation) {
   return 10 - evaluation.regretScore;
 }
 
-/* =========================
-   COLOR LOGIC
-========================= */
 function getDecisionColor(decision) {
   const evalData = getLatestEvaluation(decision);
-
   if (!evalData) return "#c4a484";
 
   const satisfaction = getSatisfaction(evalData);
-
   if (satisfaction === null) return "#c4a484";
 
   if (satisfaction <= 3) return "#dc2626";
@@ -130,11 +112,9 @@ function getDecisionColor(decision) {
 
 function getDecisionLabel(decision) {
   const evalData = getLatestEvaluation(decision);
-
   if (!evalData) return "Not evaluated";
 
   const satisfaction = getSatisfaction(evalData);
-
   if (satisfaction === null) return "Not evaluated";
 
   if (satisfaction <= 3) return "Poor";
@@ -142,23 +122,25 @@ function getDecisionLabel(decision) {
   return "Good";
 }
 
-/* =========================
-   LOAD DATA (FIXED URL)
-========================= */
 async function loadDecisions() {
   try {
     const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/decisions", {
       headers: {
-        Authorization: "Bearer " + token
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json"
       }
     });
 
-    const decisions = await res.json();
+    const result = await res.json();
+
+    console.log("API RESULT:", result);
+
+    const decisions = result.data || []; // ✅ FIX HERE
 
     const container = document.getElementById("decisions");
     container.innerHTML = "";
 
-    if (!Array.isArray(decisions) || decisions.length === 0) {
+    if (decisions.length === 0) {
       container.innerHTML = "<p>No decisions yet.</p>";
       return;
     }
@@ -188,9 +170,6 @@ async function loadDecisions() {
   }
 }
 
-/* =========================
-   INIT
-========================= */
 loadDecisions();
 </script>
 

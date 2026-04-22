@@ -1,151 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Settings</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  display: flex;
-}
-
-/* SIDEBAR */
-.sidebar {
-  width: 220px;
-  background: #e0e7ff;
-  height: 100vh;
-  padding: 20px 10px;
-  box-sizing: border-box;
-  border-right: 1px solid #c7d2fe;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.nav-item {
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  color: #312e81;
-  font-weight: 500;
-  text-align: center;
-}
-
-.nav-item:hover { background: #c7d2fe; }
-
-.active {
-  background: #4338ca;
-  color: white;
-  font-weight: bold;
-}
-
-/* MAIN */
-.main {
-  flex: 1;
-  padding: 20px;
-  max-width: 600px;
-  margin: auto;
-}
-
-/* CARD */
-.card {
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  margin-top: 14px;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.button {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #ef4444;
-  color: white;
-  cursor: pointer;
-  width: 100%;
-}
-
-/* LINK BUTTONS (match style but neutral color) */
-.link-button {
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #e0e7ff;
-  color: #312e81;
-  cursor: pointer;
-  width: 100%;
-  font-weight: 500;
-}
-</style>
+  <title>Register</title>
 </head>
-
 <body>
 
-<div class="sidebar">
-  <div class="nav-item" onclick="goDash()">Dashboard</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
-  <div class="nav-item" onclick="goHistory()">History</div>
-  <div class="nav-item" onclick="goInsights()">Insights</div>
-  <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
-  <div class="nav-item active">Settings</div>
-</div>
+<h2>Create Account</h2>
 
-<div class="main">
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+<input id="inviteToken" placeholder="Access Code"><br><br>
 
-<h2>Settings</h2>
+<button onclick="register()">Register</button>
 
-<!-- ACCOUNT -->
-<div class="card">
-  <div><strong>Account</strong></div>
-  <button class="button" onclick="logout()">Log Out</button>
-</div>
-
-<!-- NEW SECTION -->
-<div class="card">
-  <div><strong>App Information</strong></div>
-
-  <button class="link-button" onclick="goAbout()">About</button>
-  <button class="link-button" onclick="goDisclaimer()">Disclaimer</button>
-  <button class="link-button" onclick="goFaq()">FAQ</button>
-</div>
-
-</div>
+<p id="error" style="color:red;"></p>
 
 <script>
+console.log("REGISTER PAGE LOADED");
 
-/* AUTH GUARD */
-const token = localStorage.getItem("ads_token");
-if (!token || token === "null" || token === "undefined") {
-  window.location.href = "login.html";
-  throw new Error("STOP");
+async function register() {
+  console.log("REGISTER BUTTON CLICKED");
+
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const inviteToken = document.getElementById("inviteToken").value;
+
+  console.log("FORM DATA:", email, password, inviteToken);
+
+  try {
+    const res = await fetch("/api/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        inviteToken
+      })
+    });
+
+    console.log("REQUEST SENT");
+
+    const data = await res.json();
+
+    console.log("RESPONSE:", data);
+
+    if (res.ok) {
+      alert("Account created!");
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("error").innerText = data.error || "Registration failed";
+    }
+
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
+    document.getElementById("error").innerText = "Server error";
+  }
 }
-
-/* LOGOUT */
-function logout(){
-  localStorage.removeItem("ads_token");
-  window.location.href = "login.html";
-}
-
-/* NAV */
-function goDash(){ window.location.href="dashboard.html"; }
-function goEvaluations(){ window.location.href="evaluations.html"; }
-function goHistory(){ window.location.href="history.html"; }
-function goInsights(){ window.location.href="insights.html"; }
-function goBehavior(){ window.location.href="behavior.html"; }
-
-/* NEW LINKS */
-function goAbout(){ window.location.href="about.html"; }
-function goDisclaimer(){ window.location.href="disclaimer.html"; }
-function goFaq(){ window.location.href="faq.html"; }
-
 </script>
 
 </body>

@@ -1,110 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Create Account - OutcomeClarity</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  font-family: Arial;
-  background: #f5f7fb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-}
-
-.card {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 320px;
-  text-align: center;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 15px;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
-}
-
-.error {
-  color: red;
-  margin-top: 10px;
-}
-</style>
+  <title>Redirecting...</title>
+  <script>
+    // Always redirect to the single source of truth
+    window.location.href = "/settings.html";
+  </script>
 </head>
-
 <body>
-
-<div class="card">
-  <h1>Create Account</h1>
-
-  <input id="email" placeholder="Email" />
-  <input id="password" type="password" placeholder="Password" />
-
-  <button onclick="register()">Create Account</button>
-
-  <div id="error" class="error"></div>
-
-  <p>
-    Already have an account? <a href="login.html">Login</a>
-  </p>
-</div>
-
-<script>
-
-/* 🔒 HARD LOCK — REQUIRE INVITE */
-const inviteValid = localStorage.getItem("invite_valid");
-const inviteCode = localStorage.getItem("invite_code");
-
-if (!inviteValid || !inviteCode) {
-  window.location.href = "index.html";
-}
-
-/* REGISTER */
-async function register() {
-
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  try {
-    const res = await fetch("/api/v1/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-        inviteCode // ✅ REQUIRED BY BACKEND
-      })
-    });
-
-    if (res.ok) {
-      alert("Account created. Please log in.");
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("error").innerText =
-        "Registration failed (invalid invite or user exists)";
-    }
-
-  } catch (err) {
-    document.getElementById("error").innerText = "Server error";
-  }
-}
-
-</script>
-
+  <p>Redirecting...</p>
 </body>
 </html>

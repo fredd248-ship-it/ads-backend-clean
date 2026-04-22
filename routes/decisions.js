@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const prisma = require('../prisma');
+
+/* ✅ SAFE PRISMA IMPORT */
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 const authenticate = require('../middleware/authenticate');
 
 /* =========================
@@ -16,6 +20,7 @@ router.get('/', authenticate, async (req, res) => {
 
     res.json({ success: true, data: decisions });
   } catch (err) {
+    console.error("GET DECISIONS ERROR:", err);
     res.status(500).json({ success: false, error: 'Failed to fetch decisions' });
   }
 });
@@ -38,12 +43,13 @@ router.post('/', authenticate, async (req, res) => {
 
     res.json({ success: true, data: decision });
   } catch (err) {
+    console.error("CREATE DECISION ERROR:", err);
     res.status(500).json({ success: false, error: 'Failed to create decision' });
   }
 });
 
 /* =========================
-   EVALUATE DECISION (CRITICAL FIX)
+   EVALUATE DECISION (FIXED)
 ========================= */
 router.post('/:id/evaluate', authenticate, async (req, res) => {
   try {

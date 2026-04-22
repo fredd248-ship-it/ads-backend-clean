@@ -1,28 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ADS Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
+
+.sidebar { width:220px; background:#e0e7ff; height:100vh; padding:20px 10px; }
+.nav-item { padding:14px; margin-bottom:10px; border-radius:10px; cursor:pointer; }
+.active { background:#4338ca; color:white; }
+
+.main { flex:1; padding:20px; max-width:900px; margin:auto; }
+
+.card { border-radius:12px; padding:16px; margin-top:14px; cursor:pointer; }
+
+.clay { background:#e7d8c9; color:#333; }
+.good { background:#16a34a; color:white; }
+.mid  { background:#2563eb; color:white; }
+.bad  { background:#dc2626; color:white; }
+
+.card-title { font-weight:bold; }
+.card-meta { font-size:12px; opacity:.8; }
+
+#evalModal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  align-items:center;
+  justify-content:center;
+}
+
+.modal-content {
+  background:white;
+  width:520px;
+  max-width:90%;
+  padding:24px;
+  border-radius:14px;
+}
+
+.modal-content label { display:block; margin-top:16px; }
+
+.modal-content input,
+.modal-content select {
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+}
+
+button {
+  margin-top:16px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+}
+
+.save-btn { background:#4338ca; color:white; }
+.cancel-btn { background:#e5e7eb; }
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+</div>
+
+<div class="main">
+  <h2>Decisions</h2>
+  <div id="content">Loading...</div>
+</div>
+
+<div id="evalModal">
+  <div class="modal-content">
+    <h3 id="modalTitle"></h3>
+
+    <label>Satisfaction</label>
+    <input type="range" min="0" max="10" value="5" id="slider">
+
+    <label>Frequency</label>
+    <select id="frequency">
+      <option>Low</option>
+      <option selected>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Buy Again</label>
+    <select id="again">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+
+    <button class="save-btn" onclick="saveEval()">Save</button>
+    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
+let activeDecisionId = null;
+
+/* COLOR */
+function getColorClass(d){
+  if(!d.evaluations || d.evaluations.length === 0) return "clay";
+  const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
+  if(s <=3) return "bad";
+  if(s <=6) return "mid";
+  return "good";
+}
+
+/* MODAL */
+function openModal(id,title){
+  activeDecisionId = id;
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("evalModal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("evalModal").style.display = "none";
+}
+
+/* SAVE */
+async function saveEval(){
+  try {
+    const satisfaction = Number(document.getElementById("slider").value);
+    const regretScore = 10 - satisfaction;
+    const frequency = document.getElementById("frequency").value;
+    const again = document.getElementById("again").value === "true";
+
+    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+token
+      },
+      body: JSON.stringify({
+        regretScore,
+        frequencyOfUse: frequency,
+        wouldBuyAgain: again
+      })
+    });
+
+    if(!res.ok){
+      const text = await res.text();
+      alert("Save failed: " + text);
+      return;
+    }
+
+    closeModal();
+    load();
+
+  } catch (err){
+    alert("Network error: " + err);
+  }
+}
+
+/* LOAD */
 async function load(){
 
   const content = document.getElementById("content");
 
   try {
     const res = await fetch(API + "/decisions", {
-      headers: { Authorization: "Bearer " + token }
+      headers:{ Authorization:"Bearer "+token }
     });
 
     const text = await res.text();
-
-    // 👇 show raw response for debugging
-    console.log("RAW RESPONSE:", text);
+    console.log("RAW:", text);
 
     let raw;
 
     try {
       raw = JSON.parse(text);
     } catch {
-      content.innerHTML = "<pre>INVALID JSON RESPONSE:\n\n" + text + "</pre>";
+      content.innerHTML = "<pre>INVALID RESPONSE:\n\n" + text + "</pre>";
       return;
     }
 
@@ -40,21 +203,33 @@ async function load(){
     }
 
     content.innerHTML = decisions.map(d => {
-      const category = d.category || "Uncategorized";
-      const cost = d.cost ? "$" + d.cost : "";
+      const cat = d.category || "Uncategorized";
+      const cost = d.cost ? "$"+d.cost : "";
 
       return `
         <div class="card ${getColorClass(d)}"
           onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
           <div class="card-title">${d.title}</div>
-          <div class="card-meta">${category}${cost ? " • " + cost : ""}</div>
+          <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
         </div>
       `;
     }).join("");
 
-  } catch (err) {
+  } catch (err){
     content.innerHTML = "<pre>FETCH ERROR:\n\n" + err + "</pre>";
   }
 }
 
+/* NAV */
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+
+load();
+
 </script>
+
+</body>
+</html>

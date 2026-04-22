@@ -60,7 +60,6 @@ button {
 
 .save-btn { background:#4338ca; color:white; }
 .cancel-btn { background:#e5e7eb; }
-
 </style>
 </head>
 
@@ -108,11 +107,22 @@ button {
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-const token = localStorage.getItem("ads_token");
+
+/* 🔴 HARD GUARANTEE TOKEN */
+function getToken() {
+  const t = localStorage.getItem("ads_token");
+
+  if (!t || t === "null" || t === "undefined") {
+    alert("Not authenticated — please log in again");
+    window.location.href = "login.html";
+    throw new Error("NO TOKEN");
+  }
+
+  return t;
+}
 
 let activeDecisionId = null;
 
-/* COLOR */
 function getColorClass(d){
   if(!d.evaluations || d.evaluations.length === 0) return "clay";
   const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
@@ -121,7 +131,6 @@ function getColorClass(d){
   return "good";
 }
 
-/* MODAL */
 function openModal(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
@@ -132,9 +141,10 @@ function closeModal(){
   document.getElementById("evalModal").style.display = "none";
 }
 
-/* SAVE */
 async function saveEval(){
   try {
+    const token = getToken();
+
     const satisfaction = Number(document.getElementById("slider").value);
     const regretScore = 10 - satisfaction;
     const frequency = document.getElementById("frequency").value;
@@ -144,7 +154,7 @@ async function saveEval(){
       method:"POST",
       headers:{
         "Content-Type":"application/json",
-        Authorization:"Bearer "+token
+        "Authorization":"Bearer " + token
       },
       body: JSON.stringify({
         regretScore,
@@ -153,9 +163,10 @@ async function saveEval(){
       })
     });
 
+    const data = await res.json();
+
     if(!res.ok){
-      const text = await res.text();
-      alert("Save failed: " + text);
+      alert("Save failed: " + (data.error || "Unknown"));
       return;
     }
 
@@ -163,39 +174,34 @@ async function saveEval(){
     load();
 
   } catch (err){
-    alert("Network error: " + err);
+    alert("Save error: " + err.message);
   }
 }
 
-/* LOAD */
 async function load(){
 
   const content = document.getElementById("content");
 
   try {
+    const token = getToken();
+
     const res = await fetch(API + "/decisions", {
-      headers:{ Authorization:"Bearer "+token }
+      method: "GET",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
     });
 
-    const text = await res.text();
-    console.log("RAW:", text);
+    const data = await res.json();
 
-    let raw;
-
-    try {
-      raw = JSON.parse(text);
-    } catch {
-      content.innerHTML = "<pre>INVALID RESPONSE:\n\n" + text + "</pre>";
+    if(!res.ok){
+      content.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
       return;
     }
 
-    let decisions = [];
-
-    if (Array.isArray(raw)) {
-      decisions = raw;
-    } else if (raw && Array.isArray(raw.data)) {
-      decisions = raw.data;
-    }
+    const decisions = Array.isArray(data)
+      ? data
+      : (data.data || []);
 
     if(decisions.length === 0){
       content.innerHTML = "<p>No decisions yet.</p>";
@@ -216,7 +222,7 @@ async function load(){
     }).join("");
 
   } catch (err){
-    content.innerHTML = "<pre>FETCH ERROR:\n\n" + err + "</pre>";
+    content.innerHTML = "<pre>ERROR:\n\n" + err.message + "</pre>";
   }
 }
 

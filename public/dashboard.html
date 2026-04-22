@@ -86,13 +86,11 @@ body {
   align-items: center;
 }
 
-/* COLOR SYSTEM */
 .clay { background: #c4a484; }
 .good { background: #16a34a; color: white; }
 .mid { background: #2563eb; color: white; }
 .bad { background: #dc2626; color: white; }
 
-/* TEXT STRUCTURE */
 .card-left {
   display: flex;
   flex-direction: column;
@@ -105,34 +103,6 @@ body {
 .card-meta {
   font-size: 12px;
   opacity: 0.85;
-}
-
-/* MODAL */
-#createModal {
-  display: none;
-  position: fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.5);
-}
-
-.modal-content {
-  background: white;
-  width: 360px;
-  margin: 100px auto;
-  padding: 20px;
-  border-radius: 12px;
-}
-
-input, select {
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px;
-}
-
-button {
-  margin-top: 10px;
-  width: 100%;
 }
 </style>
 </head>
@@ -159,42 +129,15 @@ button {
   <div id="content">Loading...</div>
 </div>
 
-<!-- MODAL -->
-<div id="createModal">
-  <div class="modal-content">
-
-    <h3>Create Decision</h3>
-
-    <input id="title" placeholder="Title">
-    <input id="cost" type="number" placeholder="Cost">
-
-    <select id="category">
-      <option value="">Select Category</option>
-      <option value="home">Home</option>
-      <option value="vehicle">Vehicle</option>
-      <option value="electronics">Electronics</option>
-      <option value="pets">Pets</option>
-      <option value="dining">Dining</option>
-      <option value="medical">Medical</option>
-      <option value="other">Other</option>
-    </select>
-
-    <label>Time Pressure</label>
-    <input type="range" id="timePressure" min="1" max="5">
-
-    <label>Emotional Weight</label>
-    <input type="range" id="emotionalWeight" min="1" max="5">
-
-    <button onclick="createDecision()">Save</button>
-    <button onclick="closeModal()">Cancel</button>
-
-  </div>
-</div>
-
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
+
+/* CLICK HANDLER (FIXED) */
+function openDecision(id){
+  window.location.href = "evaluations.html?id=" + id;
+}
 
 /* COLOR LOGIC */
 function getColorClass(decision){
@@ -206,40 +149,6 @@ function getColorClass(decision){
   if(satisfaction <= 3) return "bad";
   if(satisfaction <= 6) return "mid";
   return "good";
-}
-
-function openModal(){
-  document.getElementById("createModal").style.display = "block";
-}
-
-function closeModal(){
-  document.getElementById("createModal").style.display = "none";
-}
-
-async function createDecision(){
-  const title = document.getElementById("title").value;
-  const cost = parseFloat(document.getElementById("cost").value);
-  const category = document.getElementById("category").value;
-  const timePressure = parseInt(document.getElementById("timePressure").value);
-  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
-
-  await fetch(API + "/decisions", {
-    method: "POST",
-    headers: {
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body: JSON.stringify({
-      title,
-      cost,
-      category,
-      timePressure,
-      emotionalWeight
-    })
-  });
-
-  closeModal();
-  load();
 }
 
 async function load(){
@@ -263,7 +172,7 @@ async function load(){
     const cost = d.cost ? "$" + d.cost : "";
 
     return `
-      <div class="card ${getColorClass(d)}">
+      <div class="card ${getColorClass(d)}" onclick="openDecision('${d.id}')">
         <div class="card-left">
           <div class="card-title">${d.title}</div>
           <div class="card-meta">${category} ${cost ? "• " + cost : ""}</div>

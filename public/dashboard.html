@@ -6,47 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  display: flex;
-}
+body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 
-/* SIDEBAR */
-.sidebar {
-  width: 220px;
-  background: #e0e7ff;
-  height: 100vh;
-  padding: 20px 10px;
-  border-right: 1px solid #c7d2fe;
-}
-
-.nav-item {
-  padding: 14px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-}
-
+.sidebar { width:220px; background:#e0e7ff; height:100vh; padding:20px 10px; }
+.nav-item { padding:14px; margin-bottom:10px; border-radius:10px; cursor:pointer; }
 .active { background:#4338ca; color:white; }
 
-/* MAIN */
-.main {
-  flex: 1;
-  padding: 20px;
-  max-width: 900px;
-  margin: auto;
-}
+.main { flex:1; padding:20px; max-width:900px; margin:auto; }
 
-/* CARDS */
-.card {
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 14px;
-  cursor: pointer;
-}
+.card { border-radius:12px; padding:16px; margin-top:14px; cursor:pointer; }
 
 .clay { background:#e7d8c9; color:#333; }
 .good { background:#16a34a; color:white; }
@@ -74,22 +42,10 @@ body {
   border-radius:14px;
 }
 
-.modal-content h3 {
-  margin-top:0;
-}
-
-.modal-content label {
-  display:block;
-  margin-top:18px;
-  font-size:14px;
-}
+.modal-content label { display:block; margin-top:18px; }
 
 .modal-content input,
-.modal-content select {
-  width:100%;
-  margin-top:8px;
-  padding:10px;
-}
+.modal-content select { width:100%; padding:10px; margin-top:8px; }
 
 .modal-content button {
   margin-top:16px;
@@ -103,6 +59,15 @@ body {
 .save-btn { background:#4338ca; color:white; }
 .cancel-btn { background:#e5e7eb; }
 
+/* DEBUG PANEL */
+#debug {
+  margin-top:20px;
+  padding:10px;
+  background:#111;
+  color:#0f0;
+  font-size:12px;
+  display:none;
+}
 </style>
 </head>
 
@@ -120,6 +85,7 @@ body {
 <div class="main">
   <h2>Decisions</h2>
   <div id="content"></div>
+  <div id="debug"></div>
 </div>
 
 <!-- MODAL -->
@@ -128,7 +94,7 @@ body {
 
     <h3 id="modalTitle"></h3>
 
-    <label>Satisfaction (0–10)</label>
+    <label>Satisfaction</label>
     <input type="range" min="0" max="10" value="5" id="slider">
 
     <label>Frequency</label>
@@ -138,7 +104,7 @@ body {
       <option>High</option>
     </select>
 
-    <label>Would you buy again?</label>
+    <label>Buy Again</label>
     <select id="again">
       <option value="true">Yes</option>
       <option value="false">No</option>
@@ -157,7 +123,12 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* COLOR */
+function log(msg){
+  const d = document.getElementById("debug");
+  d.style.display = "block";
+  d.innerText += msg + "\n";
+}
+
 function getColorClass(d){
   if(!d.evaluations.length) return "clay";
   const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
@@ -166,8 +137,7 @@ function getColorClass(d){
   return "good";
 }
 
-/* MODAL */
-function openModal(id, title){
+function openModal(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("evalModal").style.display = "flex";
@@ -177,10 +147,12 @@ function closeModal(){
   document.getElementById("evalModal").style.display = "none";
 }
 
-/* SAVE */
 async function saveEval(){
 
+  log("START SAVE");
+
   if(!activeDecisionId){
+    log("ERROR: no decision id");
     alert("Missing decision");
     return;
   }
@@ -189,6 +161,13 @@ async function saveEval(){
   const regretScore = 10 - satisfaction;
   const frequency = document.getElementById("frequency").value;
   const again = document.getElementById("again").value === "true";
+
+  log("Payload → " + JSON.stringify({
+    activeDecisionId,
+    regretScore,
+    frequency,
+    again
+  }));
 
   try {
     const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
@@ -204,17 +183,25 @@ async function saveEval(){
       })
     });
 
-    if(!res.ok) throw new Error();
+    log("STATUS → " + res.status);
+
+    const data = await res.json();
+    log("RESPONSE → " + JSON.stringify(data));
+
+    if(!res.ok){
+      alert("Save failed: " + (data.error || "Unknown"));
+      return;
+    }
 
     closeModal();
     load();
 
-  } catch {
-    alert("Save failed");
+  } catch (err){
+    log("NETWORK ERROR");
+    alert("Network error");
   }
 }
 
-/* LOAD */
 async function load(){
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
@@ -223,15 +210,13 @@ async function load(){
   const data = await res.json();
   const decisions = data.data || [];
 
-  const content = document.getElementById("content");
-
-  content.innerHTML = decisions.map(d => {
+  document.getElementById("content").innerHTML = decisions.map(d => {
     const cat = d.category || "Uncategorized";
     const cost = d.cost ? "$"+d.cost : "";
 
     return `
       <div class="card ${getColorClass(d)}"
-           onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
+        onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
         <div class="card-title">${d.title}</div>
         <div class="card-meta">${cat} ${cost ? "• "+cost : ""}</div>
       </div>
@@ -239,7 +224,6 @@ async function load(){
   }).join("");
 }
 
-/* NAV */
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }

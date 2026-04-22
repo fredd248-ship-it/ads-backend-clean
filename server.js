@@ -5,7 +5,7 @@ const cors = require("cors");
 const app = express();
 
 /* =========================
-   CORS (SAFE + REQUIRED)
+   CORS (SAFE)
 ========================= */
 app.use(cors({
   origin: "*",
@@ -35,7 +35,7 @@ app.use("/api/v1/invite", require("./routes/invite"));
 /* =========================
    FALLBACK ROUTE (FIXED)
 ========================= */
-app.get("/*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 

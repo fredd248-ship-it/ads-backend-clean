@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Get Started - OutcomeClarity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 340px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #666;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #4338ca;
+}
+
+.success {
+  color: green;
+  margin-top: 15px;
+}
+
+.error {
+  color: red;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>Create Account</h1>
+  <p>Enter your access code to get started</p>
+
+  <input id="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+  <input id="inviteToken" placeholder="Access Code" />
+
+  <button onclick="register()">Create Account</button>
+
+  <div id="message"></div>
+
+  <p style="margin-top:20px;">
+    Already have an account? <a href="login.html">Login</a>
+  </p>
+</div>
+
+<script>
+async function register() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const inviteToken = document.getElementById("inviteToken").value;
+
+  const message = document.getElementById("message");
+  message.innerHTML = "";
+
+  try {
+    const res = await fetch("/api/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        inviteToken
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      message.innerHTML = '<div class="success">Account created! Redirecting to login...</div>';
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 2000);
+
+    } else {
+      message.innerHTML = `<div class="error">${data.error || "Registration failed"}</div>`;
+    }
+
+  } catch (err) {
+    message.innerHTML = '<div class="error">Server error</div>';
+  }
+}
+</script>
+
+</body>
+</html>

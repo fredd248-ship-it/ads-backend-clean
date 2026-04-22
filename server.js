@@ -1,14 +1,14 @@
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
+const cors = require("cors");
 
 const app = express();
 
 /* =========================
-   CORS FIX (CRITICAL)
+   CORS (SAFE + REQUIRED)
 ========================= */
 app.use(cors({
-  origin: "*", // allow all for now (we can lock later)
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -26,23 +26,23 @@ console.log("Serving static from:", publicPath);
 app.use(express.static(publicPath));
 
 /* =========================
-   ROUTES
+   ROUTES (UNCHANGED)
 ========================= */
 app.use("/api/v1/auth", require("./routes/auth"));
 app.use("/api/v1/decisions", require("./routes/decisions"));
 app.use("/api/v1/invite", require("./routes/invite"));
 
 /* =========================
-   FALLBACK
+   FALLBACK ROUTE (FIXED)
 ========================= */
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
 /* =========================
    START SERVER
 ========================= */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
   console.log(`API running on port ${PORT}`);

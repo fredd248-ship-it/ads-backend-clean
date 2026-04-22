@@ -1,45 +1,41 @@
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 
 const app = express();
 
 /* =========================
-   MIDDLEWARE
+   CORS FIX (CRITICAL)
+========================= */
+app.use(cors({
+  origin: "*", // allow all for now (we can lock later)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+/* =========================
+   BODY PARSER
 ========================= */
 app.use(express.json());
 
 /* =========================
-   ROUTES
-========================= */
-const authRoutes = require("./routes/auth");
-const decisionRoutes = require("./routes/decisions");
-const insightsRoutes = require("./routes/insights");
-const inviteRoutes = require("./routes/invite");
-
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/decisions", decisionRoutes);
-app.use("/api/v1/insights", insightsRoutes);
-app.use("/api/v1/invite", inviteRoutes);
-
-/* =========================
-   STATIC FRONTEND
+   STATIC FILES
 ========================= */
 const publicPath = path.join(__dirname, "public");
 console.log("Serving static from:", publicPath);
-
 app.use(express.static(publicPath));
 
 /* =========================
-   ROOT → LANDING PAGE
+   ROUTES
 ========================= */
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
+app.use("/api/v1/auth", require("./routes/auth"));
+app.use("/api/v1/decisions", require("./routes/decisions"));
+app.use("/api/v1/invite", require("./routes/invite"));
 
 /* =========================
-   SAFE FALLBACK (FIXED)
+   FALLBACK
 ========================= */
-app.use((req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
@@ -49,5 +45,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log("API running on port " + PORT);
+  console.log(`API running on port ${PORT}`);
 });

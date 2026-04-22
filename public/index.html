@@ -1,20 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>OutcomeClarity</title>
-  <script>
-    const token = localStorage.getItem("ads_token");
+<script>
+  console.log("INDEX PAGE LOADED");
 
-    if (token) {
-      // Logged in → go to dashboard
-      window.location.href = "/dashboard.html";
-    } else {
-      // Not logged in → go to onboarding
-      window.location.href = "/onboard.html";
-    }
-  </script>
-</head>
-<body>
-  <p>Redirecting...</p>
-</body>
-</html>
+  const token = localStorage.getItem("ads_token");
+
+  if (token) {
+    window.location.href = "/dashboard.html";
+  } else {
+    window.location.href = "/onboard.html";
+  }
+</script>

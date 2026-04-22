@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard - OutcomeClarity</title>
+<title>ADS Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,167 +10,258 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f5f7fb;
-}
-
-.header {
-  padding: 15px;
-  background: #111827;
-  color: white;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.container {
+.sidebar {
+  width: 220px;
+  background: #e0e7ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #c7d2fe;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #312e81;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+
+.active {
+  background: #4338ca;
+  color: white;
+}
+
+.create-section {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.create-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.create-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #4338ca;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
   padding: 20px;
+  max-width: 800px;
+  margin: auto;
+  position: relative;
+}
+
+.top-link {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #4338ca;
+  cursor: pointer;
 }
 
 .card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.tag {
-  padding: 6px 10px;
-  border-radius: 6px;
-  color: white;
-  font-size: 12px;
+/* NEW COLOR SYSTEM */
+.clay { background: #c4a484; }
+.good { background: #16a34a; color: white; }
+.mid { background: #2563eb; color: white; }
+.bad { background: #dc2626; color: white; }
+
+/* MODAL */
+#createModal {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: white;
+  width: 360px;
+  margin: 100px auto;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+input, select {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
 }
 
 button {
-  padding: 6px 10px;
-  border: none;
-  background: #4f46e5;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <div>OutcomeClarity</div>
-  <div>
-    <button onclick="goToSettings()">Settings</button>
-    <button onclick="logout()">Logout</button>
+<div class="sidebar">
+  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
+
+  <div class="create-section">
+    <div class="create-label">New Decision</div>
+    <button class="create-btn" onclick="openModal()">+</button>
   </div>
 </div>
 
-<div class="container">
-  <h2>Your Decisions</h2>
-  <div id="decisions"></div>
+<div class="main">
+  <div class="top-link" onclick="goHow()">How it works</div>
+  <h2>Decisions</h2>
+  <div id="content">Loading...</div>
+</div>
+
+<!-- MODAL -->
+<div id="createModal">
+  <div class="modal-content">
+
+    <h3>Create Decision</h3>
+
+    <input id="title" placeholder="Title">
+    <input id="cost" type="number" placeholder="Cost">
+
+    <select id="category">
+      <option value="">Select Category</option>
+      <option value="home">Home</option>
+      <option value="vehicle">Vehicle</option>
+      <option value="electronics">Electronics</option>
+      <option value="pets">Pets</option>
+      <option value="dining">Dining</option>
+      <option value="medical">Medical</option>
+      <option value="other">Other</option>
+    </select>
+
+    <label>Time Pressure</label>
+    <input type="range" id="timePressure" min="1" max="5">
+
+    <label>Emotional Weight</label>
+    <input type="range" id="emotionalWeight" min="1" max="5">
+
+    <button onclick="createDecision()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
+
+  </div>
 </div>
 
 <script>
+
+const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
 
-if (!token) {
-  window.location.href = "/onboard.html";
+/* =========================
+   COLOR LOGIC (NEW)
+========================= */
+function getColorClass(decision){
+  if(!decision.evaluations.length) return "clay";
+
+  const evalData = decision.evaluations[decision.evaluations.length-1];
+  const satisfaction = 10 - evalData.regretScore;
+
+  if(satisfaction <= 3) return "bad";
+  if(satisfaction <= 6) return "mid";
+  return "good";
 }
 
-function logout() {
-  localStorage.removeItem("ads_token");
-  window.location.href = "/onboard.html";
+function openModal(){
+  document.getElementById("createModal").style.display = "block";
 }
 
-function goToSettings() {
-  window.location.href = "/settings.html";
+function closeModal(){
+  document.getElementById("createModal").style.display = "none";
 }
 
-function getLatestEvaluation(decision) {
-  if (!decision.evaluations || decision.evaluations.length === 0) {
-    return null;
+async function createDecision(){
+  const title = document.getElementById("title").value;
+  const cost = parseFloat(document.getElementById("cost").value);
+  const category = document.getElementById("category").value;
+  const timePressure = parseInt(document.getElementById("timePressure").value);
+  const emotionalWeight = parseInt(document.getElementById("emotionalWeight").value);
+
+  await fetch(API + "/decisions", {
+    method: "POST",
+    headers: {
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      title,
+      cost,
+      category,
+      timePressure,
+      emotionalWeight
+    })
+  });
+
+  closeModal();
+  load();
+}
+
+async function load(){
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+token }
+  });
+
+  const result = await res.json();
+  const decisions = result.data || [];
+
+  const content = document.getElementById("content");
+
+  if(decisions.length === 0){
+    content.innerHTML = "<p>No decisions yet.</p>";
+    return;
   }
-  return decision.evaluations[decision.evaluations.length - 1];
+
+  content.innerHTML = decisions.map(d => {
+    return `
+      <div class="card ${getColorClass(d)}">
+        <span>${d.title}</span>
+      </div>
+    `;
+  }).join("");
 }
 
-function getSatisfaction(evaluation) {
-  if (!evaluation || evaluation.regretScore === null || evaluation.regretScore === undefined) {
-    return null;
-  }
-  return 10 - evaluation.regretScore;
-}
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+function goHow(){ window.location.href="how-it-works.html"; }
 
-function getDecisionColor(decision) {
-  const evalData = getLatestEvaluation(decision);
-  if (!evalData) return "#c4a484";
+load();
 
-  const satisfaction = getSatisfaction(evalData);
-  if (satisfaction === null) return "#c4a484";
-
-  if (satisfaction <= 3) return "#dc2626";
-  if (satisfaction <= 6) return "#2563eb";
-  return "#16a34a";
-}
-
-function getDecisionLabel(decision) {
-  const evalData = getLatestEvaluation(decision);
-  if (!evalData) return "Not evaluated";
-
-  const satisfaction = getSatisfaction(evalData);
-  if (satisfaction === null) return "Not evaluated";
-
-  if (satisfaction <= 3) return "Poor";
-  if (satisfaction <= 6) return "Mixed";
-  return "Good";
-}
-
-async function loadDecisions() {
-  try {
-    const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/decisions", {
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json"
-      }
-    });
-
-    const result = await res.json();
-
-    console.log("API RESULT:", result);
-
-    const decisions = result.data || []; // ✅ FIX HERE
-
-    const container = document.getElementById("decisions");
-    container.innerHTML = "";
-
-    if (decisions.length === 0) {
-      container.innerHTML = "<p>No decisions yet.</p>";
-      return;
-    }
-
-    decisions.forEach(decision => {
-      const color = getDecisionColor(decision);
-      const label = getDecisionLabel(decision);
-
-      const div = document.createElement("div");
-      div.className = "card";
-
-      div.innerHTML = `
-        <div>
-          <strong>${decision.title}</strong><br>
-          <small>${decision.category || ""}</small>
-        </div>
-        <div class="tag" style="background:${color}">
-          ${label}
-        </div>
-      `;
-
-      container.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error("LOAD ERROR:", err);
-  }
-}
-
-loadDecisions();
 </script>
 
 </body>

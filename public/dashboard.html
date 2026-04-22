@@ -91,21 +91,39 @@ function goToSettings() {
 }
 
 /* =========================
-   COLOR LOGIC (FIXED)
+   SAFE EVALUATION ACCESS
 ========================= */
+function getLatestEvaluation(decision) {
+  if (!decision.evaluations || decision.evaluations.length === 0) {
+    return null;
+  }
 
-// Convert backend regretScore → UI satisfaction
-function getSatisfactionFromEvaluation(evaluation) {
-  // Assuming regretScore is 0–10 (higher = worse)
+  // Always take most recent (last)
+  return decision.evaluations[decision.evaluations.length - 1];
+}
+
+/* =========================
+   CONVERT SCORE
+========================= */
+function getSatisfaction(evaluation) {
+  if (!evaluation || evaluation.regretScore === null || evaluation.regretScore === undefined) {
+    return null;
+  }
+
   return 10 - evaluation.regretScore;
 }
 
+/* =========================
+   COLOR LOGIC (FIXED)
+========================= */
 function getDecisionColor(decision) {
-  if (!decision.evaluations || decision.evaluations.length === 0) {
-    return "#c4a484"; // clay
-  }
+  const evalData = getLatestEvaluation(decision);
 
-  const satisfaction = getSatisfactionFromEvaluation(decision.evaluations[0]);
+  if (!evalData) return "#c4a484"; // clay
+
+  const satisfaction = getSatisfaction(evalData);
+
+  if (satisfaction === null) return "#c4a484";
 
   if (satisfaction <= 3) return "#dc2626"; // red
   if (satisfaction <= 6) return "#2563eb"; // blue
@@ -113,11 +131,13 @@ function getDecisionColor(decision) {
 }
 
 function getDecisionLabel(decision) {
-  if (!decision.evaluations || decision.evaluations.length === 0) {
-    return "Not evaluated";
-  }
+  const evalData = getLatestEvaluation(decision);
 
-  const satisfaction = getSatisfactionFromEvaluation(decision.evaluations[0]);
+  if (!evalData) return "Not evaluated";
+
+  const satisfaction = getSatisfaction(evalData);
+
+  if (satisfaction === null) return "Not evaluated";
 
   if (satisfaction <= 3) return "Poor";
   if (satisfaction <= 6) return "Mixed";

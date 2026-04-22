@@ -1,70 +1,68 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const authenticate = require("../middleware/authenticate");
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
+const authenticate = require('../middleware/authenticate');
 
 /* =========================
-   GET DECISIONS
+   GET ALL DECISIONS
 ========================= */
-router.get("/", authenticate, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
-
     const decisions = await prisma.decision.findMany({
       where: { userId: req.user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        evaluations: true
-      }
+      include: { evaluations: true },
+      orderBy: { createdAt: 'desc' }
     });
 
-    return res.json({
-      success: true,
-      data: decisions
-    });
-
+    res.json({ success: true, data: decisions });
   } catch (err) {
-    console.error("DECISIONS ERROR:", err);
-
-    return res.status(500).json({
-      success: false,
-      error: "Failed to load decisions"
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch decisions' });
   }
 });
 
 /* =========================
    CREATE DECISION
 ========================= */
-router.post("/", authenticate, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
-
-    const { title, cost, category, timePressure, emotionalWeight } = req.body;
+    const { title, category, cost } = req.body;
 
     const decision = await prisma.decision.create({
       data: {
         title,
-        cost: cost || 0,
         category,
-        timePressure,
-        emotionalWeight,
+        cost,
         userId: req.user.id
       }
     });
 
-    return res.json({
-      success: true,
-      data: decision
-    });
-
+    res.json({ success: true, data: decision });
   } catch (err) {
-    console.error("CREATE ERROR:", err);
+    res.status(500).json({ success: false, error: 'Failed to create decision' });
+  }
+});
 
-    return res.status(500).json({
-      success: false,
-      error: "Failed to create decision"
+/* =========================
+   EVALUATE DECISION (CRITICAL FIX)
+========================= */
+router.post('/:id/evaluate', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { regretScore, frequencyOfUse, wouldBuyAgain } = req.body;
+
+    const evaluation = await prisma.evaluation.create({
+      data: {
+        decisionId: id,
+        regretScore,
+        frequencyOfUse,
+        wouldBuyAgain
+      }
     });
+
+    res.json({ success: true, data: evaluation });
+  } catch (err) {
+    console.error("EVALUATION ERROR:", err);
+    res.status(500).json({ success: false, error: 'Failed to save evaluation' });
   }
 });
 

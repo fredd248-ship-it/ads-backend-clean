@@ -1,62 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Register</title>
+<meta charset="UTF-8">
+<title>Settings - OutcomeClarity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 340px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #4338ca;
+}
+
+.secondary {
+  background: #e5e7eb;
+  color: #111;
+}
+
+.secondary:hover {
+  background: #d1d5db;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Create Account</h2>
+<div class="card">
+  <h1>Settings</h1>
+  <p>Your account is active.</p>
 
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
-<input id="inviteToken" placeholder="Access Code"><br><br>
-
-<button onclick="register()">Register</button>
-
-<p id="error" style="color:red;"></p>
+  <button onclick="goToDashboard()">Go to Dashboard</button>
+  <button class="secondary" onclick="logout()">Logout</button>
+</div>
 
 <script>
-console.log("REGISTER PAGE LOADED");
+// 🔒 Protect page
+if (!localStorage.getItem("ads_token")) {
+  window.location.href = "/onboard.html";
+}
 
-async function register() {
-  console.log("REGISTER BUTTON CLICKED");
+// 🔁 Navigation
+function goToDashboard() {
+  window.location.href = "/dashboard.html";
+}
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const inviteToken = document.getElementById("inviteToken").value;
-
-  console.log("FORM DATA:", email, password, inviteToken);
-
-  try {
-    const res = await fetch("/api/v1/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        inviteToken
-      })
-    });
-
-    console.log("REQUEST SENT");
-
-    const data = await res.json();
-
-    console.log("RESPONSE:", data);
-
-    if (res.ok) {
-      alert("Account created!");
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("error").innerText = data.error || "Registration failed";
-    }
-
-  } catch (err) {
-    console.error("FETCH ERROR:", err);
-    document.getElementById("error").innerText = "Server error";
-  }
+// 🚪 Logout
+function logout() {
+  localStorage.removeItem("ads_token");
+  window.location.href = "/onboard.html";
 }
 </script>
 

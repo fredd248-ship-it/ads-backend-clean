@@ -5,9 +5,9 @@ const path = require('path');
 const app = express();
 
 /* =========================
-   CORS (CRITICAL FIX)
+   CORS (FIXED)
 ========================= */
-app.use(cors({
+const corsOptions = {
   origin: [
     'https://outcomeclarity.com',
     'http://localhost:3000'
@@ -15,10 +15,22 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
 
-/* handle preflight explicitly */
-app.options('*', cors());
+app.use(cors(corsOptions));
+
+/* IMPORTANT: handle preflight WITHOUT '*' */
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://outcomeclarity.com');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 /* =========================
    MIDDLEWARE
@@ -38,7 +50,7 @@ app.use('/api/v1/insights', require('./routes/insights'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* =========================
-   SAFE CATCH-ALL (NON-API ONLY)
+   SAFE CATCH-ALL
 ========================= */
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

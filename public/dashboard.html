@@ -91,18 +91,25 @@ function goToSettings() {
 }
 
 /* =========================
-   COLOR LOGIC (FINAL)
+   COLOR LOGIC (FIXED)
 ========================= */
+
+// Convert backend regretScore → UI satisfaction
+function getSatisfactionFromEvaluation(evaluation) {
+  // Assuming regretScore is 0–10 (higher = worse)
+  return 10 - evaluation.regretScore;
+}
+
 function getDecisionColor(decision) {
   if (!decision.evaluations || decision.evaluations.length === 0) {
     return "#c4a484"; // clay
   }
 
-  const score = decision.evaluations[0].satisfaction;
+  const satisfaction = getSatisfactionFromEvaluation(decision.evaluations[0]);
 
-  if (score <= 3) return "#dc2626";   // red
-  if (score <= 6) return "#2563eb";   // blue
-  return "#16a34a";                  // green
+  if (satisfaction <= 3) return "#dc2626"; // red
+  if (satisfaction <= 6) return "#2563eb"; // blue
+  return "#16a34a"; // green
 }
 
 function getDecisionLabel(decision) {
@@ -110,10 +117,10 @@ function getDecisionLabel(decision) {
     return "Not evaluated";
   }
 
-  const score = decision.evaluations[0].satisfaction;
+  const satisfaction = getSatisfactionFromEvaluation(decision.evaluations[0]);
 
-  if (score <= 3) return "Poor";
-  if (score <= 6) return "Mixed";
+  if (satisfaction <= 3) return "Poor";
+  if (satisfaction <= 6) return "Mixed";
   return "Good";
 }
 

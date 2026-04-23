@@ -38,18 +38,40 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   padding:20px;
 }
 
+/* CARDS */
 .card {
-  background:white;
-  padding:14px;
-  border-radius:10px;
+  padding:16px;
   margin-top:12px;
+  border-radius:12px;
   cursor:pointer;
-  border:1px solid rgba(0,0,0,0.05);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.card:hover {
-  background:#f1f5f9;
+/* COLORS */
+.clay { background:#f1e3d3; }
+.good { background:#16a34a; color:white; }
+.mid  { background:#2563eb; color:white; }
+.bad  { background:#dc2626; color:white; }
+
+.label {
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:8px;
+  background:rgba(0,0,0,0.15);
 }
+
+/* HISTORY BUTTON */
+.history-btn {
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:8px;
+  background:white;
+  border:none;
+  cursor:pointer;
+}
+
 </style>
 </head>
 
@@ -82,7 +104,23 @@ if(!token){
   window.location.href = "login.html";
 }
 
-/* LOAD DECISIONS */
+/* COLOR + LABEL */
+function getEvalState(decision){
+
+  if(!decision.evaluations || decision.evaluations.length === 0){
+    return { class:"clay", label:"Not evaluated" };
+  }
+
+  const latest = decision.evaluations[decision.evaluations.length - 1];
+  const satisfaction = 10 - latest.regretScore;
+
+  if(satisfaction <= 3) return { class:"bad", label:"Poor" };
+  if(satisfaction <= 6) return { class:"mid", label:"Mixed" };
+
+  return { class:"good", label:"Good" };
+}
+
+/* LOAD */
 async function load(){
 
   try {
@@ -101,21 +139,43 @@ async function load(){
       return;
     }
 
-    container.innerHTML = decisions.map(d => `
-      <div class="card" onclick="openEvaluate('${d.id}')">
-        <strong>${d.title}</strong><br>
-        <small>${d.category || ""}</small>
-      </div>
-    `).join("");
+    container.innerHTML = decisions.map(d => {
+
+      const state = getEvalState(d);
+
+      return `
+        <div class="card ${state.class}">
+          
+          <div onclick="openEvaluate('${d.id}')">
+            <strong>${d.title}</strong><br>
+            <small>${d.category || ""}</small>
+          </div>
+
+          <div>
+            <div class="label">${state.label}</div>
+            <button class="history-btn"
+              onclick="event.stopPropagation(); openHistory('${d.id}')">
+              History
+            </button>
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
 
   } catch(err){
     document.getElementById("list").innerHTML = "Failed to load decisions";
   }
 }
 
-/* NAVIGATION */
+/* NAV */
 function openEvaluate(id){
   window.location.href = "evaluate.html?id=" + id;
+}
+
+function openHistory(id){
+  window.location.href = "evaluation-history.html?id=" + id;
 }
 
 function goDash(){ window.location.href="dashboard.html"; }

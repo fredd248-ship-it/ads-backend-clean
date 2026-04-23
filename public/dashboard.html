@@ -8,13 +8,58 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 
-.sidebar { width:220px; background:#e0e7ff; height:100vh; padding:20px 10px; }
-.nav-item { padding:14px; margin-bottom:10px; border-radius:10px; cursor:pointer; }
+/* SIDEBAR */
+.sidebar {
+  width:220px;
+  background:#e0e7ff;
+  height:100vh;
+  padding:20px 10px;
+}
+
+.nav-item {
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.nav-item:hover { background:#c7d2fe; }
 .active { background:#4338ca; color:white; }
 
-.main { flex:1; padding:20px; max-width:900px; margin:auto; }
+/* MAIN */
+.main {
+  flex:1;
+  padding:20px;
+  max-width:900px;
+  margin:auto;
+}
 
-.card { border-radius:12px; padding:16px; margin-top:14px; cursor:pointer; }
+/* TOP BAR */
+.top-bar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* ADD BUTTON */
+.add-btn {
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:none;
+  background:#4338ca;
+  color:white;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* CARDS */
+.card {
+  border-radius:12px;
+  padding:16px;
+  margin-top:14px;
+  cursor:pointer;
+}
 
 .clay { background:#e7d8c9; color:#333; }
 .good { background:#16a34a; color:white; }
@@ -24,6 +69,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
+/* MODAL */
 #evalModal {
   display:none;
   position:fixed;
@@ -60,6 +106,7 @@ button {
 
 .save-btn { background:#4338ca; color:white; }
 .cancel-btn { background:#e5e7eb; }
+
 </style>
 </head>
 
@@ -75,12 +122,20 @@ button {
 </div>
 
 <div class="main">
-  <h2>Decisions</h2>
+
+  <div class="top-bar">
+    <h2>Decisions</h2>
+    <button class="add-btn" onclick="createDecision()">+</button>
+  </div>
+
   <div id="content">Loading...</div>
+
 </div>
 
+<!-- MODAL -->
 <div id="evalModal">
   <div class="modal-content">
+
     <h3 id="modalTitle"></h3>
 
     <label>Satisfaction</label>
@@ -101,28 +156,18 @@ button {
 
     <button class="save-btn" onclick="saveEval()">Save</button>
     <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+
   </div>
 </div>
 
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-
-/* 🔴 HARD GUARANTEE TOKEN */
-function getToken() {
-  const t = localStorage.getItem("ads_token");
-
-  if (!t || t === "null" || t === "undefined") {
-    alert("Not authenticated — please log in again");
-    window.location.href = "login.html";
-    throw new Error("NO TOKEN");
-  }
-
-  return t;
-}
+const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
+/* COLOR LOGIC */
 function getColorClass(d){
   if(!d.evaluations || d.evaluations.length === 0) return "clay";
   const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
@@ -131,6 +176,7 @@ function getColorClass(d){
   return "good";
 }
 
+/* MODAL */
 function openModal(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
@@ -141,25 +187,19 @@ function closeModal(){
   document.getElementById("evalModal").style.display = "none";
 }
 
+/* SAVE */
 async function saveEval(){
   try {
-    const token = getToken();
-
-    const satisfaction = Number(document.getElementById("slider").value);
-    const regretScore = 10 - satisfaction;
-    const frequency = document.getElementById("frequency").value;
-    const again = document.getElementById("again").value === "true";
-
     const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
       method:"POST",
       headers:{
         "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
+        Authorization:"Bearer "+token
       },
       body: JSON.stringify({
-        regretScore,
-        frequencyOfUse: frequency,
-        wouldBuyAgain: again
+        regretScore: 10 - Number(document.getElementById("slider").value),
+        frequencyOfUse: document.getElementById("frequency").value,
+        wouldBuyAgain: document.getElementById("again").value === "true"
       })
     });
 
@@ -173,57 +213,40 @@ async function saveEval(){
     closeModal();
     load();
 
-  } catch (err){
+  } catch(err){
     alert("Save error: " + err.message);
   }
 }
 
+/* LOAD */
 async function load(){
+
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+token }
+  });
+
+  const data = await res.json();
+  const decisions = data.data || [];
 
   const content = document.getElementById("content");
 
-  try {
-    const token = getToken();
-
-    const res = await fetch(API + "/decisions", {
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + token
-      }
-    });
-
-    const data = await res.json();
-
-    if(!res.ok){
-      content.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
-      return;
-    }
-
-    const decisions = Array.isArray(data)
-      ? data
-      : (data.data || []);
-
-    if(decisions.length === 0){
-      content.innerHTML = "<p>No decisions yet.</p>";
-      return;
-    }
-
-    content.innerHTML = decisions.map(d => {
-      const cat = d.category || "Uncategorized";
-      const cost = d.cost ? "$"+d.cost : "";
-
-      return `
-        <div class="card ${getColorClass(d)}"
-          onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
-          <div class="card-title">${d.title}</div>
-          <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
-        </div>
-      `;
-    }).join("");
-
-  } catch (err){
-    content.innerHTML = "<pre>ERROR:\n\n" + err.message + "</pre>";
+  if(decisions.length === 0){
+    content.innerHTML = "<p>No decisions yet.</p>";
+    return;
   }
+
+  content.innerHTML = decisions.map(d => {
+    const cat = d.category || "Uncategorized";
+    const cost = d.cost ? "$"+d.cost : "";
+
+    return `
+      <div class="card ${getColorClass(d)}"
+        onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
+        <div class="card-title">${d.title}</div>
+        <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 /* NAV */
@@ -232,6 +255,11 @@ function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
+
+/* CREATE PLACEHOLDER */
+function createDecision(){
+  alert("Create decision flow next step");
+}
 
 load();
 

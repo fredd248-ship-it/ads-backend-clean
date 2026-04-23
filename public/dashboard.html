@@ -80,6 +80,16 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
+/* SMALL USAGE TAG */
+.usage-tag {
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:6px;
+  margin-top:6px;
+  display:inline-block;
+  background:rgba(0,0,0,0.15);
+}
+
 /* MODAL */
 .modal {
   display:none;
@@ -182,7 +192,7 @@ const token = localStorage.getItem("ads_token");
 let activeDecisionId = null;
 
 /* =========================
-   USAGE COLOR (FIXED FOR MIXED DATA)
+   USAGE COLOR (handles old + new data)
 ========================= */
 function getUsageColor(decision){
 
@@ -193,17 +203,30 @@ function getUsageColor(decision){
   const latest = decision.evaluations[decision.evaluations.length - 1];
   let freq = latest.frequencyOfUse;
 
-  /* OLD STRING DATA */
-  if(freq === "Low") return "low";
-  if(freq === "Medium") return "medium";
-  if(freq === "High") return "high";
-
-  /* NEW INT DATA */
-  if(freq === 1) return "low";
-  if(freq === 2) return "medium";
-  if(freq === 3) return "high";
+  if(freq === "Low" || freq === 1) return "low";
+  if(freq === "Medium" || freq === 2) return "medium";
+  if(freq === "High" || freq === 3) return "high";
 
   return "clay";
+}
+
+/* =========================
+   USAGE LABEL (small tag)
+========================= */
+function getUsageLabel(decision){
+
+  if(!decision.evaluations || decision.evaluations.length === 0){
+    return "";
+  }
+
+  const latest = decision.evaluations[decision.evaluations.length - 1];
+  let freq = latest.frequencyOfUse;
+
+  if(freq === "Low" || freq === 1) return "Low use";
+  if(freq === "Medium" || freq === 2) return "Medium use";
+  if(freq === "High" || freq === 3) return "High use";
+
+  return "";
 }
 
 /* =========================
@@ -229,6 +252,7 @@ async function load(){
 
     const cat = d.category || "Uncategorized";
     const cost = d.cost ? "$"+d.cost : "";
+    const label = getUsageLabel(d);
 
     return `
       <div class="card ${getUsageColor(d)}"
@@ -236,6 +260,8 @@ async function load(){
 
         <div class="card-title">${d.title}</div>
         <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
+
+        ${label ? `<div class="usage-tag">${label}</div>` : ""}
 
       </div>
     `;

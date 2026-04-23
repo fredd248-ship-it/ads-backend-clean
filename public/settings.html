@@ -29,10 +29,14 @@ h1 {
   margin-bottom: 10px;
 }
 
+.section {
+  margin-top: 20px;
+}
+
 button {
   width: 100%;
   padding: 12px;
-  margin-top: 15px;
+  margin-top: 12px;
   background: #4f46e5;
   color: white;
   border: none;
@@ -52,35 +56,71 @@ button:hover {
 .secondary:hover {
   background: #d1d5db;
 }
+
+.link-btn {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.link-btn:hover {
+  background: #f3f4f6;
+}
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
   <h1>Settings</h1>
   <p>Your account is active.</p>
 
-  <button onclick="goToDashboard()">Go to Dashboard</button>
-  <button class="secondary" onclick="logout()">Logout</button>
+  <!-- PRIMARY ACTIONS -->
+  <div class="section">
+    <button onclick="goToDashboard()">Go to Dashboard</button>
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- INFORMATION LINKS -->
+  <div class="section">
+    <button class="link-btn" onclick="goAbout()">About</button>
+    <button class="link-btn" onclick="goDisclaimer()">Disclaimer</button>
+    <button class="link-btn" onclick="goFAQ()">FAQ</button>
+  </div>
+
 </div>
 
 <script>
-// 🔒 Protect page
+
+/* 🔒 AUTH PROTECTION */
 if (!localStorage.getItem("ads_token")) {
   window.location.href = "/onboard.html";
 }
 
-// 🔁 Navigation
+/* NAVIGATION */
 function goToDashboard() {
   window.location.href = "/dashboard.html";
 }
 
-// 🚪 Logout
+function goAbout() {
+  window.location.href = "/about.html";
+}
+
+function goDisclaimer() {
+  window.location.href = "/disclaimer.html";
+}
+
+function goFAQ() {
+  window.location.href = "/faq.html";
+}
+
+/* LOGOUT */
 function logout() {
   localStorage.removeItem("ads_token");
   window.location.href = "/onboard.html";
 }
+
 </script>
 
 </body>

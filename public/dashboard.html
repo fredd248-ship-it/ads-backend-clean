@@ -72,15 +72,16 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   cursor:pointer;
 }
 
-.clay { background:#e7d8c9; color:#333; }
-.good { background:#16a34a; color:white; }
-.mid  { background:#2563eb; color:white; }
-.bad  { background:#dc2626; color:white; }
+/* USAGE COLORS */
+.low { background:#fde047; color:#333; }      /* yellow */
+.medium { background:#8b5cf6; color:white; }  /* violet */
+.high { background:#f97316; color:white; }    /* orange */
+.clay { background:#e7d8c9; color:#333; }     /* fallback */
 
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
-/* MODALS */
+/* MODALS (unchanged) */
 .modal {
   display:none;
   position:fixed;
@@ -97,18 +98,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   max-width:90%;
   padding:24px;
   border-radius:14px;
-  overflow:visible;
-}
-
-.modal-content label { display:block; margin-top:16px; }
-
-.modal-content input,
-.modal-content select {
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  position:relative;
-  z-index:10;
 }
 
 button {
@@ -151,75 +140,6 @@ button {
 
 </div>
 
-<!-- CREATE MODAL -->
-<div id="createModal" class="modal">
-  <div class="modal-content">
-
-    <h3>Create Decision</h3>
-
-    <label>Title</label>
-    <input id="newTitle">
-
-    <label>Category</label>
-    <select id="newCategory">
-      <option>Home Office</option>
-      <option>Travel</option>
-      <option>Relationship</option>
-      <option>Job</option>
-      <option>Lawn and Garden</option>
-      <option>Electronics</option>
-      <option>Home</option>
-      <option>Outdoors and Patio</option>
-      <option>Vehicle</option>
-      <option>Moving</option>
-      <option>Work</option>
-      <option>Business</option>
-      <option>Tools</option>
-      <option>Clothing</option>
-      <option>Decor</option>
-      <option>Dining</option>
-      <option>Medical</option>
-      <option>Pets</option>
-      <option>Other</option>
-    </select>
-
-    <label>Cost</label>
-    <input id="newCost" type="number">
-
-    <button class="save-btn" onclick="saveDecision()">Save</button>
-    <button class="cancel-btn" onclick="closeCreate()">Cancel</button>
-
-  </div>
-</div>
-
-<!-- EVALUATION MODAL -->
-<div id="evalModal" class="modal">
-  <div class="modal-content">
-
-    <h3 id="modalTitle"></h3>
-
-    <label>Satisfaction</label>
-    <input type="range" min="0" max="10" value="5" id="slider">
-
-    <label>Frequency</label>
-    <select id="frequency">
-      <option>Low</option>
-      <option selected>Medium</option>
-      <option>High</option>
-    </select>
-
-    <label>Buy Again</label>
-    <select id="again">
-      <option value="true">Yes</option>
-      <option value="false">No</option>
-    </select>
-
-    <button class="save-btn" onclick="saveEval()">Save</button>
-    <button class="cancel-btn" onclick="closeEval()">Cancel</button>
-
-  </div>
-</div>
-
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
@@ -227,17 +147,30 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* COLOR */
-function getColorClass(d){
-  if(!d.evaluations || d.evaluations.length === 0) return "clay";
-  const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
-  if(s <=3) return "bad";
-  if(s <=6) return "mid";
-  return "good";
+/* =========================
+   USAGE COLOR LOGIC (NEW)
+========================= */
+function getUsageColor(decision){
+
+  if(!decision.evaluations || decision.evaluations.length === 0){
+    return "clay";
+  }
+
+  const latest = decision.evaluations[decision.evaluations.length - 1];
+  const freq = latest.frequencyOfUse;
+
+  if(freq === 1) return "low";
+  if(freq === 2) return "medium";
+  if(freq === 3) return "high";
+
+  return "clay";
 }
 
-/* LOAD */
+/* =========================
+   LOAD
+========================= */
 async function load(){
+
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
   });
@@ -253,59 +186,28 @@ async function load(){
   }
 
   content.innerHTML = decisions.map(d => {
+
     const cat = d.category || "Uncategorized";
     const cost = d.cost ? "$"+d.cost : "";
 
     return `
-      <div class="card ${getColorClass(d)}"
+      <div class="card ${getUsageColor(d)}"
         onclick="openEval('${d.id}','${d.title.replace(/'/g,"")}')">
+
         <div class="card-title">${d.title}</div>
-        <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
+        <div class="card-meta">
+          ${cat}${cost ? " • "+cost : ""}
+        </div>
+
       </div>
     `;
+
   }).join("");
 }
 
-/* CREATE */
-function openCreate(){
-  document.getElementById("createModal").style.display = "flex";
-}
-
-function closeCreate(){
-  document.getElementById("createModal").style.display = "none";
-}
-
-async function saveDecision(){
-  try {
-    const res = await fetch(API + "/decisions", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:"Bearer "+token
-      },
-      body: JSON.stringify({
-        title: document.getElementById("newTitle").value,
-        category: document.getElementById("newCategory").value,
-        cost: Number(document.getElementById("newCost").value || 0)
-      })
-    });
-
-    const data = await res.json();
-
-    if(!res.ok){
-      alert("Create failed: " + (data.error || "Unknown"));
-      return;
-    }
-
-    closeCreate();
-    load();
-
-  } catch(err){
-    alert("Create error: " + err.message);
-  }
-}
-
-/* EVAL — FULL DEBUG VERSION */
+/* =========================
+   EVAL MODAL
+========================= */
 function openEval(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
@@ -316,53 +218,14 @@ function closeEval(){
   document.getElementById("evalModal").style.display = "none";
 }
 
-async function saveEval(){
-
-  try {
-    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:"Bearer "+token
-      },
-      body: JSON.stringify({
-        regretScore: 10 - Number(document.getElementById("slider").value),
-        frequencyOfUse: document.getElementById("frequency").value,
-        wouldBuyAgain: document.getElementById("again").value === "true"
-      })
-    });
-
-    const text = await res.text();
-    console.log("EVAL RESPONSE:", text);
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      alert("Server returned HTML instead of JSON.\n\nThis means routing is still wrong.");
-      return;
-    }
-
-    if(!res.ok){
-      alert("Save failed: " + (data.error || "Unknown"));
-      return;
-    }
-
-    closeEval();
-    load();
-
-  } catch(err){
-    alert("Network error: " + err.message);
-  }
-}
-
 /* NAV */
 function goEvaluations(){ window.location.href="evaluations.html"; }
-function goHistory(){ window.location.href="history.html"; }
+function goHistory(){ window.location.href="evaluation-history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
 
+/* INIT */
 load();
 
 </script>

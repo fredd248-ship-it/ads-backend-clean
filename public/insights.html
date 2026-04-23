@@ -9,10 +9,11 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #eef6fb;
+  background: #f3f6fb;
   display: flex;
 }
 
+/* SIDEBAR */
 .sidebar {
   width: 220px;
   background: #e0e7ff;
@@ -40,6 +41,7 @@ body {
   color: white;
 }
 
+/* MAIN */
 .main {
   flex: 1;
   padding: 20px;
@@ -47,19 +49,32 @@ body {
   margin: auto;
 }
 
-.card {
-  margin-top: 16px;
-  padding: 18px;
-  border-radius: 12px;
-  background: white;
-}
-
 .section {
-  margin-top: 24px;
-  font-size: 13px;
+  margin-top: 28px;
+  font-size: 12px;
   font-weight: bold;
   color: #555;
   text-transform: uppercase;
+}
+
+/* CARDS */
+.card {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 12px;
+  background: white;
+  border-left: 4px solid #6366f1;
+}
+
+.card.outcome { border-left-color: #10b981; }
+.card.pattern { border-left-color: #f59e0b; }
+.card.overview { border-left-color: #3b82f6; }
+.card.cost { border-left-color: #ef4444; }
+
+.subtle {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
 }
 </style>
 </head>
@@ -85,8 +100,11 @@ body {
 const API = "/api/v1";
 const token = localStorage.getItem("ads_token");
 
-function card(title, text) {
-  return `<div class="card"><strong>${title}</strong><br>${text}</div>`;
+function card(title, text, type = "") {
+  return `<div class="card ${type}">
+    <strong>${title}</strong><br>
+    ${text}
+  </div>`;
 }
 
 async function load() {
@@ -104,58 +122,111 @@ async function load() {
 
     let html = "";
 
-    // =========================
-    // REFINED — OUTCOME-BASED DISTRIBUTION
-    // =========================
+    /* =========================
+       OUTCOME DISTRIBUTION
+    ========================= */
 
     if (data.distribution) {
-      html += card("Decision Outcomes",
-        `${data.distribution.strong}% Good outcomes<br>
-         ${data.distribution.average}% Mixed outcomes<br>
-         ${data.distribution.weak}% Poor outcomes`);
+
+      const strong = data.distribution.strong || 0;
+      const avg = data.distribution.average || 0;
+      const weak = data.distribution.weak || 0;
+
+      html += `<div class="section">Decision Outcomes</div>`;
+
+      html += card(
+        "Outcome Breakdown",
+        `${strong}% Good outcomes<br>
+         ${avg}% Mixed outcomes<br>
+         ${weak}% Poor outcomes
+         <div class="subtle">
+         This reflects how your decisions are turning out after real-world use.
+         </div>`,
+        "outcome"
+      );
     }
 
-    html += `<div class="section">Strategic Insights</div>`;
+    /* =========================
+       PATTERN INSIGHTS
+    ========================= */
+
+    html += `<div class="section">Behavior Patterns</div>`;
 
     if (data.primaryPattern) {
-      html += card("Observed Pattern", data.primaryPattern);
+      html += card(
+        "Observed Pattern",
+        `${data.primaryPattern}
+        <div class="subtle">
+        This pattern reflects how your decisions behave over time, not just how they felt initially.
+        </div>`,
+        "pattern"
+      );
     }
 
     if (data.recommendedFocus) {
-      html += card("Suggested Focus", data.recommendedFocus);
+      html += card(
+        "Suggested Focus",
+        `${data.recommendedFocus}
+        <div class="subtle">
+        Small adjustments here can improve future outcomes without changing everything at once.
+        </div>`,
+        "pattern"
+      );
     }
 
     if (data.behaviorReport?.recommendedAdjustments?.length) {
-      html += card("Recommended Adjustments",
+      html += card(
+        "Actionable Adjustments",
         data.behaviorReport.recommendedAdjustments
           .map(a => "• " + a)
-          .join("<br>"));
+          .join("<br>"),
+        "pattern"
+      );
     }
+
+    /* =========================
+       OVERVIEW
+    ========================= */
 
     html += `<div class="section">Overview</div>`;
 
-    html += card("Evaluation Rate",
-      `${data.evaluationRate || 0}% of your decisions have been evaluated`);
+    html += card(
+      "Evaluation Coverage",
+      `${data.evaluationRate || 0}% of your decisions have been evaluated
+       <div class="subtle">
+       More evaluations lead to more accurate insights.
+       </div>`,
+      "overview"
+    );
 
-    html += card("Follow-Through Rate",
-      `${data.followThroughRate || 0}% of your decisions would be made again`);
+    html += card(
+      "Follow-Through Behavior",
+      `${data.followThroughRate || 0}% of decisions would be made again
+       <div class="subtle">
+       Indicates how often your decisions hold up over time.
+       </div>`,
+      "overview"
+    );
 
-    // =========================
-    // COST INSIGHTS (UNCHANGED)
-    // =========================
+    /* =========================
+       COST INSIGHTS (REFINED)
+    ========================= */
 
     if (data.costInsights) {
 
-      html += `<div class="section">Cost Insights</div>`;
+      html += `<div class="section">Cost Patterns</div>`;
 
-      html += card("Total Spend",
-        "$" + (data.costInsights.totalSpend || 0).toLocaleString());
+      html += card(
+        "Expensive Mistakes",
+        data.costInsights.expensiveMistakes,
+        "cost"
+      );
 
-      html += card("Expensive Mistakes",
-        data.costInsights.expensiveMistakes);
-
-      html += card("High-Value Wins",
-        data.costInsights.expensiveWins);
+      html += card(
+        "High-Value Wins",
+        data.costInsights.expensiveWins,
+        "cost"
+      );
     }
 
     container.innerHTML = html;
@@ -165,6 +236,7 @@ async function load() {
   }
 }
 
+/* NAV */
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }

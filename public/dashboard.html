@@ -69,10 +69,11 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   cursor:pointer;
 }
 
-.low { background:#fde047; color:#333; }
-.medium { background:#8b5cf6; color:white; }
-.high { background:#f97316; color:white; }
-.clay { background:#e7d8c9; color:#333; }
+/* 🔧 UPDATED SOFTER COLORS */
+.low { background:#fef3c7; color:#333; }      /* soft yellow */
+.medium { background:#ddd6fe; color:#333; }   /* soft violet */
+.high { background:#fed7aa; color:#333; }     /* soft orange */
+.clay { background:#e7d8c9; color:#333; }     /* unchanged */
 
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
@@ -83,7 +84,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   border-radius:6px;
   margin-top:6px;
   display:inline-block;
-  background:rgba(0,0,0,0.15);
+  background:rgba(0,0,0,0.08);
 }
 
 /* MODALS */
@@ -122,6 +123,7 @@ button {
 
 .save-btn { background:#4338ca; color:white; }
 .cancel-btn { background:#e5e7eb; }
+
 </style>
 </head>
 
@@ -134,10 +136,7 @@ button {
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
-
-  <!-- ✅ ADDED -->
   <div class="nav-item" onclick="goHowItWorks()">How It Works</div>
-
 </div>
 
 <div class="main">
@@ -207,36 +206,48 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* COLOR */
-function getUsageColor(d){
-  if(!d.evaluations?.length) return "clay";
-  let f = d.evaluations.at(-1).frequencyOfUse;
-  if(f==="Low"||f===1) return "low";
-  if(f==="Medium"||f===2) return "medium";
-  if(f==="High"||f===3) return "high";
+/* COLOR + LABEL */
+function getUsageColor(decision){
+  if(!decision.evaluations || decision.evaluations.length === 0) return "clay";
+
+  const latest = decision.evaluations.at(-1);
+  let freq = latest.frequencyOfUse;
+
+  if(freq === "Low" || freq === 1) return "low";
+  if(freq === "Medium" || freq === 2) return "medium";
+  if(freq === "High" || freq === 3) return "high";
+
   return "clay";
 }
 
-function getUsageLabel(d){
-  if(!d.evaluations?.length) return "";
-  let f = d.evaluations.at(-1).frequencyOfUse;
-  if(f==="Low"||f===1) return "Low use";
-  if(f==="Medium"||f===2) return "Medium use";
-  if(f==="High"||f===3) return "High use";
+function getUsageLabel(decision){
+  if(!decision.evaluations || decision.evaluations.length === 0) return "";
+
+  const latest = decision.evaluations.at(-1);
+  let freq = latest.frequencyOfUse;
+
+  if(freq === "Low" || freq === 1) return "Low use";
+  if(freq === "Medium" || freq === 2) return "Medium use";
+  if(freq === "High" || freq === 3) return "High use";
+
   return "";
 }
 
 /* LOAD */
 async function load(){
-  const res = await fetch(API+"/decisions",{headers:{Authorization:"Bearer "+token}});
-  const data = await res.json();
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+token }
+  });
 
-  document.getElementById("content").innerHTML = data.data.map(d=>`
+  const data = await res.json();
+  const decisions = data.data || [];
+
+  document.getElementById("content").innerHTML = decisions.map(d => `
     <div class="card ${getUsageColor(d)}"
       onclick="openEval('${d.id}','${d.title}')">
       <div class="card-title">${d.title}</div>
-      <div class="card-meta">${d.category||""}</div>
-      ${getUsageLabel(d)?`<div class="usage-tag">${getUsageLabel(d)}</div>`:""}
+      <div class="card-meta">${d.category || ""}</div>
+      ${getUsageLabel(d) ? `<div class="usage-tag">${getUsageLabel(d)}</div>` : ""}
     </div>
   `).join("");
 }
@@ -246,38 +257,48 @@ function openCreate(){ createModal.style.display="flex"; }
 function closeCreate(){ createModal.style.display="none"; }
 
 async function saveDecision(){
-  await fetch(API+"/decisions",{
+  await fetch(API + "/decisions", {
     method:"POST",
-    headers:{ "Content-Type":"application/json", Authorization:"Bearer "+token },
-    body:JSON.stringify({
-      title:newTitle.value,
-      category:newCategory.value,
-      cost:Number(newCost.value||0)
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      title: newTitle.value,
+      category: newCategory.value,
+      cost: Number(newCost.value || 0)
     })
   });
+
   closeCreate();
   load();
 }
 
 /* EVAL */
 function openEval(id,title){
-  activeDecisionId=id;
-  modalTitle.innerText=title;
-  evalModal.style.display="flex";
+  activeDecisionId = id;
+  modalTitle.innerText = title;
+  evalModal.style.display = "flex";
 }
 
-function closeEval(){ evalModal.style.display="none"; }
+function closeEval(){
+  evalModal.style.display = "none";
+}
 
 async function saveEval(){
-  await fetch(API+"/decisions/"+activeDecisionId+"/evaluate",{
+  await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
     method:"POST",
-    headers:{ "Content-Type":"application/json", Authorization:"Bearer "+token },
-    body:JSON.stringify({
-      regretScore:10-slider.value,
-      frequencyOfUse:frequency.value,
-      wouldBuyAgain:again.value==="true"
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      regretScore: 10 - Number(slider.value),
+      frequencyOfUse: frequency.value,
+      wouldBuyAgain: again.value === "true"
     })
   });
+
   closeEval();
   load();
 }
@@ -288,7 +309,7 @@ function goHistory(){ location.href="evaluation-history.html"; }
 function goInsights(){ location.href="insights.html"; }
 function goBehavior(){ location.href="behavior.html"; }
 function goSettings(){ location.href="settings.html"; }
-function goHowItWorks(){ location.href="how-it-works.html"; } /* ✅ ADDED */
+function goHowItWorks(){ location.href="how-it-works.html"; }
 
 load();
 

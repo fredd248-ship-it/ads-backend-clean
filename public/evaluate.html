@@ -97,7 +97,7 @@ select {
 
 <div class="sidebar">
   <div class="nav-item" onclick="goDash()">Decisions</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item active">Evaluations</div>
   <div class="nav-item" onclick="goHistory()">History</div>
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
@@ -137,7 +137,8 @@ select {
 
 <script>
 
-const API = "/api/v1";
+/* ✅ FIXED API */
+const API = "https://ads-backend-clean.onrender.com/api/v1";
 
 function token() {
   return localStorage.getItem("ads_token");
@@ -215,7 +216,11 @@ async function save() {
       })
     });
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const text = await res.text();
+      alert("Server error:\n\n" + text.substring(0,200));
+      throw new Error();
+    }
 
     window.location.href = "dashboard.html";
 

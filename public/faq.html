@@ -43,6 +43,24 @@ body {
   margin: auto;
 }
 
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: #d1d5db;
+}
+
 .card {
   background: #fff9e6;
   border-radius: 16px;
@@ -79,23 +97,30 @@ body {
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
+  <div class="nav-item active">FAQ</div>
 </div>
 
 <div class="main">
-  <h2>FAQ</h2>
+
+  <div class="top-bar">
+    <h2>FAQ</h2>
+    <button class="back-btn" onclick="goDash()">Back</button>
+  </div>
+
   <div id="faqList"></div>
+
 </div>
 
 <script>
 
-/* 🔧 FIXED AUTH */
+/* AUTH */
 const token = localStorage.getItem("ads_token");
 if (!token || token === "null" || token === "undefined") {
   window.location.href = "login.html";
   throw new Error("STOP");
 }
 
-/* 🔧 FIXED NAV */
+/* NAV */
 function goDash(){ window.location.href="dashboard.html"; }
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }
@@ -105,26 +130,42 @@ function goSettings(){ window.location.href="settings.html"; }
 
 /* FAQ DATA */
 const faqs = [
+
   {
-    q: "Why did my score drop?",
-    a: "Scores reflect outcomes, not intentions. A drop usually means the result did not match expectations, often due to emotional decisions, time pressure, or low follow-through."
+    q: "What do the colors on the dashboard mean?",
+    a: "Dashboard colors reflect how often you use a decision.\n\nYellow = Low use\nViolet = Medium use\nOrange = High use\n\nIf a decision is not colored, it has not been evaluated yet."
   },
+
+  {
+    q: "What do the colors on the evaluations page mean?",
+    a: "Evaluation colors reflect outcome quality.\n\nGreen = Good decision\nBlue = Mixed result\nRed = Poor outcome\n\nThese are based on your satisfaction after the decision."
+  },
+
+  {
+    q: "Why track both usage and outcome?",
+    a: "Tracking both reveals patterns. A decision you use often may not always be a good one, and a good decision may not always be used. Seeing both helps identify habits and blind spots."
+  },
+
   {
     q: "What does impulse risk mean?",
-    a: "Impulse risk indicates a pattern where decisions made under high emotion and pressure tend to produce worse outcomes."
+    a: "Impulse risk highlights patterns where decisions made under pressure or strong emotion tend to lead to worse outcomes."
   },
+
   {
     q: "Is ADS judging me?",
     a: "No. ADS reflects patterns objectively. The goal is awareness, not criticism."
   },
+
   {
     q: "Can I trust the insights?",
-    a: "Insights are based on your own inputs and outcomes, but require consistent and honest evaluations."
+    a: "Insights reflect patterns in your own behavior over time. Accuracy improves with consistent and honest evaluations."
   },
+
   {
     q: "Why track decisions at all?",
     a: "Tracking creates a reliable record that reveals patterns memory cannot."
   }
+
 ];
 
 /* RENDER */
@@ -140,7 +181,7 @@ faqs.forEach(item => {
       <span>${item.q}</span>
       <span class="icon">▼</span>
     </div>
-    <div class="answer">${item.a}</div>
+    <div class="answer">${item.a.replace(/\n/g,"<br>")}</div>
   `;
 
   card.onclick = () => {

@@ -57,7 +57,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   color:white;
   font-size:22px;
   cursor:pointer;
-
   display:flex;
   align-items:center;
   justify-content:center;
@@ -81,7 +80,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
-/* MODALS (unchanged) */
+/* MODAL */
 .modal {
   display:none;
   position:fixed;
@@ -98,6 +97,13 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   max-width:90%;
   padding:24px;
   border-radius:14px;
+}
+
+.modal-content input,
+.modal-content select {
+  width:100%;
+  padding:10px;
+  margin-top:8px;
 }
 
 button {
@@ -140,6 +146,34 @@ button {
 
 </div>
 
+<!-- EVALUATION MODAL -->
+<div id="evalModal" class="modal">
+  <div class="modal-content">
+
+    <h3 id="modalTitle"></h3>
+
+    <label>Satisfaction</label>
+    <input type="range" min="0" max="10" value="5" id="slider">
+
+    <label>Frequency</label>
+    <select id="frequency">
+      <option>Low</option>
+      <option selected>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Buy Again</label>
+    <select id="again">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+
+    <button class="save-btn" onclick="saveEval()">Save</button>
+    <button class="cancel-btn" onclick="closeEval()">Cancel</button>
+
+  </div>
+</div>
+
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
@@ -148,7 +182,7 @@ const token = localStorage.getItem("ads_token");
 let activeDecisionId = null;
 
 /* =========================
-   USAGE COLOR LOGIC (NEW)
+   USAGE COLOR (FIXED FOR MIXED DATA)
 ========================= */
 function getUsageColor(decision){
 
@@ -157,8 +191,14 @@ function getUsageColor(decision){
   }
 
   const latest = decision.evaluations[decision.evaluations.length - 1];
-  const freq = latest.frequencyOfUse;
+  let freq = latest.frequencyOfUse;
 
+  /* OLD STRING DATA */
+  if(freq === "Low") return "low";
+  if(freq === "Medium") return "medium";
+  if(freq === "High") return "high";
+
+  /* NEW INT DATA */
   if(freq === 1) return "low";
   if(freq === 2) return "medium";
   if(freq === 3) return "high";
@@ -195,9 +235,7 @@ async function load(){
         onclick="openEval('${d.id}','${d.title.replace(/'/g,"")}')">
 
         <div class="card-title">${d.title}</div>
-        <div class="card-meta">
-          ${cat}${cost ? " • "+cost : ""}
-        </div>
+        <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
 
       </div>
     `;
@@ -206,16 +244,51 @@ async function load(){
 }
 
 /* =========================
-   EVAL MODAL
+   OPEN MODAL
 ========================= */
-function openEval(id,title){
+function openEval(id, title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("evalModal").style.display = "flex";
 }
 
+/* =========================
+   CLOSE MODAL
+========================= */
 function closeEval(){
   document.getElementById("evalModal").style.display = "none";
+}
+
+/* =========================
+   SAVE EVALUATION
+========================= */
+async function saveEval(){
+
+  try {
+    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+token
+      },
+      body: JSON.stringify({
+        regretScore: 10 - Number(document.getElementById("slider").value),
+        frequencyOfUse: document.getElementById("frequency").value,
+        wouldBuyAgain: document.getElementById("again").value === "true"
+      })
+    });
+
+    if(!res.ok){
+      alert("Save failed");
+      return;
+    }
+
+    closeEval();
+    load();
+
+  } catch(err){
+    alert("Network error");
+  }
 }
 
 /* NAV */

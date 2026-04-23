@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const prisma = require('../prisma');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 const authenticate = require('../middleware/authenticate');
 
 /* =========================
@@ -55,17 +57,11 @@ router.post('/:id/evaluate', authenticate, async (req, res) => {
     const { id } = req.params;
     let { regretScore, frequencyOfUse, wouldBuyAgain } = req.body;
 
-    /* =========================
-       CONVERT STRING → INT
-    ========================= */
-    const frequencyMap = {
-      Low: 1,
-      Medium: 2,
-      High: 3
-    };
+    /* STRING → INT CONVERSION */
+    const map = { Low: 1, Medium: 2, High: 3 };
 
     if (typeof frequencyOfUse === 'string') {
-      frequencyOfUse = frequencyMap[frequencyOfUse] || null;
+      frequencyOfUse = map[frequencyOfUse] ?? null;
     }
 
     const evaluation = await prisma.evaluation.create({

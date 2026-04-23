@@ -69,8 +69,8 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
-/* MODAL */
-#evalModal {
+/* MODALS */
+.modal {
   display:none;
   position:fixed;
   inset:0;
@@ -125,15 +125,34 @@ button {
 
   <div class="top-bar">
     <h2>Decisions</h2>
-    <button class="add-btn" onclick="createDecision()">+</button>
+    <button class="add-btn" onclick="openCreate()">+</button>
   </div>
 
   <div id="content">Loading...</div>
 
 </div>
 
-<!-- MODAL -->
-<div id="evalModal">
+<!-- CREATE MODAL -->
+<div id="createModal" class="modal">
+  <div class="modal-content">
+    <h3>Create Decision</h3>
+
+    <label>Title</label>
+    <input id="newTitle">
+
+    <label>Category</label>
+    <input id="newCategory">
+
+    <label>Cost</label>
+    <input id="newCost" type="number">
+
+    <button class="save-btn" onclick="saveDecision()">Save</button>
+    <button class="cancel-btn" onclick="closeCreate()">Cancel</button>
+  </div>
+</div>
+
+<!-- EVALUATION MODAL -->
+<div id="evalModal" class="modal">
   <div class="modal-content">
 
     <h3 id="modalTitle"></h3>
@@ -155,7 +174,7 @@ button {
     </select>
 
     <button class="save-btn" onclick="saveEval()">Save</button>
-    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    <button class="cancel-btn" onclick="closeEval()">Cancel</button>
 
   </div>
 </div>
@@ -167,58 +186,23 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* COLOR LOGIC */
+/* =========================
+   COLOR LOGIC
+========================= */
 function getColorClass(d){
   if(!d.evaluations || d.evaluations.length === 0) return "clay";
-  const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
+
+  const latest = d.evaluations[d.evaluations.length - 1];
+  const s = 10 - latest.regretScore;
+
   if(s <=3) return "bad";
   if(s <=6) return "mid";
   return "good";
 }
 
-/* MODAL */
-function openModal(id,title){
-  activeDecisionId = id;
-  document.getElementById("modalTitle").innerText = title;
-  document.getElementById("evalModal").style.display = "flex";
-}
-
-function closeModal(){
-  document.getElementById("evalModal").style.display = "none";
-}
-
-/* SAVE */
-async function saveEval(){
-  try {
-    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:"Bearer "+token
-      },
-      body: JSON.stringify({
-        regretScore: 10 - Number(document.getElementById("slider").value),
-        frequencyOfUse: document.getElementById("frequency").value,
-        wouldBuyAgain: document.getElementById("again").value === "true"
-      })
-    });
-
-    const data = await res.json();
-
-    if(!res.ok){
-      alert("Save failed: " + (data.error || "Unknown"));
-      return;
-    }
-
-    closeModal();
-    load();
-
-  } catch(err){
-    alert("Save error: " + err.message);
-  }
-}
-
-/* LOAD */
+/* =========================
+   LOAD
+========================= */
 async function load(){
 
   const res = await fetch(API + "/decisions", {
@@ -241,7 +225,7 @@ async function load(){
 
     return `
       <div class="card ${getColorClass(d)}"
-        onclick="openModal('${d.id}','${d.title.replace(/'/g,"")}')">
+        onclick="openEval('${d.id}','${d.title.replace(/'/g,"")}')">
         <div class="card-title">${d.title}</div>
         <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
       </div>
@@ -249,18 +233,102 @@ async function load(){
   }).join("");
 }
 
-/* NAV */
+/* =========================
+   CREATE FLOW
+========================= */
+function openCreate(){
+  document.getElementById("createModal").style.display = "flex";
+}
+
+function closeCreate(){
+  document.getElementById("createModal").style.display = "none";
+}
+
+async function saveDecision(){
+
+  try {
+    const res = await fetch(API + "/decisions", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+token
+      },
+      body: JSON.stringify({
+        title: document.getElementById("newTitle").value,
+        category: document.getElementById("newCategory").value,
+        cost: Number(document.getElementById("newCost").value || 0)
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      alert("Create failed: " + (data.error || "Unknown"));
+      return;
+    }
+
+    closeCreate();
+    load();
+
+  } catch(err){
+    alert("Create error: " + err.message);
+  }
+}
+
+/* =========================
+   EVALUATION FLOW
+========================= */
+function openEval(id,title){
+  activeDecisionId = id;
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("evalModal").style.display = "flex";
+}
+
+function closeEval(){
+  document.getElementById("evalModal").style.display = "none";
+}
+
+async function saveEval(){
+
+  try {
+    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+token
+      },
+      body: JSON.stringify({
+        regretScore: 10 - Number(document.getElementById("slider").value),
+        frequencyOfUse: document.getElementById("frequency").value,
+        wouldBuyAgain: document.getElementById("again").value === "true"
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      alert("Save failed: " + (data.error || "Unknown"));
+      return;
+    }
+
+    closeEval();
+    load();
+
+  } catch(err){
+    alert("Save error: " + err.message);
+  }
+}
+
+/* =========================
+   NAV
+========================= */
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
 
-/* CREATE PLACEHOLDER */
-function createDecision(){
-  alert("Create decision flow next step");
-}
-
+/* INIT */
 load();
 
 </script>

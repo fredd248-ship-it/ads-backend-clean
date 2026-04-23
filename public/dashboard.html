@@ -41,7 +41,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   align-items:center;
 }
 
-/* ADD BUTTON */
 .add-container {
   display:flex;
   align-items:center;
@@ -60,7 +59,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   display:flex;
   align-items:center;
   justify-content:center;
-  line-height:0;
 }
 
 /* CARDS */
@@ -71,16 +69,14 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   cursor:pointer;
 }
 
-/* USAGE COLORS */
-.low { background:#fde047; color:#333; }      /* yellow */
-.medium { background:#8b5cf6; color:white; }  /* violet */
-.high { background:#f97316; color:white; }    /* orange */
-.clay { background:#e7d8c9; color:#333; }     /* fallback */
+.low { background:#fde047; color:#333; }
+.medium { background:#8b5cf6; color:white; }
+.high { background:#f97316; color:white; }
+.clay { background:#e7d8c9; color:#333; }
 
 .card-title { font-weight:bold; }
 .card-meta { font-size:12px; opacity:.8; }
 
-/* SMALL USAGE TAG */
 .usage-tag {
   font-size:11px;
   padding:4px 8px;
@@ -90,7 +86,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
   background:rgba(0,0,0,0.15);
 }
 
-/* MODAL */
+/* MODALS */
 .modal {
   display:none;
   position:fixed;
@@ -156,6 +152,27 @@ button {
 
 </div>
 
+<!-- CREATE MODAL -->
+<div id="createModal" class="modal">
+  <div class="modal-content">
+
+    <h3>Create Decision</h3>
+
+    <label>Title</label>
+    <input id="newTitle">
+
+    <label>Category</label>
+    <input id="newCategory">
+
+    <label>Cost</label>
+    <input id="newCost" type="number">
+
+    <button class="save-btn" onclick="saveDecision()">Save</button>
+    <button class="cancel-btn" onclick="closeCreate()">Cancel</button>
+
+  </div>
+</div>
+
 <!-- EVALUATION MODAL -->
 <div id="evalModal" class="modal">
   <div class="modal-content">
@@ -191,16 +208,11 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* =========================
-   USAGE COLOR (handles old + new data)
-========================= */
+/* COLOR + LABEL */
 function getUsageColor(decision){
+  if(!decision.evaluations || decision.evaluations.length === 0) return "clay";
 
-  if(!decision.evaluations || decision.evaluations.length === 0){
-    return "clay";
-  }
-
-  const latest = decision.evaluations[decision.evaluations.length - 1];
+  const latest = decision.evaluations.at(-1);
   let freq = latest.frequencyOfUse;
 
   if(freq === "Low" || freq === 1) return "low";
@@ -210,16 +222,10 @@ function getUsageColor(decision){
   return "clay";
 }
 
-/* =========================
-   USAGE LABEL (small tag)
-========================= */
 function getUsageLabel(decision){
+  if(!decision.evaluations || decision.evaluations.length === 0) return "";
 
-  if(!decision.evaluations || decision.evaluations.length === 0){
-    return "";
-  }
-
-  const latest = decision.evaluations[decision.evaluations.length - 1];
+  const latest = decision.evaluations.at(-1);
   let freq = latest.frequencyOfUse;
 
   if(freq === "Low" || freq === 1) return "Low use";
@@ -229,11 +235,8 @@ function getUsageLabel(decision){
   return "";
 }
 
-/* =========================
-   LOAD
-========================= */
+/* LOAD */
 async function load(){
-
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
   });
@@ -241,80 +244,65 @@ async function load(){
   const data = await res.json();
   const decisions = data.data || [];
 
-  const content = document.getElementById("content");
-
-  if(decisions.length === 0){
-    content.innerHTML = "<p>No decisions yet.</p>";
-    return;
-  }
-
-  content.innerHTML = decisions.map(d => {
-
-    const cat = d.category || "Uncategorized";
-    const cost = d.cost ? "$"+d.cost : "";
-    const label = getUsageLabel(d);
-
-    return `
-      <div class="card ${getUsageColor(d)}"
-        onclick="openEval('${d.id}','${d.title.replace(/'/g,"")}')">
-
-        <div class="card-title">${d.title}</div>
-        <div class="card-meta">${cat}${cost ? " • "+cost : ""}</div>
-
-        ${label ? `<div class="usage-tag">${label}</div>` : ""}
-
-      </div>
-    `;
-
-  }).join("");
+  document.getElementById("content").innerHTML = decisions.map(d => `
+    <div class="card ${getUsageColor(d)}"
+      onclick="openEval('${d.id}','${d.title}')">
+      <div class="card-title">${d.title}</div>
+      <div class="card-meta">${d.category || ""}</div>
+      ${getUsageLabel(d) ? `<div class="usage-tag">${getUsageLabel(d)}</div>` : ""}
+    </div>
+  `).join("");
 }
 
-/* =========================
-   OPEN MODAL
-========================= */
-function openEval(id, title){
+/* CREATE */
+function openCreate(){ document.getElementById("createModal").style.display="flex"; }
+function closeCreate(){ document.getElementById("createModal").style.display="none"; }
+
+async function saveDecision(){
+  await fetch(API + "/decisions", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      title: document.getElementById("newTitle").value,
+      category: document.getElementById("newCategory").value,
+      cost: Number(document.getElementById("newCost").value || 0)
+    })
+  });
+
+  closeCreate();
+  load();
+}
+
+/* EVAL */
+function openEval(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
   document.getElementById("evalModal").style.display = "flex";
 }
 
-/* =========================
-   CLOSE MODAL
-========================= */
 function closeEval(){
   document.getElementById("evalModal").style.display = "none";
 }
 
-/* =========================
-   SAVE EVALUATION
-========================= */
 async function saveEval(){
+  await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+token
+    },
+    body: JSON.stringify({
+      regretScore: 10 - Number(document.getElementById("slider").value),
+      frequencyOfUse: document.getElementById("frequency").value,
+      wouldBuyAgain: document.getElementById("again").value === "true"
+    })
+  });
 
-  try {
-    const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:"Bearer "+token
-      },
-      body: JSON.stringify({
-        regretScore: 10 - Number(document.getElementById("slider").value),
-        frequencyOfUse: document.getElementById("frequency").value,
-        wouldBuyAgain: document.getElementById("again").value === "true"
-      })
-    });
-
-    if(!res.ok){
-      alert("Save failed");
-      return;
-    }
-
-    closeEval();
-    load();
-
-  } catch(err){
-    alert("Network error");
-  }
+  closeEval();
+  load();
 }
 
 /* NAV */
@@ -324,7 +312,6 @@ function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
 
-/* INIT */
 load();
 
 </script>

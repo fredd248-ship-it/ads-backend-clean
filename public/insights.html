@@ -105,24 +105,24 @@ async function load() {
     let html = "";
 
     // =========================
-    // ORIGINAL INSIGHTS UI
+    // REFINED — OUTCOME-BASED DISTRIBUTION
     // =========================
 
     if (data.distribution) {
-      html += card("Decision Distribution",
-        `${data.distribution.strong}% Strong<br>
-         ${data.distribution.average}% Average<br>
-         ${data.distribution.weak}% Weak`);
+      html += card("Decision Outcomes",
+        `${data.distribution.strong}% Good outcomes<br>
+         ${data.distribution.average}% Mixed outcomes<br>
+         ${data.distribution.weak}% Poor outcomes`);
     }
 
     html += `<div class="section">Strategic Insights</div>`;
 
     if (data.primaryPattern) {
-      html += card("Primary Pattern", data.primaryPattern);
+      html += card("Observed Pattern", data.primaryPattern);
     }
 
     if (data.recommendedFocus) {
-      html += card("Recommended Focus", data.recommendedFocus);
+      html += card("Suggested Focus", data.recommendedFocus);
     }
 
     if (data.behaviorReport?.recommendedAdjustments?.length) {
@@ -141,7 +141,7 @@ async function load() {
       `${data.followThroughRate || 0}% of your decisions would be made again`);
 
     // =========================
-    // NEW — COST INSIGHTS (ADDED, NOT REPLACED)
+    // COST INSIGHTS (UNCHANGED)
     // =========================
 
     if (data.costInsights) {

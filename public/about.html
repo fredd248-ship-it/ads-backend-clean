@@ -41,8 +41,27 @@ body {
 .main {
   flex: 1;
   padding: 20px;
-  max-width: 700px;
+  max-width: 720px;
   margin: auto;
+}
+
+/* TOP BAR */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: #d1d5db;
 }
 
 /* CARD */
@@ -64,6 +83,7 @@ body {
   line-height: 1.5;
   color: #333;
 }
+
 </style>
 </head>
 
@@ -76,51 +96,76 @@ body {
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
+  <div class="nav-item active">About</div>
 </div>
 
 <div class="main">
-  <h2>About ADS</h2>
 
+  <div class="top-bar">
+    <h2>About ADS</h2>
+    <button class="back-btn" onclick="goDash()">Back</button>
+  </div>
+
+  <!-- CORE DEFINITION -->
   <div class="card">
     <div class="title">What is ADS?</div>
     <div class="text">
-      Adaptive Decision System (ADS) is a tool designed to help you evaluate your decisions over time.
-      Instead of focusing on intentions, ADS tracks outcomes and identifies patterns in your behavior.
+      Adaptive Decision System (ADS) is a structured feedback system that helps you understand your decisions over time.
+      Instead of focusing on intentions, ADS tracks what you actually do and how those decisions turn out.
     </div>
   </div>
 
+  <!-- CORE MODEL (NEW — IMPORTANT) -->
+  <div class="card">
+    <div class="title">How ADS Evaluates Decisions</div>
+    <div class="text">
+      ADS does not rely on a single metric.<br><br>
+
+      It evaluates decisions using multiple signals—how often you use a decision, how it performs over time, the conditions under which it was made (time pressure and emotional weight), and whether you would make the same decision again.<br><br>
+
+      By combining these, ADS reveals patterns in your behavior that are difficult to recognize in isolation.
+    </div>
+  </div>
+
+  <!-- WHY -->
   <div class="card">
     <div class="title">Why It Exists</div>
     <div class="text">
-      Most decisions feel right in the moment but are only understood in hindsight.
-      ADS exists to close that gap by showing how emotional weight, time pressure, and follow-through
-      affect real outcomes.
+      Many decisions feel right in the moment but are only understood in hindsight.
+      ADS exists to close that gap by showing how your decisions actually perform over time.
     </div>
   </div>
 
+  <!-- HOW IT WORKS -->
   <div class="card">
     <div class="title">How It Works</div>
     <div class="text">
-      You record decisions, evaluate them later, and ADS analyzes the results.
-      The system detects patterns such as impulsive behavior, inconsistency, and repeated mistakes,
-      then translates them into simple, actionable insights.
+      You record a decision, live with the outcome, and evaluate it later.<br><br>
+
+      ADS compares how often you use that decision with how well it performs, identifying patterns such as impulsive behavior, inconsistency, and overlooked successes.<br><br>
+
+      These patterns are surfaced in the Insights section to help you better understand your decision-making over time.
     </div>
   </div>
 
+  <!-- DIFFERENT -->
   <div class="card">
     <div class="title">What Makes It Different</div>
     <div class="text">
       ADS does not predict your future or tell you what to do.
-      It reflects your actual behavior back to you using structured data.
-      Every insight is based on your own decisions, not assumptions or generic advice.
+      It reflects your actual behavior using structured data.<br><br>
+
+      Every insight is based on your own decisions—not assumptions, opinions, or generic advice.
     </div>
   </div>
 
+  <!-- LIMITS -->
   <div class="card">
     <div class="title">What This Is Not</div>
     <div class="text">
       ADS is not financial, medical, or professional advice.
-      It is not a replacement for judgment.
+      It is not a replacement for judgment.<br><br>
+
       It is a feedback system designed to help you recognize patterns and improve decision quality over time.
     </div>
   </div>
@@ -133,7 +178,7 @@ body {
 const token = localStorage.getItem("ads_token");
 
 if (!token) {
-  window.location.href = "login.html"; // ✅ FIXED
+  window.location.href = "login.html";
 }
 
 /* NAV */

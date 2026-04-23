@@ -42,6 +42,12 @@ body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
 }
 
 /* ADD BUTTON */
+.add-container {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
 .add-btn {
   width:42px;
   height:42px;
@@ -125,7 +131,11 @@ button {
 
   <div class="top-bar">
     <h2>Decisions</h2>
-    <button class="add-btn" onclick="openCreate()">+</button>
+
+    <div class="add-container">
+      <button class="add-btn" onclick="openCreate()" title="Create New Decision">+</button>
+      <span style="font-size:14px; color:#555;">Create Decision</span>
+    </div>
   </div>
 
   <div id="content">Loading...</div>
@@ -135,19 +145,41 @@ button {
 <!-- CREATE MODAL -->
 <div id="createModal" class="modal">
   <div class="modal-content">
+
     <h3>Create Decision</h3>
 
     <label>Title</label>
     <input id="newTitle">
 
     <label>Category</label>
-    <input id="newCategory">
+    <select id="newCategory">
+      <option>Home Office</option>
+      <option>Travel</option>
+      <option>Relationship</option>
+      <option>Job</option>
+      <option>Lawn and Garden</option>
+      <option>Electronics</option>
+      <option>Home</option>
+      <option>Outdoors and Patio</option>
+      <option>Vehicle</option>
+      <option>Moving</option>
+      <option>Work</option>
+      <option>Business</option>
+      <option>Tools</option>
+      <option>Clothing</option>
+      <option>Decor</option>
+      <option>Dining</option>
+      <option>Medical</option>
+      <option>Pets</option>
+      <option>Other</option>
+    </select>
 
     <label>Cost</label>
     <input id="newCost" type="number">
 
     <button class="save-btn" onclick="saveDecision()">Save</button>
     <button class="cancel-btn" onclick="closeCreate()">Cancel</button>
+
   </div>
 </div>
 
@@ -186,25 +218,17 @@ const token = localStorage.getItem("ads_token");
 
 let activeDecisionId = null;
 
-/* =========================
-   COLOR LOGIC
-========================= */
+/* COLOR */
 function getColorClass(d){
   if(!d.evaluations || d.evaluations.length === 0) return "clay";
-
-  const latest = d.evaluations[d.evaluations.length - 1];
-  const s = 10 - latest.regretScore;
-
+  const s = 10 - d.evaluations[d.evaluations.length-1].regretScore;
   if(s <=3) return "bad";
   if(s <=6) return "mid";
   return "good";
 }
 
-/* =========================
-   LOAD
-========================= */
+/* LOAD */
 async function load(){
-
   const res = await fetch(API + "/decisions", {
     headers:{ Authorization:"Bearer "+token }
   });
@@ -233,9 +257,7 @@ async function load(){
   }).join("");
 }
 
-/* =========================
-   CREATE FLOW
-========================= */
+/* CREATE */
 function openCreate(){
   document.getElementById("createModal").style.display = "flex";
 }
@@ -245,7 +267,6 @@ function closeCreate(){
 }
 
 async function saveDecision(){
-
   try {
     const res = await fetch(API + "/decisions", {
       method:"POST",
@@ -275,9 +296,7 @@ async function saveDecision(){
   }
 }
 
-/* =========================
-   EVALUATION FLOW
-========================= */
+/* EVAL */
 function openEval(id,title){
   activeDecisionId = id;
   document.getElementById("modalTitle").innerText = title;
@@ -289,7 +308,6 @@ function closeEval(){
 }
 
 async function saveEval(){
-
   try {
     const res = await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
       method:"POST",
@@ -319,16 +337,13 @@ async function saveEval(){
   }
 }
 
-/* =========================
-   NAV
-========================= */
+/* NAV */
 function goEvaluations(){ window.location.href="evaluations.html"; }
 function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
 
-/* INIT */
 load();
 
 </script>

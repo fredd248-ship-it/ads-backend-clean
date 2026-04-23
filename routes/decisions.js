@@ -1,14 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-/* ✅ SAFE PRISMA IMPORT */
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
+const prisma = require('../prisma');
 const authenticate = require('../middleware/authenticate');
 
 /* =========================
-   GET ALL DECISIONS
+   GET DECISIONS
 ========================= */
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -19,6 +16,7 @@ router.get('/', authenticate, async (req, res) => {
     });
 
     res.json({ success: true, data: decisions });
+
   } catch (err) {
     console.error("GET DECISIONS ERROR:", err);
     res.status(500).json({ success: false, error: 'Failed to fetch decisions' });
@@ -42,6 +40,7 @@ router.post('/', authenticate, async (req, res) => {
     });
 
     res.json({ success: true, data: decision });
+
   } catch (err) {
     console.error("CREATE DECISION ERROR:", err);
     res.status(500).json({ success: false, error: 'Failed to create decision' });
@@ -54,7 +53,20 @@ router.post('/', authenticate, async (req, res) => {
 router.post('/:id/evaluate', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { regretScore, frequencyOfUse, wouldBuyAgain } = req.body;
+    let { regretScore, frequencyOfUse, wouldBuyAgain } = req.body;
+
+    /* =========================
+       CONVERT STRING → INT
+    ========================= */
+    const frequencyMap = {
+      Low: 1,
+      Medium: 2,
+      High: 3
+    };
+
+    if (typeof frequencyOfUse === 'string') {
+      frequencyOfUse = frequencyMap[frequencyOfUse] || null;
+    }
 
     const evaluation = await prisma.evaluation.create({
       data: {
@@ -66,6 +78,7 @@ router.post('/:id/evaluate', authenticate, async (req, res) => {
     });
 
     res.json({ success: true, data: evaluation });
+
   } catch (err) {
     console.error("EVALUATION ERROR:", err);
     res.status(500).json({ success: false, error: 'Failed to save evaluation' });

@@ -6,35 +6,41 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
-
-/* =========================
-   REGISTER (HARDENED)
-========================= */
+/*
+  REGISTER (INVITE REQUIRED - FINAL)
+*/
 router.post("/register", async (req, res) => {
   try {
-    let { email, password, inviteToken } = req.body;
+    let { email, password, inviteCode } = req.body;
 
-    // Normalize input
-    if (inviteToken) {
-      inviteToken = inviteToken.trim().toUpperCase();
+    // Normalize
+    if (inviteCode) {
+      inviteCode = inviteCode.trim().toUpperCase();
     }
 
-    if (!email || !password || !inviteToken) {
-      return res.status(400).json({ error: "Missing fields" });
+    if (!email || !password || !inviteCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Email, password, and invite code are required"
+      });
     }
 
-    console.log("REGISTER ATTEMPT TOKEN:", inviteToken);
-
+    // ✅ LOOKUP USING NEW FIELD (code)
     const invite = await prisma.invite.findUnique({
-      where: { token: inviteToken }
+      where: { code: inviteCode }
     });
 
-    console.log("DB LOOKUP RESULT:", invite);
-
-    if (!invite || invite.used) {
+    if (!invite) {
       return res.status(400).json({
+        success: false,
         error: "Invalid access code"
+      });
+    }
+
+    if (invite.isUsed) {
+      return res.status(400).json({
+        success: false,
+        error: "Access code already used"
       });
     }
 
@@ -44,6 +50,7 @@ router.post("/register", async (req, res) => {
 
     if (existingUser) {
       return res.status(400).json({
+        success: false,
         error: "User already exists"
       });
     }
@@ -57,22 +64,36 @@ router.post("/register", async (req, res) => {
       }
     });
 
+    // ✅ MARK USED (new schema)
     await prisma.invite.update({
-      where: { token: inviteToken },
-      data: { used: true }
+      where: { code: inviteCode },
+      data: { isUsed: true }
     });
 
-    return res.json({ success: true });
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      success: true,
+      token
+    });
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    return res.status(500).json({ error: "Server error" });
+
+    return res.status(500).json({
+      success: false,
+      error: "Server error"
+    });
   }
 });
 
-/* =========================
-   LOGIN
-========================= */
+/*
+  LOGIN
+*/
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -82,26 +103,39 @@ router.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid credentials"
+      });
     }
 
     const valid = await bcrypt.compare(password, user.password);
 
     if (!valid) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid credentials"
+      });
     }
 
     const token = jwt.sign(
       { id: user.id },
-      JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    return res.json({ token });
+    return res.json({
+      success: true,
+      token
+    });
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-    return res.status(500).json({ error: "Server error" });
+
+    return res.status(500).json({
+      success: false,
+      error: "Server error"
+    });
   }
 });
 

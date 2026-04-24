@@ -1,13 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Redirecting...</title>
-  <script>
-    // Always redirect to the single source of truth
-    window.location.href = "/settings.html";
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e4fd8;
+    }
+
+    .message {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <p>Redirecting...</p>
+
+  <div class="card">
+    <h2>Create Account</h2>
+
+    <form id="registerForm">
+      <input id="email" type="email" placeholder="Email" required />
+      <input id="password" type="password" placeholder="Password" required />
+      <input id="inviteCode" type="text" placeholder="Access Code" required />
+
+      <button type="submit">Create Account</button>
+    </form>
+
+    <div id="message" class="message"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("registerForm");
+    const messageBox = document.getElementById("message");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault(); // 🔥 prevents page refresh
+
+      messageBox.innerText = "Processing...";
+      messageBox.style.color = "#333";
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      let inviteCode = document.getElementById("inviteCode").value;
+
+      // normalize input
+      inviteCode = inviteCode.trim().toUpperCase();
+
+      try {
+        const res = await fetch("/api/v1/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            inviteCode
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          messageBox.innerText = data.error || "Registration failed";
+          messageBox.style.color = "red";
+          return;
+        }
+
+        messageBox.innerText = "Account created successfully";
+        messageBox.style.color = "green";
+
+      } catch (err) {
+        console.error(err);
+        messageBox.innerText = "Server error";
+        messageBox.style.color = "red";
+      }
+    });
+  </script>
+
 </body>
 </html>

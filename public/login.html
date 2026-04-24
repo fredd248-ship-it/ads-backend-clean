@@ -68,23 +68,29 @@ async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
+  const errorBox = document.getElementById("error");
+  errorBox.innerText = "Processing...";
+
   try {
-    const res = await fetch("/api/v1/auth/login", {
+    const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ email, password })
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      const data = await res.json();
       localStorage.setItem("ads_token", data.token);
-      localStorage.removeItem("invite_valid");
       window.location.href = "dashboard.html";
     } else {
-      document.getElementById("error").innerText = "Invalid email or password";
+      errorBox.innerText = data.error || "Invalid email or password";
     }
+
   } catch (err) {
-    document.getElementById("error").innerText = "Server error";
+    errorBox.innerText = "Connection error";
   }
 }
 </script>

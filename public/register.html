@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Create Account</title>
+<title>Register</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,6 +13,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  margin: 0;
 }
 
 .card {
@@ -20,6 +21,7 @@ body {
   padding: 25px;
   border-radius: 12px;
   width: 320px;
+  text-align: center;
 }
 
 input {
@@ -38,7 +40,7 @@ button {
 }
 
 .message {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 14px;
 }
 </style>
@@ -47,7 +49,8 @@ button {
 <body>
 
 <div class="card">
-  <h2>Create Account (DEBUG)</h2>
+  <!-- 🔥 THIS IS YOUR VISUAL PROOF -->
+  <h2>REGISTER VERSION 2</h2>
 
   <input id="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Password" />
@@ -59,43 +62,13 @@ button {
 </div>
 
 <script>
-async function register() {
-
+function register() {
   const msg = document.getElementById("message");
-  msg.innerText = "STEP 1: Button clicked";
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  let inviteCode = document.getElementById("inviteCode").value;
+  // 🔥 THIS MUST SHOW — proves JS is running
+  msg.innerText = "BUTTON CLICKED";
 
-  inviteCode = inviteCode.trim().toUpperCase();
-
-  try {
-
-    msg.innerText = "STEP 2: Sending request...";
-
-    const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        inviteCode
-      })
-    });
-
-    msg.innerText = "STEP 3: Response received (" + res.status + ")";
-
-    const data = await res.json();
-
-    msg.innerText = "STEP 4: " + JSON.stringify(data);
-
-  } catch (err) {
-
-    msg.innerText = "STEP ERROR: " + err.message;
-  }
+  // Stop here for now — we are proving execution first
 }
 </script>
 

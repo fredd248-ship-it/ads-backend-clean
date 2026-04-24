@@ -1,65 +1,62 @@
-const express = require("express");
-const router = express.Router();
-const { PrismaClient } = require("@prisma/client");
+generator client {
+  provider = "prisma-client-js"
+}
 
-const prisma = new PrismaClient();
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-/*
-  CREATE INVITE CODE
-*/
-router.post("/create", async (req, res) => {
-  try {
-    const adminKey = req.headers["x-admin-key"];
+// =========================
+// USER
+// =========================
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 
-    // Validate env
-    if (!process.env.ADMIN_KEY) {
-      return res.status(500).json({
-        success: false,
-        error: "ADMIN_KEY not set in environment"
-      });
-    }
+  decisions Decision[]
+}
 
-    // Validate request
-    if (adminKey !== process.env.ADMIN_KEY) {
-      return res.status(401).json({
-        success: false,
-        error: "Unauthorized"
-      });
-    }
+// =========================
+// DECISION
+// =========================
+model Decision {
+  id              String   @id @default(uuid())
+  title           String
+  category        String?
+  cost            Float?
+  timePressure    Int?
+  emotionalWeight Int?
+  createdAt       DateTime @default(now())
 
-    // Generate invite code
-    const code =
-      "ADS-" +
-      Math.random().toString(36).substring(2, 8).toUpperCase();
+  userId String
+  user   User @relation(fields: [userId], references: [id])
 
-    // Create invite (matches CURRENT schema: code + isUsed)
-    const invite = await prisma.invite.create({
-      data: {
-        code: code,
-        isUsed: false
-      }
-    });
+  evaluations Evaluation[]
+}
 
-    return res.json({
-      success: true,
-      code: invite.code
-    });
+// =========================
+// EVALUATION
+// =========================
+model Evaluation {
+  id             String   @id @default(uuid())
+  regretScore    Int
+  frequencyOfUse Int
+  wouldBuyAgain  Boolean
+  createdAt      DateTime @default(now())
 
-  } catch (err) {
-    console.error("INVITE ERROR:", err);
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id])
+}
 
-    return res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
-});
-
-/*
-  BASIC ROUTE TEST
-*/
-router.get("/", (req, res) => {
-  res.send("Invite route active");
-});
-
-module.exports = router;
+// =========================
+// INVITE (FINAL CLEAN VERSION)
+// =========================
+model Invite {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

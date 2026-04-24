@@ -2,64 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard</title>
+<title>ADS Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  font-family: Arial;
-  background: #f5f7fb;
   margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  display: flex;
 }
 
-.container {
-  padding: 20px;
+.sidebar {
+  width: 220px;
+  background: #e0e7ff;
+  height: 100vh;
+  padding: 20px 10px;
+  border-right: 1px solid #c7d2fe;
+  display: flex;
+  flex-direction: column;
 }
 
-button {
-  padding: 10px;
-  background: #4f46e5;
+.nav-item {
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #312e81;
+}
+
+.nav-item:hover { background: #c7d2fe; }
+
+.active {
+  background: #4338ca;
   color: white;
-  border: none;
 }
 
+.create-section {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.create-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.create-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #4338ca;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+  position: relative;
+}
+
+.top-link {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #4338ca;
+  cursor: pointer;
+}
+
+.card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clay { background: #c4a484; }
+.good { background: #16a34a; color: white; }
+.mid { background: #2563eb; color: white; }
+.bad { background: #dc2626; color: white; }
+
+.card-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+.card-meta {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* MODAL */
 .modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background: rgba(0,0,0,0.4);
 }
 
 .modal-content {
   background: white;
   padding: 20px;
+  width: 320px;
   margin: 10% auto;
-  width: 300px;
+  border-radius: 12px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h2>Dashboard</h2>
+<div class="sidebar">
+  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
+  <div class="nav-item" onclick="goHistory()">History</div>
+  <div class="nav-item" onclick="goInsights()">Insights</div>
+  <div class="nav-item" onclick="goBehavior()">Behavior</div>
+  <div class="nav-item" onclick="goSettings()">Settings</div>
 
-  <button onclick="openModal()">+ New Decision</button>
+  <div class="create-section">
+    <div class="create-label">New Decision</div>
+    <button class="create-btn" onclick="openModal()">+</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="top-link" onclick="goHow()">How it works</div>
+  <h2>Decisions</h2>
+  <div id="content">Loading...</div>
 </div>
 
 <!-- MODAL -->
 <div id="modal" class="modal">
   <div class="modal-content">
 
-    <h3>Create Decision</h3>
+    <h3>New Decision</h3>
 
     <input id="title" placeholder="Decision title"><br><br>
 
-    <!-- ✅ CATEGORY DROPDOWN -->
     <select id="category"></select><br><br>
+
+    <input id="cost" type="number" placeholder="Cost"><br><br>
+
+    <label>Time Pressure</label>
+    <input id="timePressure" type="range" min="1" max="10"><br><br>
+
+    <label>Emotional Weight</label>
+    <input id="emotionalWeight" type="range" min="1" max="10"><br><br>
 
     <button onclick="saveDecision()">Save</button>
     <button onclick="closeModal()">Cancel</button>
@@ -68,86 +171,123 @@ button {
 </div>
 
 <script>
-/* 🔒 AUTH GUARD */
+
+const API = "https://ads-backend-clean.onrender.com/api/v1";
 const token = localStorage.getItem("ads_token");
+
+/* 🔒 AUTH GUARD */
 if (!token) {
   window.location.href = "login.html";
 }
 
-/* MODAL CONTROL */
-function openModal() {
-  document.getElementById("modal").style.display = "block";
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-/* ✅ CATEGORY LIST (from your categories page) */
+/* CATEGORY LIST */
 const categories = [
-  "Home Office",
-  "Travel",
-  "Relationship",
-  "Job",
-  "Lawn and Garden",
-  "Electronics",
-  "Home",
-  "Outdoors and Patio",
-  "Vehicle",
-  "Moving",
-  "Work",
-  "Business",
-  "Tools",
-  "Clothing",
-  "Decor",
-  "Dining",
-  "Medical",
-  "Pets",
-  "Other"
+  "Home Office","Travel","Relationship","Job","Lawn and Garden",
+  "Electronics","Home","Outdoors and Patio","Vehicle","Moving",
+  "Work","Business","Tools","Clothing","Decor",
+  "Dining","Medical","Pets","Other"
 ];
 
-/* ✅ POPULATE DROPDOWN */
-function populateCategories() {
+function populateCategories(){
   const select = document.getElementById("category");
-
   select.innerHTML = "";
-
-  categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    select.appendChild(option);
+  categories.forEach(c=>{
+    const o = document.createElement("option");
+    o.value = c;
+    o.textContent = c;
+    select.appendChild(o);
   });
 }
 
-/* 🔥 RUN ON LOAD */
-populateCategories();
+/* MODAL */
+function openModal(){
+  document.getElementById("modal").style.display="block";
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
 
-/* SAVE DECISION (UNCHANGED CORE FLOW) */
-async function saveDecision() {
+/* SAVE */
+async function saveDecision(){
   const title = document.getElementById("title").value;
   const category = document.getElementById("category").value;
+  const cost = document.getElementById("cost").value;
+  const timePressure = document.getElementById("timePressure").value;
+  const emotionalWeight = document.getElementById("emotionalWeight").value;
 
-  try {
-    await fetch("https://ads-backend-clean.onrender.com/api/v1/decisions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({
-        title,
-        category
-      })
-    });
+  await fetch(API+"/decisions",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+token
+    },
+    body: JSON.stringify({
+      title,
+      category,
+      cost: cost ? Number(cost) : null,
+      timePressure: Number(timePressure),
+      emotionalWeight: Number(emotionalWeight)
+    })
+  });
 
-    closeModal();
-    location.reload();
-
-  } catch (err) {
-    alert("Error saving decision");
-  }
+  closeModal();
+  load();
 }
+
+/* DECISIONS */
+function openDecision(id){
+  window.location.href = "evaluations.html?id="+id;
+}
+
+function getColorClass(d){
+  if(!d.evaluations.length) return "clay";
+  const e = d.evaluations[d.evaluations.length-1];
+  const s = 10 - e.regretScore;
+  if(s<=3) return "bad";
+  if(s<=6) return "mid";
+  return "good";
+}
+
+async function load(){
+  const res = await fetch(API+"/decisions",{
+    headers:{ Authorization:"Bearer "+token }
+  });
+
+  const data = await res.json();
+  const decisions = data.data || [];
+
+  const content = document.getElementById("content");
+
+  if(!decisions.length){
+    content.innerHTML = "<p>No decisions yet.</p>";
+    return;
+  }
+
+  content.innerHTML = decisions.map(d=>{
+    const cat = d.category || "Uncategorized";
+    const cost = d.cost ? "$"+d.cost : "";
+
+    return `
+    <div class="card ${getColorClass(d)}" onclick="openDecision('${d.id}')">
+      <div class="card-left">
+        <div class="card-title">${d.title}</div>
+        <div class="card-meta">${cat} ${cost ? "• "+cost : ""}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* NAV */
+function goEvaluations(){ window.location.href="evaluations.html"; }
+function goHistory(){ window.location.href="history.html"; }
+function goInsights(){ window.location.href="insights.html"; }
+function goBehavior(){ window.location.href="behavior.html"; }
+function goSettings(){ window.location.href="settings.html"; }
+function goHow(){ window.location.href="how-it-works.html"; }
+
+populateCategories();
+load();
+
 </script>
 
 </body>

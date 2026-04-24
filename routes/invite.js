@@ -26,19 +26,16 @@ router.post("/create", async (req, res) => {
       "ADS-" +
       Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // 🔥 Write EVERYTHING the DB might expect
     const invite = await prisma.invite.create({
       data: {
-        code: code,       // new schema
-        token: code,      // old schema
-        isUsed: false,    // new schema
-        used: false       // old schema
+        code: code,
+        isUsed: false
       }
     });
 
     return res.json({
       success: true,
-      code: invite.code || invite.token
+      code: invite.code
     });
 
   } catch (err) {

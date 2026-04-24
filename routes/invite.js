@@ -5,21 +5,40 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 /* =========================
-   CREATE INVITE CODE
+   CREATE INVITE CODE (WITH DEBUG)
 ========================= */
 router.post("/create", async (req, res) => {
   try {
     const adminKey = req.headers["x-admin-key"];
+    const envKey = process.env.ADMIN_KEY;
 
-    if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
-      return res.status(401).json({
+    // 🔍 DEBUG RESPONSE (temporary)
+    if (!envKey) {
+      return res.status(500).json({
         success: false,
-        error: "Unauthorized"
+        error: "ADMIN_KEY not set in environment",
+        debug: {
+          receivedHeader: adminKey || null
+        }
       });
     }
 
-    // Generate simple readable code
-    const code = "ADS-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    if (!adminKey || adminKey !== envKey) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+        debug: {
+          receivedHeader: adminKey || null,
+          expectedLength: envKey.length,
+          receivedLength: adminKey ? adminKey.length : 0
+        }
+      });
+    }
+
+    // Generate code
+    const code =
+      "ADS-" +
+      Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const invite = await prisma.invite.create({
       data: {

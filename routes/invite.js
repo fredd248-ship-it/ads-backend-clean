@@ -26,18 +26,17 @@ router.post("/create", async (req, res) => {
       "ADS-" +
       Math.random().toString(36).substring(2, 8).toUpperCase();
 
+    // ✅ WRITE ONLY token + used (matches your live DB)
     const invite = await prisma.invite.create({
       data: {
-        code: code,
-        isUsed: false,
-        token: code, // ✅ critical fix
-        used: false  // ✅ for legacy schema
+        token: code,
+        used: false
       }
     });
 
     return res.json({
       success: true,
-      code: invite.code || invite.token
+      code: invite.token
     });
 
   } catch (err) {
@@ -45,7 +44,7 @@ router.post("/create", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: "Server error"
+      error: err.message
     });
   }
 });

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Register</title>
+<title>Create Account</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,7 +13,6 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  margin: 0;
 }
 
 .card {
@@ -49,7 +48,7 @@ button {
 <body>
 
 <div class="card">
-  <h2>REGISTER LIVE</h2>
+  <h2>Create Account</h2>
 
   <input id="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Password" />
@@ -65,17 +64,15 @@ async function register() {
 
   const msg = document.getElementById("message");
 
-  msg.innerText = "STEP 1: Button clicked";
-
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   let inviteCode = document.getElementById("inviteCode").value;
 
   inviteCode = inviteCode.trim().toUpperCase();
 
-  try {
+  msg.innerText = "Creating account...";
 
-    msg.innerText = "STEP 2: Sending request...";
+  try {
 
     const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/auth/register", {
       method: "POST",
@@ -89,15 +86,21 @@ async function register() {
       })
     });
 
-    msg.innerText = "STEP 3: Response received (" + res.status + ")";
-
     const data = await res.json();
 
-    msg.innerText = "STEP 4: " + JSON.stringify(data);
+    if (!res.ok) {
+      msg.innerText = data.error || "Registration failed";
+      return;
+    }
+
+    // ✅ Save token
+    localStorage.setItem("ads_token", data.token);
+
+    // ✅ Redirect to dashboard
+    window.location.href = "dashboard.html";
 
   } catch (err) {
-
-    msg.innerText = "ERROR: " + err.message;
+    msg.innerText = "Connection error";
   }
 }
 </script>

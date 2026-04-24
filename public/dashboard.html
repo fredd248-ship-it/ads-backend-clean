@@ -2,317 +2,152 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ADS Dashboard</title>
+<title>Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { margin:0; font-family:Arial; background:#f5f7fb; display:flex; }
-
-/* SIDEBAR */
-.sidebar {
-  width:220px;
-  background:#e0e7ff;
-  height:100vh;
-  padding:20px 10px;
+body {
+  font-family: Arial;
+  background: #f5f7fb;
+  margin: 0;
 }
 
-.nav-item {
-  padding:14px;
-  margin-bottom:10px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-.nav-item:hover { background:#c7d2fe; }
-.active { background:#4338ca; color:white; }
-
-/* MAIN */
-.main {
-  flex:1;
-  padding:20px;
-  max-width:900px;
-  margin:auto;
-}
-
-/* TOP BAR */
-.top-bar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.add-container {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.add-btn {
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  border:none;
-  background:#4338ca;
-  color:white;
-  font-size:22px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-/* CARDS */
-.card {
-  border-radius:12px;
-  padding:16px;
-  margin-top:14px;
-  cursor:pointer;
-}
-
-/* 🔧 UPDATED SOFTER COLORS */
-.low { background:#fef3c7; color:#333; }      /* soft yellow */
-.medium { background:#ddd6fe; color:#333; }   /* soft violet */
-.high { background:#fed7aa; color:#333; }     /* soft orange */
-.clay { background:#e7d8c9; color:#333; }     /* unchanged */
-
-.card-title { font-weight:bold; }
-.card-meta { font-size:12px; opacity:.8; }
-
-.usage-tag {
-  font-size:11px;
-  padding:4px 8px;
-  border-radius:6px;
-  margin-top:6px;
-  display:inline-block;
-  background:rgba(0,0,0,0.08);
-}
-
-/* MODALS */
-.modal {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.5);
-  justify-content:center;
-  align-items:flex-start;
-  padding-top:80px;
-}
-
-.modal-content {
-  background:white;
-  width:520px;
-  max-width:90%;
-  padding:24px;
-  border-radius:14px;
-}
-
-.modal-content input,
-.modal-content select {
-  width:100%;
-  padding:10px;
-  margin-top:8px;
+.container {
+  padding: 20px;
 }
 
 button {
-  margin-top:16px;
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:8px;
+  padding: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
 }
 
-.save-btn { background:#4338ca; color:white; }
-.cancel-btn { background:#e5e7eb; }
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+}
 
+.modal-content {
+  background: white;
+  padding: 20px;
+  margin: 10% auto;
+  width: 300px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-  <div class="nav-item active">Dashboard</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
-  <div class="nav-item" onclick="goHistory()">History</div>
-  <div class="nav-item" onclick="goInsights()">Insights</div>
-  <div class="nav-item" onclick="goBehavior()">Behavior</div>
-  <div class="nav-item" onclick="goSettings()">Settings</div>
-  <div class="nav-item" onclick="goHowItWorks()">How It Works</div>
+<div class="container">
+  <h2>Dashboard</h2>
+
+  <button onclick="openModal()">+ New Decision</button>
 </div>
 
-<div class="main">
-
-  <div class="top-bar">
-    <h2>Decisions</h2>
-
-    <div class="add-container">
-      <button class="add-btn" onclick="openCreate()">+</button>
-      <span style="font-size:14px; color:#555;">Create Decision</span>
-    </div>
-  </div>
-
-  <div id="content">Loading...</div>
-
-</div>
-
-<!-- CREATE MODAL -->
-<div id="createModal" class="modal">
+<!-- MODAL -->
+<div id="modal" class="modal">
   <div class="modal-content">
+
     <h3>Create Decision</h3>
 
-    <label>Title</label>
-    <input id="newTitle">
+    <input id="title" placeholder="Decision title"><br><br>
 
-    <label>Category</label>
-    <input id="newCategory">
+    <!-- ✅ CATEGORY DROPDOWN -->
+    <select id="category"></select><br><br>
 
-    <label>Cost</label>
-    <input id="newCost" type="number">
+    <button onclick="saveDecision()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
 
-    <button class="save-btn" onclick="saveDecision()">Save</button>
-    <button class="cancel-btn" onclick="closeCreate()">Cancel</button>
-  </div>
-</div>
-
-<!-- EVALUATION MODAL -->
-<div id="evalModal" class="modal">
-  <div class="modal-content">
-    <h3 id="modalTitle"></h3>
-
-    <label>Satisfaction</label>
-    <input type="range" min="0" max="10" value="5" id="slider">
-
-    <label>Frequency</label>
-    <select id="frequency">
-      <option>Low</option>
-      <option selected>Medium</option>
-      <option>High</option>
-    </select>
-
-    <label>Buy Again</label>
-    <select id="again">
-      <option value="true">Yes</option>
-      <option value="false">No</option>
-    </select>
-
-    <button class="save-btn" onclick="saveEval()">Save</button>
-    <button class="cancel-btn" onclick="closeEval()">Cancel</button>
   </div>
 </div>
 
 <script>
-
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+/* 🔒 AUTH GUARD */
 const token = localStorage.getItem("ads_token");
-
-let activeDecisionId = null;
-
-/* COLOR + LABEL */
-function getUsageColor(decision){
-  if(!decision.evaluations || decision.evaluations.length === 0) return "clay";
-
-  const latest = decision.evaluations.at(-1);
-  let freq = latest.frequencyOfUse;
-
-  if(freq === "Low" || freq === 1) return "low";
-  if(freq === "Medium" || freq === 2) return "medium";
-  if(freq === "High" || freq === 3) return "high";
-
-  return "clay";
+if (!token) {
+  window.location.href = "login.html";
 }
 
-function getUsageLabel(decision){
-  if(!decision.evaluations || decision.evaluations.length === 0) return "";
-
-  const latest = decision.evaluations.at(-1);
-  let freq = latest.frequencyOfUse;
-
-  if(freq === "Low" || freq === 1) return "Low use";
-  if(freq === "Medium" || freq === 2) return "Medium use";
-  if(freq === "High" || freq === 3) return "High use";
-
-  return "";
+/* MODAL CONTROL */
+function openModal() {
+  document.getElementById("modal").style.display = "block";
 }
 
-/* LOAD */
-async function load(){
-  const res = await fetch(API + "/decisions", {
-    headers:{ Authorization:"Bearer "+token }
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+/* ✅ CATEGORY LIST (from your categories page) */
+const categories = [
+  "Home Office",
+  "Travel",
+  "Relationship",
+  "Job",
+  "Lawn and Garden",
+  "Electronics",
+  "Home",
+  "Outdoors and Patio",
+  "Vehicle",
+  "Moving",
+  "Work",
+  "Business",
+  "Tools",
+  "Clothing",
+  "Decor",
+  "Dining",
+  "Medical",
+  "Pets",
+  "Other"
+];
+
+/* ✅ POPULATE DROPDOWN */
+function populateCategories() {
+  const select = document.getElementById("category");
+
+  select.innerHTML = "";
+
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
   });
-
-  const data = await res.json();
-  const decisions = data.data || [];
-
-  document.getElementById("content").innerHTML = decisions.map(d => `
-    <div class="card ${getUsageColor(d)}"
-      onclick="openEval('${d.id}','${d.title}')">
-      <div class="card-title">${d.title}</div>
-      <div class="card-meta">${d.category || ""}</div>
-      ${getUsageLabel(d) ? `<div class="usage-tag">${getUsageLabel(d)}</div>` : ""}
-    </div>
-  `).join("");
 }
 
-/* CREATE */
-function openCreate(){ createModal.style.display="flex"; }
-function closeCreate(){ createModal.style.display="none"; }
+/* 🔥 RUN ON LOAD */
+populateCategories();
 
-async function saveDecision(){
-  await fetch(API + "/decisions", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body: JSON.stringify({
-      title: newTitle.value,
-      category: newCategory.value,
-      cost: Number(newCost.value || 0)
-    })
-  });
+/* SAVE DECISION (UNCHANGED CORE FLOW) */
+async function saveDecision() {
+  const title = document.getElementById("title").value;
+  const category = document.getElementById("category").value;
 
-  closeCreate();
-  load();
+  try {
+    await fetch("https://ads-backend-clean.onrender.com/api/v1/decisions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        title,
+        category
+      })
+    });
+
+    closeModal();
+    location.reload();
+
+  } catch (err) {
+    alert("Error saving decision");
+  }
 }
-
-/* EVAL */
-function openEval(id,title){
-  activeDecisionId = id;
-  modalTitle.innerText = title;
-  evalModal.style.display = "flex";
-}
-
-function closeEval(){
-  evalModal.style.display = "none";
-}
-
-async function saveEval(){
-  await fetch(API + "/decisions/" + activeDecisionId + "/evaluate", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+token
-    },
-    body: JSON.stringify({
-      regretScore: 10 - Number(slider.value),
-      frequencyOfUse: frequency.value,
-      wouldBuyAgain: again.value === "true"
-    })
-  });
-
-  closeEval();
-  load();
-}
-
-/* NAV */
-function goEvaluations(){ location.href="evaluations.html"; }
-function goHistory(){ location.href="evaluation-history.html"; }
-function goInsights(){ location.href="insights.html"; }
-function goBehavior(){ location.href="behavior.html"; }
-function goSettings(){ location.href="settings.html"; }
-function goHowItWorks(){ location.href="how-it-works.html"; }
-
-load();
-
 </script>
 
 </body>

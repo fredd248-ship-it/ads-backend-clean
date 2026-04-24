@@ -93,11 +93,16 @@ async function register() {
       return;
     }
 
-    // ✅ Save token
+    // ✅ SAVE TOKEN
     localStorage.setItem("ads_token", data.token);
 
-    // ✅ Redirect to dashboard
-    window.location.href = "dashboard.html";
+    // ✅ OPTIONAL: show confirmation briefly
+    msg.innerText = "Account created successfully";
+
+    // ✅ REDIRECT
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 800);
 
   } catch (err) {
     msg.innerText = "Connection error";

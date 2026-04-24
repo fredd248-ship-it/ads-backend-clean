@@ -4,38 +4,24 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-/* =========================
-   CREATE INVITE CODE (WITH DEBUG)
-========================= */
 router.post("/create", async (req, res) => {
   try {
     const adminKey = req.headers["x-admin-key"];
-    const envKey = process.env.ADMIN_KEY;
 
-    // 🔍 DEBUG RESPONSE (temporary)
-    if (!envKey) {
+    if (!process.env.ADMIN_KEY) {
       return res.status(500).json({
         success: false,
-        error: "ADMIN_KEY not set in environment",
-        debug: {
-          receivedHeader: adminKey || null
-        }
+        error: "ADMIN_KEY not set in environment"
       });
     }
 
-    if (!adminKey || adminKey !== envKey) {
+    if (adminKey !== process.env.ADMIN_KEY) {
       return res.status(401).json({
         success: false,
-        error: "Unauthorized",
-        debug: {
-          receivedHeader: adminKey || null,
-          expectedLength: envKey.length,
-          receivedLength: adminKey ? adminKey.length : 0
-        }
+        error: "Unauthorized"
       });
     }
 
-    // Generate code
     const code =
       "ADS-" +
       Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -43,13 +29,15 @@ router.post("/create", async (req, res) => {
     const invite = await prisma.invite.create({
       data: {
         code: code,
-        isUsed: false
+        isUsed: false,
+        token: code, // ✅ critical fix
+        used: false  // ✅ for legacy schema
       }
     });
 
     return res.json({
       success: true,
-      code: invite.code
+      code: invite.code || invite.token
     });
 
   } catch (err) {
@@ -60,13 +48,6 @@ router.post("/create", async (req, res) => {
       error: "Server error"
     });
   }
-});
-
-/* =========================
-   BASIC ROUTE TEST
-========================= */
-router.get("/", (req, res) => {
-  res.send("Invite route active");
 });
 
 module.exports = router;

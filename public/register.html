@@ -80,7 +80,7 @@
     const messageBox = document.getElementById("message");
 
     form.addEventListener("submit", async function (e) {
-      e.preventDefault(); // 🔥 prevents page refresh
+      e.preventDefault();
 
       messageBox.innerText = "Processing...";
       messageBox.style.color = "#333";
@@ -89,11 +89,12 @@
       const password = document.getElementById("password").value;
       let inviteCode = document.getElementById("inviteCode").value;
 
-      // normalize input
       inviteCode = inviteCode.trim().toUpperCase();
 
+      console.log("Sending request...");
+
       try {
-        const res = await fetch("/api/v1/auth/register", {
+        const res = await fetch("https://ads-backend-clean.onrender.com/api/v1/auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -105,7 +106,11 @@
           })
         });
 
+        console.log("Response status:", res.status);
+
         const data = await res.json();
+
+        console.log("Response data:", data);
 
         if (!res.ok) {
           messageBox.innerText = data.error || "Registration failed";
@@ -117,8 +122,8 @@
         messageBox.style.color = "green";
 
       } catch (err) {
-        console.error(err);
-        messageBox.innerText = "Server error";
+        console.error("FETCH ERROR:", err);
+        messageBox.innerText = "Connection error";
         messageBox.style.color = "red";
       }
     });

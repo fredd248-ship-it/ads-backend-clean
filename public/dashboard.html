@@ -186,7 +186,7 @@ function getCardColor(decision) {
   if (decision.evaluations && decision.evaluations.length > 0) {
     const latest = decision.evaluations[decision.evaluations.length - 1];
     if (latest.frequencyOfUse === 1) color = "#fde68a";
-    else if (latest.frequencyOfUse === 2) color = "#d1a98c"; // UPDATED CLAY
+    else if (latest.frequencyOfUse === 2) color = "#d1a98c";
     else if (latest.frequencyOfUse === 3) color = "#ddd6fe";
   }
   return color;
@@ -282,12 +282,12 @@ async function save(){
   load();
 }
 
-/* NAV */
-function goEvaluations(){location.href="evaluations.html";}
-function goHistory(){location.href="history.html";}
-function goInsights(){location.href="insights.html";}
-function goBehavior(){location.href="behavior.html";}
-function goSettings(){location.href="settings.html";}
+/* ✅ FIXED NAVIGATION */
+function goEvaluations(){ location.href="evaluations.html"; }
+function goHistory(){ location.href="history.html"; }  /* FIXED */
+function goInsights(){ location.href="insights.html"; }
+function goBehavior(){ location.href="behavior.html"; }
+function goSettings(){ location.href="settings.html"; }
 
 loadCategories();
 load();

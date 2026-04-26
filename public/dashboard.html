@@ -133,7 +133,6 @@ input[type=range], select, input { width:100%; padding:10px; }
       <div id="sliderValue">5</div>
     </div>
 
-    <!-- ✅ FIXED LABEL -->
     <div class="section">
       <div><strong>Frequency of Use (How often do you use this?)</strong></div>
       <select id="frequency">
@@ -187,7 +186,7 @@ function getCardColor(decision) {
   if (decision.evaluations && decision.evaluations.length > 0) {
     const latest = decision.evaluations[decision.evaluations.length - 1];
     if (latest.frequencyOfUse === 1) color = "#fde68a";
-    else if (latest.frequencyOfUse === 2) color = "#e7d3c7";
+    else if (latest.frequencyOfUse === 2) color = "#d1a98c"; // UPDATED CLAY
     else if (latest.frequencyOfUse === 3) color = "#ddd6fe";
   }
   return color;

@@ -7,22 +7,23 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 /*
-  REGISTER (INVITE REQUIRED - DEBUG ENABLED)
+  REGISTER (CLEAN + PRODUCTION READY)
 */
 router.post("/register", async (req, res) => {
   try {
     let { email, password, inviteCode } = req.body;
 
-    // Normalize
+    // Normalize invite code
     if (inviteCode) {
       inviteCode = inviteCode.trim().toUpperCase();
     }
 
-    console.log("REGISTER ATTEMPT:", { email, inviteCode });
-
-    // 🔍 DEBUG: dump all invites in this DB
-    const allInvites = await prisma.invite.findMany();
-    console.log("ALL INVITES IN DB:", allInvites);
+    // Minimal, useful log
+    console.log("REGISTER:", {
+      email,
+      inviteCode,
+      time: new Date().toISOString()
+    });
 
     if (!email || !password || !inviteCode) {
       return res.status(400).json({
@@ -31,11 +32,10 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Find invite
     const invite = await prisma.invite.findFirst({
       where: { code: inviteCode }
     });
-
-    console.log("MATCHED INVITE:", invite);
 
     if (!invite) {
       return res.status(400).json({
@@ -51,6 +51,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Check existing user
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -62,8 +63,10 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await prisma.user.create({
       data: {
         email,
@@ -71,11 +74,13 @@ router.post("/register", async (req, res) => {
       }
     });
 
+    // Mark invite as used
     await prisma.invite.update({
       where: { id: invite.id },
       data: { isUsed: true }
     });
 
+    // Generate token
     const token = jwt.sign(
       { id: user.id },
       process.env.JWT_SECRET,

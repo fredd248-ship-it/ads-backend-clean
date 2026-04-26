@@ -128,11 +128,14 @@ input[type=range], select, input { width:100%; padding:10px; }
     <div id="modalTitle"></div>
 
     <div class="section">
+      <div><strong>Satisfaction (0–10)</strong></div>
       <input type="range" min="0" max="10" value="5" id="slider">
       <div id="sliderValue">5</div>
     </div>
 
+    <!-- ✅ FIXED LABEL -->
     <div class="section">
+      <div><strong>Frequency of Use (How often do you use this?)</strong></div>
       <select id="frequency">
         <option>Low</option>
         <option selected>Medium</option>
@@ -140,9 +143,12 @@ input[type=range], select, input { width:100%; padding:10px; }
       </select>
     </div>
 
-    <div class="toggle">
-      <button id="yesBtn" class="active" onclick="setAgain(true)">Yes</button>
-      <button id="noBtn" onclick="setAgain(false)">No</button>
+    <div class="section">
+      <div><strong>Would you do / buy again?</strong></div>
+      <div class="toggle">
+        <button id="yesBtn" class="active" onclick="setAgain(true)">Yes</button>
+        <button id="noBtn" onclick="setAgain(false)">No</button>
+      </div>
     </div>
 
     <button class="save" onclick="save()">Save</button>
@@ -176,39 +182,29 @@ function loadCategories(){
   });
 }
 
-/* ✅ FIXED COLOR LOGIC (NUMERIC) */
 function getCardColor(decision) {
-
-  let color = "#cbd5e1"; // default (no evaluation)
-
+  let color = "#cbd5e1";
   if (decision.evaluations && decision.evaluations.length > 0) {
-
     const latest = decision.evaluations[decision.evaluations.length - 1];
-
-    if (latest.frequencyOfUse === 1) color = "#fde68a";       // Low
-    else if (latest.frequencyOfUse === 2) color = "#e7d3c7";  // Medium
-    else if (latest.frequencyOfUse === 3) color = "#ddd6fe";  // High
+    if (latest.frequencyOfUse === 1) color = "#fde68a";
+    else if (latest.frequencyOfUse === 2) color = "#e7d3c7";
+    else if (latest.frequencyOfUse === 3) color = "#ddd6fe";
   }
-
   return color;
 }
 
 async function load(){
-
   const res = await fetch(API+"/decisions", {
     headers:{ Authorization:"Bearer "+t }
   });
-
   const data = await res.json();
 
   const list = document.getElementById("list");
   list.innerHTML="";
 
   data.data.forEach(d => {
-
     const card = document.createElement("div");
     card.className = "card";
-
     card.style.background = getCardColor(d);
 
     card.innerHTML = `
@@ -217,7 +213,6 @@ async function load(){
     `;
 
     card.onclick = () => openModal(d);
-
     list.appendChild(card);
   });
 }
@@ -226,7 +221,6 @@ function openCreate(){ document.getElementById("createModal").style.display="fle
 function closeCreate(){ document.getElementById("createModal").style.display="none"; }
 
 async function create(){
-
   await fetch(API+"/decisions",{
     method:"POST",
     headers:{
@@ -241,7 +235,6 @@ async function create(){
       emotionalWeight:Number(document.getElementById("emotion").value)
     })
   });
-
   closeCreate();
   load();
 }
@@ -270,7 +263,6 @@ function setAgain(val){
 }
 
 async function save(){
-
   const regretScore = 10 - Number(slider.value);
   const frequency = document.getElementById("frequency").value;
 

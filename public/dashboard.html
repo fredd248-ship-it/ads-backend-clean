@@ -176,24 +176,18 @@ function loadCategories(){
   });
 }
 
+/* ✅ FIXED COLOR LOGIC (NUMERIC) */
 function getCardColor(decision) {
 
-  // default: not evaluated
-  let color = "#cbd5e1"; // blue/grey
+  let color = "#cbd5e1"; // default (no evaluation)
 
   if (decision.evaluations && decision.evaluations.length > 0) {
 
     const latest = decision.evaluations[decision.evaluations.length - 1];
 
-    if (latest.frequencyOfUse === "Low") {
-      color = "#fde68a"; // yellow
-    }
-    else if (latest.frequencyOfUse === "Medium") {
-      color = "#e7d3c7"; // light clay
-    }
-    else if (latest.frequencyOfUse === "High") {
-      color = "#ddd6fe"; // light violet
-    }
+    if (latest.frequencyOfUse === 1) color = "#fde68a";       // Low
+    else if (latest.frequencyOfUse === 2) color = "#e7d3c7";  // Medium
+    else if (latest.frequencyOfUse === 3) color = "#ddd6fe";  // High
   }
 
   return color;
@@ -215,7 +209,6 @@ async function load(){
     const card = document.createElement("div");
     card.className = "card";
 
-    // ✅ apply color
     card.style.background = getCardColor(d);
 
     card.innerHTML = `

@@ -7,7 +7,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 /*
-  REGISTER (INVITE REQUIRED - FINAL)
+  REGISTER (INVITE REQUIRED - FIXED)
 */
 router.post("/register", async (req, res) => {
   try {
@@ -18,6 +18,8 @@ router.post("/register", async (req, res) => {
       inviteCode = inviteCode.trim().toUpperCase();
     }
 
+    console.log("REGISTER ATTEMPT:", { email, inviteCode });
+
     if (!email || !password || !inviteCode) {
       return res.status(400).json({
         success: false,
@@ -25,10 +27,12 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // ✅ LOOKUP USING NEW FIELD (code)
-    const invite = await prisma.invite.findUnique({
+    // ✅ FIX: use findFirst instead of findUnique
+    const invite = await prisma.invite.findFirst({
       where: { code: inviteCode }
     });
+
+    console.log("INVITE LOOKUP RESULT:", invite);
 
     if (!invite) {
       return res.status(400).json({
@@ -64,9 +68,9 @@ router.post("/register", async (req, res) => {
       }
     });
 
-    // ✅ MARK USED (new schema)
+    // mark invite as used
     await prisma.invite.update({
-      where: { code: inviteCode },
+      where: { id: invite.id }, // safer than code
       data: { isUsed: true }
     });
 

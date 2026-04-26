@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ADS Dashboard</title>
+<title>Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -15,12 +15,13 @@ body {
 
 .sidebar {
   width: 220px;
-  background: #e0e7ff;
+  background: #eef2ff;
   height: 100vh;
   padding: 20px 10px;
-  border-right: 1px solid #c7d2fe;
+  border-right: 1px solid #d1d5db;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .nav-item {
@@ -29,97 +30,91 @@ body {
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
-  color: #312e81;
+  color: #3730a3;
 }
 
 .nav-item:hover { background: #c7d2fe; }
-
-.active {
-  background: #4338ca;
-  color: white;
-}
-
-.create-section {
-  margin-top: 40px;
-  text-align: center;
-}
-
-.create-label {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.create-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #4338ca;
-  color: white;
-  font-size: 24px;
-  border: none;
-  cursor: pointer;
-}
+.active { background: #4f46e5; color: white; }
 
 .main {
   flex: 1;
   padding: 20px;
-  max-width: 800px;
+  max-width: 900px;
   margin: auto;
-  position: relative;
-}
-
-.top-link {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: #4338ca;
-  cursor: pointer;
 }
 
 .card {
+  background: white;
   border-radius: 12px;
   padding: 16px;
   margin-top: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.clay { background: #c4a484; }
-.good { background: #16a34a; color: white; }
-.mid { background: #2563eb; color: white; }
-.bad { background: #dc2626; color: white; }
-
-.card-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-title {
-  font-weight: bold;
-}
-
-.card-meta {
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-/* MODAL */
 .modal {
-  display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-content {
   background: white;
+  width: 90%;
+  max-width: 500px;
   padding: 20px;
-  width: 320px;
-  margin: 10% auto;
   border-radius: 12px;
+}
+
+.section { margin-top: 20px; }
+
+input[type=range] { width: 100%; }
+
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #e5e7eb;
+}
+
+.toggle .active {
+  background: #4f46e5;
+  color: white;
+}
+
+.save {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+.close {
+  margin-top: 10px;
+  background: #aaa;
 }
 </style>
 </head>
@@ -133,148 +128,145 @@ body {
   <div class="nav-item" onclick="goInsights()">Insights</div>
   <div class="nav-item" onclick="goBehavior()">Behavior</div>
   <div class="nav-item" onclick="goSettings()">Settings</div>
-
-  <div class="create-section">
-    <div class="create-label">New Decision</div>
-    <button class="create-btn" onclick="openModal()">+</button>
-  </div>
 </div>
 
 <div class="main">
-  <div class="top-link" onclick="goHow()">How it works</div>
   <h2>Decisions</h2>
-  <div id="content">Loading...</div>
+  <div id="list"></div>
 </div>
 
 <!-- MODAL -->
-<div id="modal" class="modal">
+<div class="modal" id="modal">
   <div class="modal-content">
+    <div id="modalTitle"><strong>Evaluate</strong></div>
 
-    <h3>New Decision</h3>
+    <div class="section">
+      <div><strong>Satisfaction (0–10)</strong></div>
+      <input type="range" min="0" max="10" value="5" id="slider">
+      <div id="sliderValue">5</div>
+    </div>
 
-    <input id="title" placeholder="Decision title"><br><br>
+    <div class="section">
+      <div><strong>Frequency of Use</strong></div>
+      <select id="frequency">
+        <option>Low</option>
+        <option selected>Medium</option>
+        <option>High</option>
+      </select>
+    </div>
 
-    <select id="category"></select><br><br>
+    <div class="section">
+      <div><strong>Would you do / buy again?</strong></div>
+      <div class="toggle">
+        <button id="yesBtn" class="active" onclick="setAgain(true)">Yes</button>
+        <button id="noBtn" onclick="setAgain(false)">No</button>
+      </div>
+    </div>
 
-    <input id="cost" type="number" placeholder="Cost"><br><br>
-
-    <label>Time Pressure</label>
-    <input id="timePressure" type="range" min="1" max="10"><br><br>
-
-    <label>Emotional Weight</label>
-    <input id="emotionalWeight" type="range" min="1" max="10"><br><br>
-
-    <button onclick="saveDecision()">Save</button>
-    <button onclick="closeModal()">Cancel</button>
-
+    <button class="save" id="saveBtn" onclick="save()">Save</button>
+    <button class="save close" onclick="closeModal()">Cancel</button>
   </div>
 </div>
 
 <script>
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
-const token = localStorage.getItem("ads_token");
 
-/* 🔒 AUTH GUARD */
-if (!token) {
-  window.location.href = "login.html";
+function token(){
+  return localStorage.getItem("ads_token");
 }
 
-/* CATEGORY LIST */
-const categories = [
-  "Home Office","Travel","Relationship","Job","Lawn and Garden",
-  "Electronics","Home","Outdoors and Patio","Vehicle","Moving",
-  "Work","Business","Tools","Clothing","Decor",
-  "Dining","Medical","Pets","Other"
-];
-
-function populateCategories(){
-  const select = document.getElementById("category");
-  select.innerHTML = "";
-  categories.forEach(c=>{
-    const o = document.createElement("option");
-    o.value = c;
-    o.textContent = c;
-    select.appendChild(o);
-  });
+const t = token();
+if(!t){
+  window.location.href="login.html";
 }
 
-/* MODAL */
-function openModal(){
-  document.getElementById("modal").style.display="block";
-}
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-/* SAVE */
-async function saveDecision(){
-  const title = document.getElementById("title").value;
-  const category = document.getElementById("category").value;
-  const cost = document.getElementById("cost").value;
-  const timePressure = document.getElementById("timePressure").value;
-  const emotionalWeight = document.getElementById("emotionalWeight").value;
-
-  await fetch(API+"/decisions",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "Authorization":"Bearer "+token
-    },
-    body: JSON.stringify({
-      title,
-      category,
-      cost: cost ? Number(cost) : null,
-      timePressure: Number(timePressure),
-      emotionalWeight: Number(emotionalWeight)
-    })
-  });
-
-  closeModal();
-  load();
-}
-
-/* DECISIONS */
-function openDecision(id){
-  window.location.href = "evaluations.html?id="+id;
-}
-
-function getColorClass(d){
-  if(!d.evaluations.length) return "clay";
-  const e = d.evaluations[d.evaluations.length-1];
-  const s = 10 - e.regretScore;
-  if(s<=3) return "bad";
-  if(s<=6) return "mid";
-  return "good";
-}
+let currentDecisionId = null;
+let wouldBuyAgain = true;
 
 async function load(){
-  const res = await fetch(API+"/decisions",{
-    headers:{ Authorization:"Bearer "+token }
+
+  const res = await fetch(API + "/decisions", {
+    headers:{ Authorization:"Bearer "+t }
   });
 
   const data = await res.json();
-  const decisions = data.data || [];
 
-  const content = document.getElementById("content");
+  const container = document.getElementById("list");
+  container.innerHTML = "";
 
-  if(!decisions.length){
-    content.innerHTML = "<p>No decisions yet.</p>";
-    return;
+  data.data.forEach(d => {
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<strong>${d.title}</strong><br><small>${d.category}</small>`;
+
+    card.onclick = () => openModal(d);
+
+    container.appendChild(card);
+  });
+}
+
+function openModal(decision){
+  currentDecisionId = decision.id;
+  document.getElementById("modalTitle").innerText = decision.title;
+  document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+const slider = document.getElementById("slider");
+const sliderValue = document.getElementById("sliderValue");
+
+slider.oninput = () => {
+  sliderValue.innerText = slider.value;
+};
+
+function setAgain(val){
+  wouldBuyAgain = val;
+  document.getElementById("yesBtn").classList.toggle("active", val);
+  document.getElementById("noBtn").classList.toggle("active", !val);
+}
+
+async function save(){
+
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  const satisfaction = Number(slider.value);
+  const regretScore = 10 - satisfaction;
+  const frequencyOfUse = document.getElementById("frequency").value;
+
+  try {
+
+    const res = await fetch(API + "/decisions/" + currentDecisionId + "/evaluate", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:"Bearer "+t
+      },
+      body: JSON.stringify({
+        regretScore,
+        frequencyOfUse,
+        wouldBuyAgain
+      })
+    });
+
+    if(!res.ok){
+      throw new Error();
+    }
+
+    closeModal();
+    load();
+
+  } catch {
+    alert("Failed to save");
+    btn.disabled = false;
+    btn.innerText = "Save";
   }
-
-  content.innerHTML = decisions.map(d=>{
-    const cat = d.category || "Uncategorized";
-    const cost = d.cost ? "$"+d.cost : "";
-
-    return `
-    <div class="card ${getColorClass(d)}" onclick="openDecision('${d.id}')">
-      <div class="card-left">
-        <div class="card-title">${d.title}</div>
-        <div class="card-meta">${cat} ${cost ? "• "+cost : ""}</div>
-      </div>
-    </div>`;
-  }).join("");
 }
 
 /* NAV */
@@ -283,9 +275,7 @@ function goHistory(){ window.location.href="history.html"; }
 function goInsights(){ window.location.href="insights.html"; }
 function goBehavior(){ window.location.href="behavior.html"; }
 function goSettings(){ window.location.href="settings.html"; }
-function goHow(){ window.location.href="how-it-works.html"; }
 
-populateCategories();
 load();
 
 </script>

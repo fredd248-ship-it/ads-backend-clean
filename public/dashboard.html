@@ -33,10 +33,12 @@ body { margin:0; font-family:Arial; display:flex; background:#f5f7fb; }
 }
 
 .card {
-  background:white; border-radius:12px; padding:16px;
+  border-radius:12px; padding:16px;
   margin-top:14px; border:1px solid rgba(0,0,0,0.05);
   cursor:pointer;
+  transition:transform 0.1s ease;
 }
+.card:hover { transform:scale(1.01); }
 
 .modal {
   position:fixed; top:0; left:0; width:100%; height:100%;
@@ -119,7 +121,7 @@ input[type=range], select, input { width:100%; padding:10px; }
   </div>
 </div>
 
-<!-- EVALUATE MODAL (unchanged working system) -->
+<!-- EVALUATE MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -165,6 +167,7 @@ const categories = [
 
 function loadCategories(){
   const select = document.getElementById("category");
+  select.innerHTML = "";
   categories.forEach(c=>{
     const opt = document.createElement("option");
     opt.value = c;
@@ -173,23 +176,55 @@ function loadCategories(){
   });
 }
 
+function getCardColor(decision) {
+
+  // default: not evaluated
+  let color = "#cbd5e1"; // blue/grey
+
+  if (decision.evaluations && decision.evaluations.length > 0) {
+
+    const latest = decision.evaluations[decision.evaluations.length - 1];
+
+    if (latest.frequencyOfUse === "Low") {
+      color = "#fde68a"; // yellow
+    }
+    else if (latest.frequencyOfUse === "Medium") {
+      color = "#e7d3c7"; // light clay
+    }
+    else if (latest.frequencyOfUse === "High") {
+      color = "#ddd6fe"; // light violet
+    }
+  }
+
+  return color;
+}
+
 async function load(){
-  const res = await fetch(API+"/decisions",{headers:{Authorization:"Bearer "+t}});
+
+  const res = await fetch(API+"/decisions", {
+    headers:{ Authorization:"Bearer "+t }
+  });
+
   const data = await res.json();
 
   const list = document.getElementById("list");
   list.innerHTML="";
 
-  data.data.forEach(d=>{
-    const card=document.createElement("div");
-    card.className="card";
+  data.data.forEach(d => {
 
-    card.innerHTML=`
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // ✅ apply color
+    card.style.background = getCardColor(d);
+
+    card.innerHTML = `
       <strong>${d.title}</strong><br>
       <small>${d.category} ${d.cost ? "• $" + d.cost : ""}</small>
     `;
 
-    card.onclick=()=>openModal(d);
+    card.onclick = () => openModal(d);
+
     list.appendChild(card);
   });
 }
@@ -198,6 +233,7 @@ function openCreate(){ document.getElementById("createModal").style.display="fle
 function closeCreate(){ document.getElementById("createModal").style.display="none"; }
 
 async function create(){
+
   await fetch(API+"/decisions",{
     method:"POST",
     headers:{
@@ -218,26 +254,32 @@ async function create(){
 }
 
 function openModal(d){
-  currentDecisionId=d.id;
-  document.getElementById("modalTitle").innerText=d.title;
-  document.getElementById("modal").style.display="flex";
+  currentDecisionId = d.id;
+  document.getElementById("modalTitle").innerText = d.title;
+  document.getElementById("modal").style.display = "flex";
 }
 
-function closeModal(){ document.getElementById("modal").style.display="none"; }
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
 
-const slider=document.getElementById("slider");
-const sliderValue=document.getElementById("sliderValue");
-slider.oninput=()=>sliderValue.innerText=slider.value;
+const slider = document.getElementById("slider");
+const sliderValue = document.getElementById("sliderValue");
+
+slider.oninput = () => {
+  sliderValue.innerText = slider.value;
+};
 
 function setAgain(val){
-  wouldBuyAgain=val;
-  yesBtn.classList.toggle("active",val);
-  noBtn.classList.toggle("active",!val);
+  wouldBuyAgain = val;
+  yesBtn.classList.toggle("active", val);
+  noBtn.classList.toggle("active", !val);
 }
 
 async function save(){
-  const regretScore=10-Number(slider.value);
-  const frequency=document.getElementById("frequency").value;
+
+  const regretScore = 10 - Number(slider.value);
+  const frequency = document.getElementById("frequency").value;
 
   await fetch(API+"/decisions/"+currentDecisionId+"/evaluate",{
     method:"POST",
@@ -245,7 +287,11 @@ async function save(){
       "Content-Type":"application/json",
       Authorization:"Bearer "+t
     },
-    body:JSON.stringify({regretScore,frequencyOfUse:frequency,wouldBuyAgain})
+    body:JSON.stringify({
+      regretScore,
+      frequencyOfUse:frequency,
+      wouldBuyAgain
+    })
   });
 
   closeModal();

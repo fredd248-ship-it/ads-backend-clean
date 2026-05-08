@@ -43,76 +43,83 @@ router.get("/", authenticate, async (req, res) => {
         totalSpend += d.cost;
       }
 
-      if (!d.evaluations || d.evaluations.length === 0) {
+      if (
+        !d.evaluations ||
+        d.evaluations.length === 0
+      ) {
         return;
       }
 
       evaluatedDecisions++;
 
-      d.evaluations.forEach(e => {
+      // USE ONLY THE LATEST EVALUATION
+      const latest =
+        d.evaluations[
+          d.evaluations.length - 1
+        ];
 
-        const score = 10 - e.regretScore;
+      const score =
+        10 - latest.regretScore;
 
-        totalScore += score;
-        scoreCount++;
-        totalEvaluations++;
+      totalScore += score;
+      scoreCount++;
+      totalEvaluations++;
 
-        // DISTRIBUTION
-        if (score >= 7) {
-          strong++;
-        } else if (score >= 4) {
-          average++;
-        } else {
-          weak++;
-        }
+      // DISTRIBUTION
+      if (score >= 7) {
+        strong++;
+      } else if (score >= 4) {
+        average++;
+      } else {
+        weak++;
+      }
 
-        // FOLLOW-THROUGH
-        if (e.wouldBuyAgain) {
-          wouldDo++;
-        }
+      // FOLLOW-THROUGH
+      if (latest.wouldBuyAgain) {
+        wouldDo++;
+      }
 
-        // CATEGORY TRACKING
-        if (d.category) {
-          categoryScores[d.category] =
-            (categoryScores[d.category] || 0) + score;
+      // CATEGORY TRACKING
+      if (d.category) {
 
-          categoryCounts[d.category] =
-            (categoryCounts[d.category] || 0) + 1;
-        }
+        categoryScores[d.category] =
+          (categoryScores[d.category] || 0) + score;
 
-        // BEHAVIOR SIGNALS
-        if (
-          d.timePressure >= 4 &&
-          score < 6
-        ) {
-          highPressureBad++;
-        }
+        categoryCounts[d.category] =
+          (categoryCounts[d.category] || 0) + 1;
+      }
 
-        if (
-          d.emotionalWeight >= 4 &&
-          score < 6
-        ) {
-          emotionalBad++;
-        }
+      // BEHAVIOR SIGNALS
+      if (
+        d.timePressure >= 4 &&
+        score < 6
+      ) {
+        highPressureBad++;
+      }
 
-        // COST PATTERNS
-        if (
-          d.cost &&
-          d.cost >= 500 &&
-          score <= 4
-        ) {
-          expensiveMistakes++;
-        }
+      if (
+        d.emotionalWeight >= 4 &&
+        score < 6
+      ) {
+        emotionalBad++;
+      }
 
-        if (
-          d.cost &&
-          d.cost >= 500 &&
-          score >= 8
-        ) {
-          expensiveWins++;
-        }
+      // COST PATTERNS
+      if (
+        d.cost &&
+        d.cost >= 500 &&
+        score <= 4
+      ) {
+        expensiveMistakes++;
+      }
 
-      });
+      if (
+        d.cost &&
+        d.cost >= 500 &&
+        score >= 8
+      ) {
+        expensiveWins++;
+      }
 
     });
 
@@ -247,7 +254,7 @@ router.get("/", authenticate, async (req, res) => {
 
       averageRegretScore: avgScore,
 
-      // NEW STABLE METRIC
+      // NOW COUNTS ONLY LATEST DECISION STATES
       strongDecisions: strong,
 
       distribution,

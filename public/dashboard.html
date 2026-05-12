@@ -6,66 +6,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { margin:0; font-family:Arial; display:flex; background:#f5f7fb; }
+body {
+  margin:0;
+  font-family:Arial;
+  display:flex;
+  background:#f5f7fb;
+}
 
 .sidebar {
-  width:220px; background:#eef2ff; height:100vh;
-  padding:20px 10px; border-right:1px solid #d1d5db;
-  display:flex; flex-direction:column; justify-content:center;
+  width:220px;
+  background:#eef2ff;
+  height:100vh;
+  padding:20px 10px;
+  border-right:1px solid #d1d5db;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
 
 .nav-item {
-  padding:14px; margin-bottom:10px; border-radius:10px;
-  text-align:center; cursor:pointer; color:#3730a3;
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
+  color:#3730a3;
 }
-.nav-item:hover { background:#c7d2fe; }
-.active { background:#4f46e5; color:white; }
 
-.main { flex:1; padding:20px; max-width:900px; margin:auto; }
+.nav-item:hover {
+  background:#c7d2fe;
+}
+
+.active {
+  background:#4f46e5;
+  color:white;
+}
+
+.main {
+  flex:1;
+  padding:20px;
+  max-width:900px;
+  margin:auto;
+}
 
 .header {
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.header-right {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.how-link {
+  color:#4f46e5;
+  cursor:pointer;
+  font-weight:600;
 }
 
 .add-btn {
-  background:#4f46e5; color:white; border:none;
-  padding:10px 14px; border-radius:10px; cursor:pointer;
+  background:#4f46e5;
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
 .card {
-  border-radius:12px; padding:16px;
-  margin-top:14px; border:1px solid rgba(0,0,0,0.05);
+  border-radius:12px;
+  padding:16px;
+  margin-top:14px;
+  border:1px solid rgba(0,0,0,0.05);
   cursor:pointer;
   transition:transform 0.1s ease;
 }
-.card:hover { transform:scale(1.01); }
+
+.card:hover {
+  transform:scale(1.01);
+}
 
 .modal {
-  position:fixed; top:0; left:0; width:100%; height:100%;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
   background:rgba(0,0,0,0.4);
-  display:none; align-items:center; justify-content:center;
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
 
 .modal-content {
-  background:white; width:90%; max-width:500px;
-  padding:20px; border-radius:12px;
+  background:white;
+  width:90%;
+  max-width:500px;
+  padding:20px;
+  border-radius:12px;
 }
 
-.section { margin-top:20px; }
-input[type=range], select, input { width:100%; padding:10px; }
+.section {
+  margin-top:20px;
+}
 
-.toggle { display:flex; gap:10px; margin-top:10px; }
+input[type=range],
+select,
+input {
+  width:100%;
+  padding:10px;
+}
+
+.toggle {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
 .toggle button {
-  flex:1; padding:10px; border:none; border-radius:8px;
-  background:#e5e7eb; cursor:pointer;
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#e5e7eb;
+  cursor:pointer;
 }
-.toggle .active { background:#4f46e5; color:white; }
+
+.toggle .active {
+  background:#4f46e5;
+  color:white;
+}
 
 .save {
-  margin-top:20px; width:100%; padding:14px;
-  background:#4f46e5; color:white; border:none; border-radius:10px;
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  background:#4f46e5;
+  color:white;
+  border:none;
+  border-radius:10px;
 }
-.close { background:#aaa; }
+
+.close {
+  background:#aaa;
+}
 </style>
 </head>
 
@@ -83,8 +171,27 @@ input[type=range], select, input { width:100%; padding:10px; }
 <div class="main">
 
   <div class="header">
+
     <h2>Decisions</h2>
-    <button class="add-btn" onclick="openCreate()">+ New</button>
+
+    <div class="header-right">
+
+      <div
+        class="how-link"
+        onclick="goHowItWorks()"
+      >
+        How It Works
+      </div>
+
+      <button
+        class="add-btn"
+        onclick="openCreate()"
+      >
+        + New
+      </button>
+
+    </div>
+
   </div>
 
   <div id="list"></div>
@@ -93,201 +200,527 @@ input[type=range], select, input { width:100%; padding:10px; }
 
 <!-- CREATE MODAL -->
 <div class="modal" id="createModal">
+
   <div class="modal-content">
+
     <h3>New Decision</h3>
 
-    <input id="title" placeholder="Title">
+    <input
+      id="title"
+      placeholder="Title"
+    >
 
     <div class="section">
-      <input id="cost" type="number" placeholder="Cost">
+
+      <input
+        id="cost"
+        type="number"
+        placeholder="Cost"
+      >
+
     </div>
 
     <div class="section">
+
       <select id="category"></select>
+
     </div>
 
     <div class="section">
+
       <div>Time Pressure (1–10)</div>
-      <input type="range" id="time" min="1" max="10" value="5">
+
+      <input
+        type="range"
+        id="time"
+        min="1"
+        max="10"
+        value="5"
+      >
+
     </div>
 
     <div class="section">
+
       <div>Emotional Weight (1–10)</div>
-      <input type="range" id="emotion" min="1" max="10" value="5">
+
+      <input
+        type="range"
+        id="emotion"
+        min="1"
+        max="10"
+        value="5"
+      >
+
     </div>
 
-    <button class="save" onclick="create()">Create</button>
-    <button class="save close" onclick="closeCreate()">Cancel</button>
+    <button
+      class="save"
+      onclick="create()"
+    >
+      Create
+    </button>
+
+    <button
+      class="save close"
+      onclick="closeCreate()"
+    >
+      Cancel
+    </button>
+
   </div>
 </div>
 
 <!-- EVALUATE MODAL -->
 <div class="modal" id="modal">
+
   <div class="modal-content">
 
     <div id="modalTitle"></div>
 
     <div class="section">
-      <div><strong>Satisfaction (0–10)</strong></div>
-      <input type="range" min="0" max="10" value="5" id="slider">
+
+      <div>
+        <strong>Satisfaction (0–10)</strong>
+      </div>
+
+      <input
+        type="range"
+        min="0"
+        max="10"
+        value="5"
+        id="slider"
+      >
+
       <div id="sliderValue">5</div>
+
     </div>
 
     <div class="section">
-      <div><strong>Frequency of Use (How often do you use this?)</strong></div>
+
+      <div>
+        <strong>
+          Frequency of Use
+          (How often do you use this?)
+        </strong>
+      </div>
+
       <select id="frequency">
         <option>Low</option>
         <option selected>Medium</option>
         <option>High</option>
       </select>
+
     </div>
 
     <div class="section">
-      <div><strong>Would you do / buy again?</strong></div>
-      <div class="toggle">
-        <button id="yesBtn" class="active" onclick="setAgain(true)">Yes</button>
-        <button id="noBtn" onclick="setAgain(false)">No</button>
+
+      <div>
+        <strong>
+          Would you do / buy again?
+        </strong>
       </div>
+
+      <div class="toggle">
+
+        <button
+          id="yesBtn"
+          class="active"
+          onclick="setAgain(true)"
+        >
+          Yes
+        </button>
+
+        <button
+          id="noBtn"
+          onclick="setAgain(false)"
+        >
+          No
+        </button>
+
+      </div>
+
     </div>
 
-    <button class="save" onclick="save()">Save</button>
-    <button class="save close" onclick="closeModal()">Cancel</button>
+    <button
+      class="save"
+      onclick="save()"
+    >
+      Save
+    </button>
+
+    <button
+      class="save close"
+      onclick="closeModal()"
+    >
+      Cancel
+    </button>
 
   </div>
 </div>
 
 <script>
 
-const API = "https://ads-backend-clean.onrender.com/api/v1";
-const t = localStorage.getItem("ads_token");
+const API =
+  "https://ads-backend-clean.onrender.com/api/v1";
+
+const t =
+  localStorage.getItem("ads_token");
 
 let currentDecisionId = null;
 let wouldBuyAgain = true;
 
 const categories = [
-"Home Office","Travel","Relationship","Job","Lawn and Garden",
-"Electronics","Home","Outdoors and Patio","Vehicle","Moving",
-"Work","Business","Tools","Clothing","Decor","Dining","Medical","Pets","Other"
+
+"Appliances",
+
+"Business",
+
+"Career",
+
+"Clothing",
+
+"Cooking/Recipe",
+
+"Decor",
+
+"Dining",
+
+"Electronics",
+
+"Furniture",
+
+"Home",
+
+"Home Office",
+
+"Investment",
+
+"Job",
+
+"Lawn & Garden",
+
+"Lifestyle",
+
+"Medical",
+
+"Moving",
+
+"Other",
+
+"Outdoor & Patio",
+
+"Pets",
+
+"Relationship",
+
+"Subscription",
+
+"Tools",
+
+"Travel",
+
+"Vehicle",
+
+"Work"
+
 ];
 
 function loadCategories(){
-  const select = document.getElementById("category");
+
+  const select =
+    document.getElementById(
+      "category"
+    );
+
   select.innerHTML = "";
+
   categories.forEach(c=>{
-    const opt = document.createElement("option");
+
+    const opt =
+      document.createElement(
+        "option"
+      );
+
     opt.value = c;
     opt.textContent = c;
+
     select.appendChild(opt);
   });
 }
 
 function getCardColor(decision) {
+
   let color = "#cbd5e1";
-  if (decision.evaluations && decision.evaluations.length > 0) {
-    const latest = decision.evaluations[decision.evaluations.length - 1];
-    if (latest.frequencyOfUse === 1) color = "#fde68a";
-    else if (latest.frequencyOfUse === 2) color = "#d1a98c";
-    else if (latest.frequencyOfUse === 3) color = "#ddd6fe";
+
+  if (
+    decision.evaluations &&
+    decision.evaluations.length > 0
+  ) {
+
+    const latest =
+      decision.evaluations[
+        decision.evaluations.length - 1
+      ];
+
+    if (
+      latest.frequencyOfUse === 1
+    ) {
+      color = "#fde68a";
+    }
+
+    else if (
+      latest.frequencyOfUse === 2
+    ) {
+      color = "#d1a98c";
+    }
+
+    else if (
+      latest.frequencyOfUse === 3
+    ) {
+      color = "#ddd6fe";
+    }
   }
+
   return color;
 }
 
 async function load(){
-  const res = await fetch(API+"/decisions", {
-    headers:{ Authorization:"Bearer "+t }
-  });
-  const data = await res.json();
 
-  const list = document.getElementById("list");
-  list.innerHTML="";
+  const res =
+    await fetch(
+      API + "/decisions",
+      {
+        headers:{
+          Authorization:
+            "Bearer " + t
+        }
+      }
+    );
+
+  const data =
+    await res.json();
+
+  const list =
+    document.getElementById(
+      "list"
+    );
+
+  list.innerHTML = "";
 
   data.data.forEach(d => {
-    const card = document.createElement("div");
+
+    const card =
+      document.createElement(
+        "div"
+      );
+
     card.className = "card";
-    card.style.background = getCardColor(d);
+
+    card.style.background =
+      getCardColor(d);
 
     card.innerHTML = `
       <strong>${d.title}</strong><br>
       <small>${d.category} ${d.cost ? "• $" + d.cost : ""}</small>
     `;
 
-    card.onclick = () => openModal(d);
+    card.onclick =
+      () => openModal(d);
+
     list.appendChild(card);
   });
 }
 
-function openCreate(){ document.getElementById("createModal").style.display="flex"; }
-function closeCreate(){ document.getElementById("createModal").style.display="none"; }
+function openCreate(){
+
+  document.getElementById(
+    "createModal"
+  ).style.display = "flex";
+}
+
+function closeCreate(){
+
+  document.getElementById(
+    "createModal"
+  ).style.display = "none";
+}
 
 async function create(){
-  await fetch(API+"/decisions",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+t
-    },
-    body:JSON.stringify({
-      title:document.getElementById("title").value,
-      cost:Number(document.getElementById("cost").value),
-      category:document.getElementById("category").value,
-      timePressure:Number(document.getElementById("time").value),
-      emotionalWeight:Number(document.getElementById("emotion").value)
-    })
-  });
+
+  await fetch(
+    API + "/decisions",
+    {
+      method:"POST",
+
+      headers:{
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          "Bearer " + t
+      },
+
+      body:JSON.stringify({
+
+        title:
+          document.getElementById(
+            "title"
+          ).value,
+
+        cost:Number(
+          document.getElementById(
+            "cost"
+          ).value
+        ),
+
+        category:
+          document.getElementById(
+            "category"
+          ).value,
+
+        timePressure:Number(
+          document.getElementById(
+            "time"
+          ).value
+        ),
+
+        emotionalWeight:Number(
+          document.getElementById(
+            "emotion"
+          ).value
+        )
+      })
+    }
+  );
+
   closeCreate();
   load();
 }
 
 function openModal(d){
+
   currentDecisionId = d.id;
-  document.getElementById("modalTitle").innerText = d.title;
-  document.getElementById("modal").style.display = "flex";
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText = d.title;
+
+  document.getElementById(
+    "modal"
+  ).style.display = "flex";
 }
 
 function closeModal(){
-  document.getElementById("modal").style.display = "none";
+
+  document.getElementById(
+    "modal"
+  ).style.display = "none";
 }
 
-const slider = document.getElementById("slider");
-const sliderValue = document.getElementById("sliderValue");
+const slider =
+  document.getElementById(
+    "slider"
+  );
+
+const sliderValue =
+  document.getElementById(
+    "sliderValue"
+  );
 
 slider.oninput = () => {
-  sliderValue.innerText = slider.value;
+
+  sliderValue.innerText =
+    slider.value;
 };
 
 function setAgain(val){
+
   wouldBuyAgain = val;
-  yesBtn.classList.toggle("active", val);
-  noBtn.classList.toggle("active", !val);
+
+  yesBtn.classList.toggle(
+    "active",
+    val
+  );
+
+  noBtn.classList.toggle(
+    "active",
+    !val
+  );
 }
 
 async function save(){
-  const regretScore = 10 - Number(slider.value);
-  const frequency = document.getElementById("frequency").value;
 
-  await fetch(API+"/decisions/"+currentDecisionId+"/evaluate",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+t
-    },
-    body:JSON.stringify({
-      regretScore,
-      frequencyOfUse:frequency,
-      wouldBuyAgain
-    })
-  });
+  const regretScore =
+    10 - Number(slider.value);
+
+  const frequency =
+    document.getElementById(
+      "frequency"
+    ).value;
+
+  await fetch(
+    API +
+    "/decisions/" +
+    currentDecisionId +
+    "/evaluate",
+    {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          "Bearer " + t
+      },
+
+      body:JSON.stringify({
+
+        regretScore,
+
+        frequencyOfUse:
+          frequency,
+
+        wouldBuyAgain
+      })
+    }
+  );
 
   closeModal();
   load();
 }
 
-/* ✅ CORRECT ROUTING */
-function goEvaluations(){ location.href="evaluations.html"; }
-function goHistory(){ location.href="history.html"; }
-function goInsights(){ location.href="insights.html"; }
-function goBehavior(){ location.href="behavior.html"; }
-function goSettings(){ location.href="settings.html"; }
+function goEvaluations(){
+  location.href =
+    "evaluations.html";
+}
+
+function goHistory(){
+  location.href =
+    "history.html";
+}
+
+function goInsights(){
+  location.href =
+    "insights.html";
+}
+
+function goBehavior(){
+  location.href =
+    "behavior.html";
+}
+
+function goSettings(){
+  location.href =
+    "settings.html";
+}
+
+function goHowItWorks(){
+  location.href =
+    "how-it-works.html";
+}
 
 loadCategories();
 load();

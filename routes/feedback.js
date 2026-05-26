@@ -7,6 +7,48 @@ const prisma = new PrismaClient();
 const authenticate = require('../middleware/authenticate');
 
 /* =========================
+   GET FEEDBACK
+========================= */
+router.get('/', async (req, res) => {
+
+  try {
+
+    const feedback =
+      await prisma.feedback.findMany({
+
+        orderBy: {
+          createdAt: 'desc'
+        },
+
+        include: {
+          user: {
+            select: {
+              email: true
+            }
+          }
+        }
+      });
+
+    res.json({
+      success: true,
+      data: feedback
+    });
+
+  } catch (err) {
+
+    console.error(
+      'GET FEEDBACK ERROR:',
+      err
+    );
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch feedback'
+    });
+  }
+});
+
+/* =========================
    SUBMIT FEEDBACK
 ========================= */
 router.post('/', authenticate, async (req, res) => {

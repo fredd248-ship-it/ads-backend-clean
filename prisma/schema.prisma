@@ -17,6 +17,7 @@ model User {
   createdAt DateTime @default(now())
 
   decisions Decision[]
+  feedback  Feedback[]
 }
 
 // =========================
@@ -49,6 +50,20 @@ model Evaluation {
 
   decisionId String
   decision   Decision @relation(fields: [decisionId], references: [id])
+}
+
+// =========================
+// FEEDBACK
+// =========================
+model Feedback {
+  id        String   @id @default(uuid())
+  type      String
+  message   String
+  email     String?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
 }
 
 // =========================

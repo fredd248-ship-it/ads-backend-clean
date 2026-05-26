@@ -772,13 +772,94 @@ function closeFeedback(){
   ).style.display = "none";
 }
 
-function submitFeedback(){
+async function submitFeedback(){
 
-  alert(
-    "Feedback submission backend coming next."
-  );
+  const type =
+    document.getElementById(
+      "feedbackType"
+    ).value;
 
-  closeFeedback();
+  const message =
+    document.getElementById(
+      "feedbackMessage"
+    ).value.trim();
+
+  const email =
+    document.getElementById(
+      "feedbackEmail"
+    ).value.trim();
+
+  if (!message) {
+
+    alert(
+      "Please enter feedback before submitting."
+    );
+
+    return;
+  }
+
+  try {
+
+    const res =
+      await fetch(
+        API + "/feedback",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              "Bearer " + t
+          },
+
+          body:JSON.stringify({
+
+            type,
+            message,
+            email
+          })
+        }
+      );
+
+    const data =
+      await res.json();
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "Feedback submission failed"
+      );
+    }
+
+    alert(
+      "Thank you for your feedback."
+    );
+
+    document.getElementById(
+      "feedbackMessage"
+    ).value = "";
+
+    document.getElementById(
+      "feedbackEmail"
+    ).value = "";
+
+    closeFeedback();
+
+  } catch (err) {
+
+    console.error(
+      "FEEDBACK SUBMISSION ERROR:",
+      err
+    );
+
+    alert(
+      "Failed to submit feedback."
+    );
+  }
 }
 
 const slider =

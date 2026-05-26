@@ -33,7 +33,9 @@ body {
   color: #312e81;
 }
 
-.nav-item:hover { background: #c7d2fe; }
+.nav-item:hover {
+  background: #c7d2fe;
+}
 
 .active {
   background: #4338ca;
@@ -63,12 +65,25 @@ body {
   display: inline-block;
 }
 
-.low { background: #fde68a; }
-.medium { background: #bfdbfe; }
-.high { background: #bbf7d0; }
+.low {
+  background: #fde68a;
+}
 
-.do { background: #fef3c7; }
-.not-do { background: #fecaca; }
+.medium {
+  background: #bfdbfe;
+}
+
+.high {
+  background: #bbf7d0;
+}
+
+.do {
+  background: #fef3c7;
+}
+
+.not-do {
+  background: #fecaca;
+}
 
 .small {
   font-size: 13px;
@@ -86,112 +101,336 @@ body {
 <body>
 
 <div class="sidebar">
-  <div class="nav-item" onclick="goDash()">Dashboard</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
-  <div class="nav-item active">Evaluation History</div>
-  <div class="nav-item" onclick="goInsights()">Insights</div>
-  <div class="nav-item" onclick="goBehavior()">Tips & Coaching</div>
-  <div class="nav-item" onclick="goSettings()">Settings</div>
+
+  <div
+    class="nav-item"
+    onclick="goDash()"
+  >
+    Dashboard
+  </div>
+
+  <div
+    class="nav-item"
+    onclick="goEvaluations()"
+  >
+    Evaluations
+  </div>
+
+  <div class="nav-item active">
+    Evaluation History
+  </div>
+
+  <div
+    class="nav-item"
+    onclick="goInsights()"
+  >
+    Insights
+  </div>
+
+  <div
+    class="nav-item"
+    onclick="goBehavior()"
+  >
+    Tips & Coaching
+  </div>
+
+  <div
+    class="nav-item"
+    onclick="goSettings()"
+  >
+    Settings
+  </div>
+
 </div>
 
 <div class="main">
-  <h2 id="title">Loading...</h2>
-  <div id="meta" class="small"></div>
+
+  <h2 id="title">
+    Loading...
+  </h2>
+
+  <div
+    id="meta"
+    class="small"
+  ></div>
+
   <div id="list"></div>
+
 </div>
 
 <script>
 
-/* ✅ FIXED API */
-const API = "https://ads-backend-clean.onrender.com/api/v1";
+/* =========================
+   API
+========================= */
+const API =
+  "https://ads-backend-clean.onrender.com/api/v1";
 
+/* =========================
+   TOKEN
+========================= */
 function token(){
-  return localStorage.getItem("ads_token");
-}
 
-function formatCost(cost){
-  if(cost === null || cost === undefined) return "";
-  return "$" + Number(cost).toLocaleString();
+  return localStorage.getItem(
+    "ads_token"
+  );
 }
 
 const t = token();
-if(!t || t === "null" || t === "undefined"){
-  window.location.href="login.html";
+
+if(
+  !t ||
+  t === "null" ||
+  t === "undefined"
+){
+
+  window.location.href =
+    "login.html";
+
   throw new Error("STOP");
 }
 
-const params = new URLSearchParams(window.location.search);
-const decisionId = params.get("id");
+/* =========================
+   QUERY PARAMS
+========================= */
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
 
-async function load(){
+const decisionId =
+  params.get("id");
 
-  const res = await fetch(API + "/decisions", {
-    headers:{ Authorization:"Bearer "+t }
-  });
+/* =========================
+   SAFE GUARD
+========================= */
+if(!decisionId){
 
-  const data = await res.json();
+  window.location.href =
+    "evaluations.html";
 
-  const decision = data.data.find(d => d.id == decisionId);
-
-  if(!decision){
-    document.getElementById("title").innerText = "Decision not found";
-    return;
-  }
-
-  document.getElementById("title").innerText = decision.title;
-
-  document.getElementById("meta").innerText =
-    `${decision.category || ""} ${decision.cost ? "• " + formatCost(decision.cost) : ""}`;
-
-  const container = document.getElementById("list");
-  container.innerHTML = "";
-
-  if(!decision.evaluations || decision.evaluations.length === 0){
-    container.innerHTML = "<div class='card'>No evaluations yet</div>";
-    return;
-  }
-
-  const sorted = decision.evaluations.slice().reverse();
-
-  sorted.forEach(e => {
-
-    const satisfaction = 10 - e.regretScore;
-
-    let usageClass = "";
-    if(e.frequencyOfUse === "Low") usageClass = "low";
-    if(e.frequencyOfUse === "Medium") usageClass = "medium";
-    if(e.frequencyOfUse === "High") usageClass = "high";
-
-    const doClass = e.wouldBuyAgain ? "do" : "not-do";
-    const doText = e.wouldBuyAgain ? "Would Do Again" : "Would Not Do Again";
-
-    const date = new Date(e.createdAt).toLocaleDateString();
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <div class="title">Satisfaction: ${satisfaction}/10</div>
-      <div>
-        <span class="tag ${usageClass}">${e.frequencyOfUse} Use</span>
-        <span class="tag ${doClass}">${doText}</span>
-      </div>
-      <div class="small">Date: ${date}</div>
-    `;
-
-    container.appendChild(card);
-
-  });
-
+  throw new Error(
+    "Missing decision ID"
+  );
 }
 
-/* NAV */
-function goDash(){ window.location.href="dashboard.html"; }
-function goEvaluations(){ window.location.href="evaluations.html"; }
-function goInsights(){ window.location.href="insights.html"; }
-function goBehavior(){ window.location.href="behavior.html"; }
-function goSettings(){ window.location.href="settings.html"; }
+/* =========================
+   HELPERS
+========================= */
+function formatCost(cost){
 
+  if(
+    cost === null ||
+    cost === undefined
+  ){
+    return "";
+  }
+
+  return (
+    "$" +
+    Number(cost).toLocaleString()
+  );
+}
+
+/* =========================
+   LOAD PAGE
+========================= */
+async function load(){
+
+  try {
+
+    const res =
+      await fetch(
+        API + "/decisions",
+        {
+          headers:{
+            Authorization:
+              "Bearer " + t
+          }
+        }
+      );
+
+    if(!res.ok){
+
+      throw new Error(
+        "Failed to fetch decisions"
+      );
+    }
+
+    const data =
+      await res.json();
+
+    const decision =
+      data.data.find(
+        d => d.id == decisionId
+      );
+
+    /* =========================
+       INVALID DECISION
+    ========================= */
+    if(!decision){
+
+      window.location.href =
+        "evaluations.html";
+
+      return;
+    }
+
+    document.getElementById(
+      "title"
+    ).innerText =
+      decision.title;
+
+    document.getElementById(
+      "meta"
+    ).innerText =
+      `${decision.category || ""}
+       ${
+         decision.cost
+         ? "• " + formatCost(decision.cost)
+         : ""
+       }`;
+
+    const container =
+      document.getElementById(
+        "list"
+      );
+
+    container.innerHTML = "";
+
+    if(
+      !decision.evaluations ||
+      decision.evaluations.length === 0
+    ){
+
+      container.innerHTML =
+        "<div class='card'>No evaluations yet</div>";
+
+      return;
+    }
+
+    const sorted =
+      decision.evaluations
+        .slice()
+        .reverse();
+
+    sorted.forEach(e => {
+
+      const satisfaction =
+        10 - e.regretScore;
+
+      let usageClass = "";
+
+      if(
+        e.frequencyOfUse === "Low"
+      ){
+        usageClass = "low";
+      }
+
+      if(
+        e.frequencyOfUse === "Medium"
+      ){
+        usageClass = "medium";
+      }
+
+      if(
+        e.frequencyOfUse === "High"
+      ){
+        usageClass = "high";
+      }
+
+      const doClass =
+        e.wouldBuyAgain
+          ? "do"
+          : "not-do";
+
+      const doText =
+        e.wouldBuyAgain
+          ? "Would Do Again"
+          : "Would Not Do Again";
+
+      const date =
+        new Date(
+          e.createdAt
+        ).toLocaleDateString();
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className = "card";
+
+      card.innerHTML = `
+        <div class="title">
+          Satisfaction:
+          ${satisfaction}/10
+        </div>
+
+        <div>
+
+          <span class="tag ${usageClass}">
+            ${e.frequencyOfUse} Use
+          </span>
+
+          <span class="tag ${doClass}">
+            ${doText}
+          </span>
+
+        </div>
+
+        <div class="small">
+          Date: ${date}
+        </div>
+      `;
+
+      container.appendChild(card);
+
+    });
+
+  } catch(err){
+
+    console.error(
+      "EVALUATION HISTORY ERROR:",
+      err
+    );
+
+    window.location.href =
+      "evaluations.html";
+  }
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+function goDash(){
+  window.location.href =
+    "dashboard.html";
+}
+
+function goEvaluations(){
+  window.location.href =
+    "evaluations.html";
+}
+
+function goInsights(){
+  window.location.href =
+    "insights.html";
+}
+
+function goBehavior(){
+  window.location.href =
+    "behavior.html";
+}
+
+function goSettings(){
+  window.location.href =
+    "settings.html";
+}
+
+/* =========================
+   INIT
+========================= */
 load();
 
 </script>

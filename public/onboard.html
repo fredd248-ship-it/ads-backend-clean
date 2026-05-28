@@ -1,96 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Welcome</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>OutcomeClarity</title>
 
 <style>
-body {
+
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
   font-family: Arial, sans-serif;
-  background: #f5f7fb;
+  background:
+    radial-gradient(circle at top, #312e81 0%, #111827 45%, #0f172a 100%);
+  color: white;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.page-wrapper {
+  width: 100%;
+  padding: 60px 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
 }
 
 .container {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.hero-section {
   text-align: center;
-  max-width: 500px;
-  padding: 20px;
+  margin-bottom: 70px;
 }
 
-h1 {
-  margin-bottom: 16px;
+.logo-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #c7d2fe;
+  margin-bottom: 28px;
+  backdrop-filter: blur(10px);
 }
 
-p {
-  color: #555;
-  line-height: 1.5;
+.hero-title {
+  font-size: clamp(42px, 7vw, 72px);
+  line-height: 1.05;
+  font-weight: bold;
+  margin-bottom: 28px;
+}
+
+.highlight {
+  color: #818cf8;
+}
+
+.hero-subtitle {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #cbd5e1;
+  font-size: 20px;
+  line-height: 1.7;
 }
 
 .button-group {
-  margin-top: 30px;
+  margin-top: 42px;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
 button {
-  padding: 14px 20px;
   border: none;
-  border-radius: 10px;
   cursor: pointer;
+  transition: 0.25s ease;
   font-size: 16px;
+  border-radius: 14px;
+  padding: 16px 28px;
+  font-weight: bold;
 }
 
 .primary-btn {
-  background: #4f46e5;
+  background: #6366f1;
   color: white;
+  box-shadow: 0 10px 30px rgba(99,102,241,0.35);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  background: #7477ff;
 }
 
 .secondary-btn {
-  background: #e5e7eb;
-  color: #111827;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
-button:hover {
-  opacity: 0.95;
+.secondary-btn:hover {
+  background: rgba(255,255,255,0.14);
+  transform: translateY(-2px);
 }
+
+.section {
+  margin-bottom: 70px;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 34px;
+  margin-bottom: 20px;
+}
+
+.section-text {
+  text-align: center;
+  color: #cbd5e1;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.8;
+  font-size: 18px;
+}
+
+.cards-grid {
+  margin-top: 45px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  padding: 30px;
+  backdrop-filter: blur(10px);
+  transition: 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.09);
+}
+
+.card h3 {
+  margin-bottom: 16px;
+  font-size: 22px;
+  color: #e0e7ff;
+}
+
+.card p {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.use-cases {
+  margin-top: 45px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.use-case {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  color: #dbeafe;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.quote-section {
+  margin-top: 80px;
+  text-align: center;
+  padding: 40px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.quote {
+  font-size: 28px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.footer-text {
+  margin-top: 25px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
+  .quote {
+    font-size: 22px;
+  }
+
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="page-wrapper">
 
-  <h1>Welcome to Outcome Clarity</h1>
+  <div class="container">
 
-  <p>
-    Track your decisions, evaluate outcomes, and uncover patterns in your behavior.
-  </p>
+    <!-- HERO -->
 
-  <div class="button-group">
-    <button class="primary-btn" onclick="goRegister()">
-      Create Account
-    </button>
+    <section class="hero-section">
 
-    <button class="secondary-btn" onclick="goLogin()">
-      Log In
-    </button>
+      <div class="logo-badge">
+        OutcomeClarity • Adaptive Decision System
+      </div>
+
+      <h1 class="hero-title">
+        Your Memory Is A <span class="highlight">Poor Judge</span><br>
+        Of Your Past Decisions
+      </h1>
+
+      <p class="hero-subtitle">
+        OutcomeClarity helps you compare what you expected against what
+        actually happened — so you can identify patterns, improve judgment,
+        and stop quietly rewriting your own history over time.
+      </p>
+
+      <div class="button-group">
+
+        <button class="primary-btn" onclick="goRegister()">
+          Create Account
+        </button>
+
+        <button class="secondary-btn" onclick="goLogin()">
+          Log In
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- WHY IT MATTERS -->
+
+    <section class="section">
+
+      <h2 class="section-title">
+        Why This Matters
+      </h2>
+
+      <p class="section-text">
+        Most people remember decisions emotionally — not accurately.
+        <br><br>
+        Over time, expectations shift, regret fades, outcomes get rationalized,
+        and the brain slowly rewrites the story.
+        <br><br>
+        OutcomeClarity creates a structured record before memory distortion
+        takes over, allowing you to compare what you believed would happen
+        against what actually happened later.
+      </p>
+
+    </section>
+
+    <!-- FEATURES -->
+
+    <section class="section">
+
+      <h2 class="section-title">
+        What OutcomeClarity Does
+      </h2>
+
+      <div class="cards-grid">
+
+        <div class="card">
+          <h3>Track Decisions</h3>
+          <p>
+            Record important purchases, commitments, risks,
+            subscriptions, career choices, and major life decisions
+            before hindsight changes the narrative.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Evaluate Outcomes</h3>
+          <p>
+            Return later and compare expectations against reality,
+            including satisfaction, emotional impact,
+            and long-term usefulness.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Detect Behavioral Patterns</h3>
+          <p>
+            Identify recurring tendencies, emotional blind spots,
+            impulse behavior, and decision-making trends
+            that repeat across time.
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- USE CASES -->
+
+    <section class="section">
+
+      <h2 class="section-title">
+        Real World Decisions
+      </h2>
+
+      <div class="use-cases">
+
+        <div class="use-case">
+          Expensive Purchases
+        </div>
+
+        <div class="use-case">
+          Career Decisions
+        </div>
+
+        <div class="use-case">
+          Subscriptions
+        </div>
+
+        <div class="use-case">
+          Business Risks
+        </div>
+
+        <div class="use-case">
+          Emotional Decisions
+        </div>
+
+        <div class="use-case">
+          Lifestyle Changes
+        </div>
+
+        <div class="use-case">
+          Time Investments
+        </div>
+
+        <div class="use-case">
+          Long-Term Commitments
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- FINAL POSITIONING -->
+
+    <section class="quote-section">
+
+      <div class="quote">
+        “OutcomeClarity is not designed to maximize productivity.
+        It is designed to help you see your decisions more honestly over time.”
+      </div>
+
+      <div class="footer-text">
+        A reflective system for decision tracking, behavioral insight,
+        and expectation versus reality analysis.
+      </div>
+
+    </section>
+
   </div>
 
 </div>
 
 <script>
 
-function goRegister(){
+function goRegister() {
   window.location.href = "register.html";
 }
 
-function goLogin(){
+function goLogin() {
   window.location.href = "login.html";
 }
 

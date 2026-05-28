@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,15 +59,13 @@ body {
 }
 
 .hero-title {
-  font-size: clamp(42px, 7vw, 68px);
-  line-height: 1.08;
-  font-weight: 800;
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.3;
+  font-weight: 600;
   margin-bottom: 28px;
-  color: #111827;
-}
-
-.highlight {
-  color: #6366f1;
+  color: #4f46e5;
+  letter-spacing: 0.3px;
+  font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 }
 
 .hero-subtitle {
@@ -148,7 +145,7 @@ button {
 .cards-grid {
   margin-top: 50px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -236,10 +233,18 @@ button {
 
 /* MOBILE */
 
+@media (max-width: 900px) {
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
 @media (max-width: 768px) {
 
   .hero-title {
-    font-size: 46px;
+    font-size: 38px;
   }
 
   .hero-subtitle {
@@ -278,8 +283,7 @@ button {
       </div>
 
       <h1 class="hero-title">
-        Reflect On Your Decisions<br>
-        With <span class="highlight">Greater Clarity</span>
+        Reflect on your decisions with greater clarity
       </h1>
 
       <p class="hero-subtitle">
@@ -368,18 +372,6 @@ button {
             Revisit decisions later and compare your
             original expectations with your real-world
             experiences and satisfaction.
-          </p>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">📈</div>
-
-          <h3>Discover Patterns</h3>
-
-          <p>
-            Identify recurring trends, habits,
-            and behaviors that may influence
-            the kinds of decisions that work best for you.
           </p>
         </div>
 
@@ -480,4 +472,3 @@ function goLogin() {
 
 </body>
 </html>
-```

@@ -6,63 +6,150 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f7fb;
+  background:
+    linear-gradient(to bottom,
+      #f7f9fc 0%,
+      #eef2ff 45%,
+      #ffffff 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 30px 20px;
+}
+
+.page-wrapper {
+  width: 100%;
+  max-width: 420px;
 }
 
 .container {
   background: white;
-  padding: 24px;
-  border-radius: 12px;
+  padding: 28px;
+  border-radius: 18px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+  border: 1px solid #e5e7eb;
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #4f46e5;
+  font-weight: 600;
 }
 
 input {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
 
 button {
   width: 100%;
-  padding: 12px;
-  background: #4f46e5;
+  padding: 14px;
+  background: #6366f1;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  transition: 0.25s ease;
+}
+
+button:hover {
+  background: #5558ee;
 }
 
 .error {
-  color: red;
-  margin-top: 10px;
+  color: #dc2626;
+  margin-top: 14px;
+  text-align: center;
+  line-height: 1.6;
 }
+
+/* ACCESS LINK */
+
+.access-request {
+  margin-top: 28px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.access-request a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.access-request a:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="page-wrapper">
 
-  <h2>Create Account</h2>
+  <div class="container">
 
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <input id="inviteCode" placeholder="Access Code">
+    <h2>Create Account</h2>
 
-  <button id="registerBtn">Create Account</button>
+    <input id="email" placeholder="Email">
 
-  <div id="error" class="error"></div>
+    <input id="password"
+           type="password"
+           placeholder="Password">
+
+    <input id="inviteCode"
+           placeholder="Access Code">
+
+    <button id="registerBtn">
+      Create Account
+    </button>
+
+    <div id="error" class="error"></div>
+
+    <!-- ACCESS REQUEST -->
+
+    <div class="access-request">
+
+      Please request an access code here
+
+      <br><br>
+
+      <a href="mailto:adssystemnotifications@gmail.com?subject=OutcomeClarity Early Access Request">
+        Request an early access code
+      </a>
+
+    </div>
+
+  </div>
 
 </div>
 
@@ -84,8 +171,10 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
   console.log("SENDING:", { email, inviteCode });
 
   if (!email || !password || !inviteCode) {
+
     errorDiv.innerText = "All fields are required";
     return;
+
   }
 
   btn.disabled = true;
@@ -94,33 +183,45 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
   try {
 
     const res = await fetch(API + "/auth/register", {
+
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
+
       body: JSON.stringify({
         email,
         password,
         inviteCode
       })
+
     });
 
     const data = await res.json();
 
     if (!res.ok) {
+
       errorDiv.innerText = data.error || "Registration failed";
+
       btn.disabled = false;
       btn.innerText = "Create Account";
+
       return;
+
     }
 
     localStorage.setItem("ads_token", data.token);
+
     window.location.href = "dashboard.html";
 
   } catch (err) {
+
     errorDiv.innerText = "Network error";
+
     btn.disabled = false;
     btn.innerText = "Create Account";
+
   }
 
 });

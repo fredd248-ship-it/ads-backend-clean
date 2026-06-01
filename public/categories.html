@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -14,6 +15,7 @@ body {
 }
 
 /* SIDEBAR */
+
 .sidebar {
   width: 220px;
   background: #eef2ff;
@@ -32,6 +34,7 @@ body {
   text-align: center;
   cursor: pointer;
   color: #3730a3;
+  transition: 0.2s ease;
 }
 
 .nav-item:hover {
@@ -44,60 +47,145 @@ body {
 }
 
 /* MAIN */
+
 .main {
   flex: 1;
-  padding: 20px;
-  max-width: 800px;
+  padding: 30px;
+  max-width: 850px;
   margin: auto;
 }
 
+.page-title {
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+/* SECTION TITLES */
+
+.section-heading {
+  margin-top: 34px;
+  margin-bottom: 16px;
+  color: #4f46e5;
+  font-size: 18px;
+}
+
 /* CARD */
+
 .card {
   background: white;
-  padding: 14px;
-  border-radius: 12px;
-  margin-top: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  margin-top: 12px;
   border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+  transition: 0.2s ease;
+  color: #374151;
+  font-weight: 500;
 }
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(99,102,241,0.08);
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="sidebar">
-  <div class="nav-item" onclick="goDash()">Decisions</div>
-  <div class="nav-item" onclick="goEvaluations()">Evaluations</div>
-  <div class="nav-item" onclick="goHistory()">History</div>
-  <div class="nav-item" onclick="goInsights()">Insights</div>
-  <div class="nav-item" onclick="goSettings()">Settings</div>
-  <div class="nav-item active">Categories</div>
+
+  <div class="nav-item" onclick="goDash()">
+    Decisions
+  </div>
+
+  <div class="nav-item" onclick="goEvaluations()">
+    Evaluations
+  </div>
+
+  <div class="nav-item" onclick="goHistory()">
+    History
+  </div>
+
+  <div class="nav-item" onclick="goInsights()">
+    Insights
+  </div>
+
+  <div class="nav-item" onclick="goSettings()">
+    Settings
+  </div>
+
+  <div class="nav-item active">
+    Categories
+  </div>
+
 </div>
 
 <div class="main">
 
-<h2>Categories</h2>
+  <h2 class="page-title">
+    Categories
+  </h2>
 
-<div class="card">Home Office</div>
-<div class="card">Travel</div>
-<div class="card">Relationship</div>
-<div class="card">Job</div>
-<div class="card">Lawn and Garden</div>
-<div class="card">Electronics</div>
-<div class="card">Home</div>
-<div class="card">Outdoors and Patio</div>
-<div class="card">Vehicle</div>
-<div class="card">Moving</div>
-<div class="card">Work</div>
-<div class="card">Business</div>
-<div class="card">Tools</div>
-<div class="card">Clothing</div>
-<div class="card">Decor</div>
+  <p class="page-subtitle">
+    OutcomeClarity categories help organize decisions,
+    reflections, and long-term patterns across different
+    areas of life and experience.
+  </p>
 
-<!-- ✅ NEW CATEGORIES -->
-<div class="card">Dining</div>
-<div class="card">Medical</div>
-<div class="card">Pets</div>
-<div class="card">Other</div>
+  <!-- EXISTING CATEGORIES -->
+
+  <h3 class="section-heading">
+    Existing Categories
+  </h3>
+
+  <div class="card">Home Office</div>
+  <div class="card">Travel</div>
+  <div class="card">Relationship</div>
+  <div class="card">Job</div>
+  <div class="card">Lawn and Garden</div>
+  <div class="card">Electronics</div>
+  <div class="card">Home</div>
+  <div class="card">Outdoors and Patio</div>
+  <div class="card">Vehicle</div>
+  <div class="card">Moving</div>
+  <div class="card">Work</div>
+  <div class="card">Business</div>
+  <div class="card">Tools</div>
+  <div class="card">Clothing</div>
+  <div class="card">Decor</div>
+  <div class="card">Dining</div>
+  <div class="card">Medical</div>
+  <div class="card">Pets</div>
+  <div class="card">Other</div>
+
+  <!-- REFLECTIVE CATEGORIES -->
+
+  <h3 class="section-heading">
+    Reflective Categories
+  </h3>
+
+  <div class="card">Impulse Decisions</div>
+
+  <div class="card">Long-Term Investments</div>
+
+  <div class="card">Personal Growth</div>
+
+  <div class="card">Emotional Purchases</div>
+
+  <div class="card">Time Commitments</div>
+
+  <div class="card">Opportunities</div>
+
+  <div class="card">Experiments</div>
+
+  <div class="card">High-Risk Decisions</div>
 
 </div>
 
@@ -106,16 +194,33 @@ body {
 const token = localStorage.getItem("ads_token");
 
 if (!token) {
+
   window.location.href = "login.html";
   throw new Error("STOP");
+
 }
 
 /* NAV */
-function goDash(){ window.location.href="dashboard.html"; }
-function goEvaluations(){ window.location.href="evaluations.html"; }
-function goHistory(){ window.location.href="history.html"; }
-function goInsights(){ window.location.href="insights.html"; }
-function goSettings(){ window.location.href="settings.html"; }
+
+function goDash() {
+  window.location.href = "dashboard.html";
+}
+
+function goEvaluations() {
+  window.location.href = "evaluations.html";
+}
+
+function goHistory() {
+  window.location.href = "history.html";
+}
+
+function goInsights() {
+  window.location.href = "insights.html";
+}
+
+function goSettings() {
+  window.location.href = "settings.html";
+}
 
 </script>
 

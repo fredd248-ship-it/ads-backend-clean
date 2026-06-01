@@ -179,6 +179,19 @@ textarea {
   color:#374151;
   font-size:14px;
 }
+
+/* REMOVE NUMBER INPUT SPINNERS */
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 </style>
 </head>
 
@@ -546,6 +559,8 @@ const categories = [
 
 "Home Office",
 
+"Impulse Decisions",
+
 "Investment",
 
 "Job",
@@ -553,6 +568,8 @@ const categories = [
 "Lawn & Garden",
 
 "Lifestyle",
+
+"Long-Term Investments",
 
 "Medical",
 
@@ -574,7 +591,19 @@ const categories = [
 
 "Vehicle",
 
-"Work"
+"Work",
+
+"Personal Growth",
+
+"Emotional Purchases",
+
+"Time Commitments",
+
+"Opportunities",
+
+"Experiments",
+
+"High-Risk Decisions"
 
 ];
 

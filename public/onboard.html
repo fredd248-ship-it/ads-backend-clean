@@ -179,24 +179,31 @@ button {
   line-height: 1.8;
 }
 
-/* USE CASES */
+/* REFLECTION PATTERNS */
 
 .use-cases {
   margin-top: 50px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
 }
 
 .use-case {
   background: white;
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 18px;
+  padding: 22px;
   text-align: center;
   color: #374151;
   border: 1px solid #e5e7eb;
   font-weight: 600;
+  line-height: 1.7;
   box-shadow: 0 4px 14px rgba(15,23,42,0.04);
+  transition: 0.25s ease;
+}
+
+.use-case:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(99,102,241,0.10);
 }
 
 /* FINAL SECTION */
@@ -374,6 +381,7 @@ button {
       <div class="cards-grid">
 
         <div class="card">
+
           <div class="card-icon">📝</div>
 
           <h3>Track Decisions</h3>
@@ -383,9 +391,11 @@ button {
             subscriptions, goals, and life decisions
             before details begin to fade over time.
           </p>
+
         </div>
 
         <div class="card">
+
           <div class="card-icon">🔍</div>
 
           <h3>Reflect On Outcomes</h3>
@@ -395,9 +405,11 @@ button {
             original expectations with your real-world
             experiences and satisfaction.
           </p>
+
         </div>
 
         <div class="card">
+
           <div class="card-icon">💡</div>
 
           <h3>Receive Insights</h3>
@@ -407,52 +419,41 @@ button {
             coaching-style feedback, and behavioral
             insights generated from your decision history.
           </p>
+
         </div>
 
       </div>
 
     </section>
 
-    <!-- USE CASES -->
+    <!-- REFLECTION SECTION -->
 
     <section class="section">
 
       <h2 class="section-title">
-        Designed For Real Life Decisions
+        Over time, patterns begin to emerge.
       </h2>
 
       <div class="use-cases">
 
         <div class="use-case">
-          Major Purchases
+          Decisions that genuinely improved your life
         </div>
 
         <div class="use-case">
-          Career Choices
+          Purchases that only felt important temporarily
         </div>
 
         <div class="use-case">
-          Subscription Services
+          Choices that quietly shaped your daily routines
         </div>
 
         <div class="use-case">
-          Business Decisions
+          Risks that turned out differently than expected
         </div>
 
         <div class="use-case">
-          Lifestyle Changes
-        </div>
-
-        <div class="use-case">
-          Long-Term Goals
-        </div>
-
-        <div class="use-case">
-          Emotional Decisions
-        </div>
-
-        <div class="use-case">
-          Time Investments
+          Opportunities you were glad you pursued
         </div>
 
       </div>

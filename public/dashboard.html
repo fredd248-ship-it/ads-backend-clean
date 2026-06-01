@@ -184,12 +184,12 @@ textarea {
 
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+  -webkit-appearance:none;
+  margin:0;
 }
 
 input[type=number] {
-  -moz-appearance: textfield;
+  -moz-appearance:textfield;
 }
 
 </style>
@@ -198,7 +198,10 @@ input[type=number] {
 <body>
 
 <div class="sidebar">
-  <div class="nav-item active">Dashboard</div>
+
+  <div class="nav-item active">
+    Dashboard
+  </div>
 
   <div
     class="nav-item"
@@ -241,6 +244,7 @@ input[type=number] {
   >
     Send Feedback
   </div>
+
 </div>
 
 <div class="main">
@@ -278,6 +282,7 @@ input[type=number] {
 </div>
 
 <!-- CREATE MODAL -->
+
 <div class="modal" id="createModal">
 
   <div class="modal-content">
@@ -348,9 +353,11 @@ input[type=number] {
     </button>
 
   </div>
+
 </div>
 
 <!-- EVALUATE MODAL -->
+
 <div class="modal" id="modal">
 
   <div class="modal-content">
@@ -436,9 +443,11 @@ input[type=number] {
     </button>
 
   </div>
+
 </div>
 
 <!-- FEEDBACK MODAL -->
+
 <div class="modal" id="feedbackModal">
 
   <div class="modal-content">
@@ -522,6 +531,7 @@ input[type=number] {
     </button>
 
   </div>
+
 </div>
 
 <script>
@@ -536,6 +546,8 @@ let currentDecisionId = null;
 let wouldBuyAgain = true;
 
 const categories = [
+
+"Choose a Category",
 
 "Appliances",
 
@@ -616,7 +628,7 @@ function loadCategories(){
 
   select.innerHTML = "";
 
-  categories.forEach(c=>{
+  categories.forEach((c, index)=>{
 
     const opt =
       document.createElement(
@@ -626,7 +638,15 @@ function loadCategories(){
     opt.value = c;
     opt.textContent = c;
 
+    if (index === 0) {
+
+      opt.disabled = true;
+      opt.selected = true;
+
+    }
+
     select.appendChild(opt);
+
   });
 }
 

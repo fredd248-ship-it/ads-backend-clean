@@ -2,111 +2,94 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Register</title>
+<title>Create Account</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
-* {
-  box-sizing: border-box;
+*{
+    box-sizing:border-box;
 }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background:
-    linear-gradient(to bottom,
-      #f7f9fc 0%,
-      #eef2ff 45%,
-      #ffffff 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 30px 20px;
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:
+        linear-gradient(to bottom,
+        #f7f9fc 0%,
+        #eef2ff 45%,
+        #ffffff 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:30px 20px;
 }
 
-.page-wrapper {
-  width: 100%;
-  max-width: 420px;
+.page-wrapper{
+    width:100%;
+    max-width:420px;
 }
 
-.container {
-  background: white;
-  padding: 28px;
-  border-radius: 18px;
-  width: 100%;
-  box-shadow: 0 10px 30px rgba(15,23,42,0.06);
-  border: 1px solid #e5e7eb;
+.container{
+    background:#fff;
+    padding:28px;
+    border-radius:18px;
+    width:100%;
+    box-shadow:0 10px 30px rgba(15,23,42,.06);
+    border:1px solid #e5e7eb;
 }
 
-h2 {
-  margin-top: 0;
-  margin-bottom: 24px;
-  text-align: center;
-  color: #4f46e5;
-  font-weight: 600;
+h2{
+    margin-top:0;
+    margin-bottom:24px;
+    text-align:center;
+    color:#4f46e5;
+    font-weight:600;
 }
 
-input {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
+input{
+    width:100%;
+    padding:14px;
+    margin-bottom:14px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:15px;
 }
 
-input:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+input:focus{
+    outline:none;
+    border-color:#6366f1;
+    box-shadow:0 0 0 3px rgba(99,102,241,.12);
 }
 
-button {
-  width: 100%;
-  padding: 14px;
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: bold;
-  transition: 0.25s ease;
+button{
+    width:100%;
+    padding:14px;
+    background:#6366f1;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+    transition:.25s ease;
 }
 
-button:hover {
-  background: #5558ee;
+button:hover{
+    background:#5558ee;
 }
 
-.error {
-  color: #dc2626;
-  margin-top: 14px;
-  text-align: center;
-  line-height: 1.6;
+button:disabled{
+    opacity:.7;
+    cursor:default;
 }
 
-/* ACCESS LINK */
-
-.access-request {
-  margin-top: 28px;
-  text-align: center;
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.access-request a {
-  color: #6366f1;
-  text-decoration: none;
-  font-weight: 600;
-  transition: 0.2s ease;
-}
-
-.access-request a:hover {
-  color: #4f46e5;
-  text-decoration: underline;
+.error{
+    color:#dc2626;
+    margin-top:14px;
+    text-align:center;
+    line-height:1.6;
 }
 
 </style>
@@ -116,40 +99,32 @@ button:hover {
 
 <div class="page-wrapper">
 
-  <div class="container">
+<div class="container">
 
-    <h2>Create Account</h2>
+<h2>Create Account</h2>
 
-    <input id="email" placeholder="Email">
+<input
+    id="email"
+    type="email"
+    placeholder="Email">
 
-    <input id="password"
-           type="password"
-           placeholder="Password">
+<input
+    id="password"
+    type="password"
+    placeholder="Password">
 
-    <input id="inviteCode"
-           placeholder="Access Code">
+<input
+    id="confirmPassword"
+    type="password"
+    placeholder="Confirm Password">
 
-    <button id="registerBtn">
-      Create Account
-    </button>
+<button id="registerBtn">
+    Create Account
+</button>
 
-    <div id="error" class="error"></div>
+<div id="error" class="error"></div>
 
-    <!-- ACCESS REQUEST -->
-
-    <div class="access-request">
-
-      Please request an access code here
-
-      <br><br>
-
-      <a href="mailto:adssystemnotifications@gmail.com?subject=OutcomeClarity Early Access Request">
-        Request an early access code
-      </a>
-
-    </div>
-
-  </div>
+</div>
 
 </div>
 
@@ -157,72 +132,93 @@ button:hover {
 
 const API = "https://ads-backend-clean.onrender.com/api/v1";
 
-document.getElementById("registerBtn").addEventListener("click", async () => {
+document
+.getElementById("registerBtn")
+.addEventListener("click", async () => {
 
-  const btn = document.getElementById("registerBtn");
-  const errorDiv = document.getElementById("error");
+    const btn = document.getElementById("registerBtn");
+    const errorDiv = document.getElementById("error");
 
-  errorDiv.innerText = "";
+    errorDiv.innerText = "";
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const inviteCode = document.getElementById("inviteCode").value.trim();
+    const email =
+        document.getElementById("email")
+        .value.trim();
 
-  console.log("SENDING:", { email, inviteCode });
+    const password =
+        document.getElementById("password")
+        .value;
 
-  if (!email || !password || !inviteCode) {
+    const confirmPassword =
+        document.getElementById("confirmPassword")
+        .value;
 
-    errorDiv.innerText = "All fields are required";
-    return;
+    if(!email || !password || !confirmPassword){
 
-  }
+        errorDiv.innerText =
+            "All fields are required.";
 
-  btn.disabled = true;
-  btn.innerText = "Creating...";
-
-  try {
-
-    const res = await fetch(API + "/auth/register", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        email,
-        password,
-        inviteCode
-      })
-
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-
-      errorDiv.innerText = data.error || "Registration failed";
-
-      btn.disabled = false;
-      btn.innerText = "Create Account";
-
-      return;
-
+        return;
     }
 
-    localStorage.setItem("ads_token", data.token);
+    if(password !== confirmPassword){
 
-    window.location.href = "dashboard.html";
+        errorDiv.innerText =
+            "Passwords do not match.";
 
-  } catch (err) {
+        return;
+    }
 
-    errorDiv.innerText = "Network error";
+    btn.disabled = true;
+    btn.innerText = "Creating...";
 
-    btn.disabled = false;
-    btn.innerText = "Create Account";
+    try{
 
-  }
+        const res = await fetch(
+            API + "/auth/register",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
+
+        const data = await res.json();
+
+        if(!res.ok){
+
+            errorDiv.innerText =
+                data.error || "Registration failed.";
+
+            btn.disabled = false;
+            btn.innerText = "Create Account";
+
+            return;
+        }
+
+        localStorage.setItem(
+            "ads_token",
+            data.token
+        );
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+    catch(err){
+
+        errorDiv.innerText =
+            "Network error.";
+
+        btn.disabled = false;
+        btn.innerText = "Create Account";
+
+    }
 
 });
 

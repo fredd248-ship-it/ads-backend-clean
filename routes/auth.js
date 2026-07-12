@@ -9,48 +9,30 @@ const prisma = new PrismaClient();
 /*
   REGISTER (CLEAN + PRODUCTION READY)
 */
-router.post("/register", async (req, res) => {
+  router.post("/register", async (req, res) => {
   try {
-    let { email, password, inviteCode } = req.body;
+    let { email, password } = req.body;
 
-    // Normalize invite code
-    if (inviteCode) {
-      inviteCode = inviteCode.trim().toUpperCase();
-    }
+
+  email = (email || "").trim();
+  password = (password || "").trim();
 
     // Minimal, useful log
     console.log("REGISTER:", {
       email,
-      inviteCode,
+     
       time: new Date().toISOString()
     });
 
-    if (!email || !password || !inviteCode) {
-      return res.status(400).json({
-        success: false,
-        error: "Email, password, and invite code are required"
-      });
+    if (!email || !password) {
+  return res.status(400).json({
+    success: false,
+    error: "Email and password are required"
+  });
+
     }
 
-    // Find invite
-    const invite = await prisma.invite.findFirst({
-      where: { code: inviteCode }
-    });
-
-    if (!invite) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid access code"
-      });
-    }
-
-    if (invite.isUsed) {
-      return res.status(400).json({
-        success: false,
-        error: "Access code already used"
-      });
-    }
-
+   
     // Check existing user
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -74,11 +56,7 @@ router.post("/register", async (req, res) => {
       }
     });
 
-    // Mark invite as used
-    await prisma.invite.update({
-      where: { id: invite.id },
-      data: { isUsed: true }
-    });
+   
 
     // Generate token
     const token = jwt.sign(

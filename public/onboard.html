@@ -5,276 +5,544 @@
 <!-- Google Analytics (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-77K9ZTGCGM"></script>
 <script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-77K9ZTGCGM');
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+
+  gtag('js', new Date());
+  gtag('config', 'G-77K9ZTGCGM');
 </script>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
 
-<title>OutcomeClarity | Learn From Every Decision</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+
+<title>OutcomeClarity | Decision Journal & Outcome Tracking</title>
 
 <meta name="description"
-content="OutcomeClarity is a free decision journal that helps you track important decisions, compare expectations with real outcomes, and discover patterns that improve future decision making.">
+      content="Track important decisions, compare expectations with real outcomes, and discover patterns that improve future decision making with OutcomeClarity." />
 
 <link rel="canonical"
-href="https://outcomeclarity.com/">
+      href="https://outcomeclarity.com/" />
 
 <script type="application/ld+json">
 {
-  "@context":"https://schema.org",
-  "@type":"SoftwareApplication",
-  "name":"OutcomeClarity",
-  "applicationCategory":"ProductivityApplication",
-  "applicationSubCategory":"Decision Journal",
-  "operatingSystem":"Web",
-  "url":"https://outcomeclarity.com/",
-  "description":"OutcomeClarity helps people learn from their own decisions by recording expectations, comparing them with real outcomes, and discovering long-term decision patterns."
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "OutcomeClarity",
+  "applicationCategory": "ProductivityApplication",
+  "applicationSubCategory": "Decision Journal",
+  "operatingSystem": "Web",
+  "softwareVersion": "1.0",
+  "url": "https://outcomeclarity.com/",
+  "description": "OutcomeClarity is a decision journal that helps people track important decisions, compare expectations with real outcomes, and discover patterns that improve future decision making over time.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "OutcomeClarity",
+    "url": "https://outcomeclarity.com/"
+  }
 }
 </script>
 
+
 <style>
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-body{
-font-family:Arial,sans-serif;
-background:linear-gradient(to bottom,#f7f9fc,#eef2ff,#ffffff);
-color:#1f2937;
-line-height:1.7;
+body {
+  font-family: Arial, sans-serif;
+  background:
+    linear-gradient(to bottom,
+      #f7f9fc 0%,
+      #eef2ff 45%,
+      #ffffff 100%);
+  color: #1f2937;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.page-wrapper{
-max-width:1100px;
-margin:auto;
-padding:60px 24px 80px;
+.page-wrapper {
+  width: 100%;
+  padding: 60px 20px 80px;
+  display: flex;
+  justify-content: center;
 }
 
-.hero{
-text-align:center;
-padding:40px 0 70px;
+.container {
+  width: 100%;
+  max-width: 1080px;
 }
 
-.badge{
-display:inline-block;
-padding:10px 18px;
-border-radius:999px;
-background:white;
-border:1px solid #dbeafe;
-color:#4f46e5;
-font-weight:bold;
-margin-bottom:28px;
+/* HERO */
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 90px;
 }
 
-h1{
-font-size:clamp(34px,5vw,56px);
-line-height:1.2;
-color:#4f46e5;
-margin-bottom:28px;
+.logo-badge {
+  display: inline-block;
+  background: white;
+  border: 1px solid #dbeafe;
+  color: #4f46e5;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.08);
 }
 
-.hero p{
-font-size:21px;
-max-width:820px;
-margin:0 auto;
-color:#4b5563;
-line-height:1.8;
+.hero-title {
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.3;
+  font-weight: 600;
+  margin-bottom: 28px;
+  color: #4f46e5;
+  letter-spacing: 0.3px;
+  font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 }
 
-.button-row{
-margin-top:42px;
-display:flex;
-justify-content:center;
-gap:18px;
-flex-wrap:wrap;
+.hero-subtitle {
+  max-width: 820px;
+  margin: 0 auto;
+  color: #4b5563;
+  font-size: 21px;
+  line-height: 1.8;
 }
 
-.btn-primary{
-background:#6366f1;
-color:white;
-border:none;
-padding:16px 30px;
-border-radius:14px;
-font-size:17px;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 12px 24px rgba(99,102,241,.20);
+/* BUTTONS */
+
+.button-group {
+  margin-top: 42px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
-.btn-secondary{
-background:white;
-color:#374151;
-border:1px solid #d1d5db;
-padding:16px 30px;
-border-radius:14px;
-font-size:17px;
-font-weight:bold;
-cursor:pointer;
+button {
+  border: none;
+  cursor: pointer;
+  transition: 0.25s ease;
+  font-size: 16px;
+  border-radius: 14px;
+  padding: 16px 28px;
+  font-weight: bold;
 }
 
-.signup-note{
-margin-top:18px;
-color:#6b7280;
-font-size:15px;
+.primary-btn {
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 10px 25px rgba(99,102,241,0.22);
 }
 
-.section{
-margin-top:90px;
+.primary-btn:hover {
+  transform: translateY(-2px);
+  background: #5558ee;
 }
 
-.section h2{
-text-align:center;
-font-size:38px;
-margin-bottom:24px;
+.secondary-btn {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
-.section p{
-max-width:850px;
-margin:auto;
-font-size:18px;
-color:#4b5563;
-line-height:1.9;
-text-align:center;
+.secondary-btn:hover {
+  background: #f9fafb;
+  transform: translateY(-2px);
 }
 
-.cards{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:24px;
-margin-top:50px;
+/* GENERAL SECTIONS */
+
+.section {
+  margin-bottom: 85px;
 }
 
-.card{
-background:white;
-border-radius:22px;
-padding:34px;
-border:1px solid #e5e7eb;
-box-shadow:0 10px 28px rgba(0,0,0,.05);
+.section-title {
+  text-align: center;
+  font-size: 38px;
+  margin-bottom: 24px;
+  color: #111827;
 }
 
-.card h3{
-margin:18px 0;
-font-size:23px;
+.section-text {
+  text-align: center;
+  color: #4b5563;
+  max-width: 860px;
+  margin: 0 auto;
+  line-height: 1.9;
+  font-size: 18px;
 }
 
-.card p{
-text-align:left;
-font-size:16px;
+/* FEATURE CARDS */
+
+.cards-grid {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
 }
 
-.icon{
-font-size:34px;
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 34px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15,23,42,0.05);
+  transition: 0.25s ease;
 }
 
-.quote{
-margin-top:90px;
-padding:60px;
-text-align:center;
-background:#eef2ff;
-border-radius:28px;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(99,102,241,0.12);
 }
 
-.quote h2{
-font-size:34px;
-margin-bottom:24px;
+.card-icon {
+  font-size: 34px;
+  margin-bottom: 18px;
 }
 
-.quote p{
-font-size:20px;
-max-width:800px;
-margin:auto;
-line-height:1.9;
+.card h3 {
+  margin-bottom: 16px;
+  font-size: 23px;
+  color: #111827;
 }
 
-.footer{
-margin-top:70px;
-text-align:center;
-color:#6b7280;
-font-size:15px;
+.card p {
+  color: #4b5563;
+  line-height: 1.8;
 }
 
-.footer a{
-color:#4f46e5;
-text-decoration:none;
-font-weight:bold;
+/* REFLECTION PATTERNS */
+
+.use-cases {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
 }
 
-@media(max-width:900px){
-
-.cards{
-grid-template-columns:1fr;
+.use-case {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  text-align: center;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  line-height: 1.7;
+  box-shadow: 0 4px 14px rgba(15,23,42,0.04);
+  transition: 0.25s ease;
 }
 
-h1{
-font-size:40px;
+.use-case:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(99,102,241,0.10);
 }
 
-.hero p{
-font-size:18px;
+/* FINAL SECTION */
+
+.quote-section {
+  margin-top: 70px;
+  text-align: center;
+  padding: 50px 35px;
+  background:
+    linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #ffffff 100%
+    );
+  border-radius: 30px;
+  border: 1px solid #dbeafe;
 }
+
+.quote {
+  font-size: 30px;
+  line-height: 1.7;
+  color: #1f2937;
+  max-width: 860px;
+  margin: 0 auto;
+  font-weight: 600;
+}
+
+.footer-text {
+  margin-top: 25px;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* CONTACT LINK */
+
+.footer-contact {
+  margin-top: 55px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.footer-contact a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.footer-contact a:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .hero-title {
+    font-size: 38px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+
+  .quote {
+    font-size: 24px;
+  }
+
+  .page-wrapper {
+    padding-top: 40px;
+  }
 
 }
 
 </style>
-
 </head>
 
 <body>
 
 <div class="page-wrapper">
 
-<section class="hero">
+  <div class="container">
 
-<div class="badge">
-OutcomeClarity • Adaptive Decision System
-</div>
+    <!-- HERO -->
 
-<h1>
+    <section class="hero-section">
 
-Most of us remember how we felt about a decision.
+      <div class="logo-badge">
+        OutcomeClarity • Adaptive Decision System
+      </div>
 
-Few of us remember whether it actually turned out to be the right one.
-
+      <h1 class="hero-title">
+  Track Decisions. Reflect on Outcomes. Make Better Decisions.
 </h1>
 
-<p>
+<p class="hero-subtitle">
 
-Every important decision teaches something.
+  Life moves quickly, and it's surprisingly easy to remember how we felt about a decision while forgetting whether it actually turned out to be the right one.
 
-The problem is that we rarely capture those lessons before memory quietly rewrites the story.
+  <br><br>
 
-OutcomeClarity is a completely free decision journal that helps you record important decisions, compare expectations with real outcomes, and discover personal patterns that can improve future decisions.
+  OutcomeClarity is a decision journal that helps you track important decisions, compare your expectations with real outcomes, and discover patterns that can improve future decision making over time.
 
 </p>
+      <div class="button-group">
 
-<div class="button-row">
+        <button class="primary-btn" onclick="goRegister()">
+          Create Account
+        </button>
 
-<button class="btn-primary"
-onclick="location.href='register.html'">
+        <button class="secondary-btn" onclick="goLogin()">
+          Log In
+        </button>
 
-Create Free Account
+      </div>
 
-</button>
+    </section>
 
-<button class="btn-secondary"
-onclick="location.href='login.html'">
+    <!-- MAIN EXPLANATION -->
 
-Log In
+    <section class="section">
 
-</button>
+      <h2 class="section-title">
+        Thoughtful Reflection Over Time
+      </h2>
+
+      <p class="section-text">
+
+        Whether it’s a major purchase, a career move, a subscription,
+        or a personal goal, OutcomeClarity helps you look back thoughtfully
+        and compare what you expected with what actually happened.
+
+        <br><br>
+
+        As you continue using the system, OutcomeClarity can also provide
+        insights, behavioral patterns, and gentle coaching observations
+        based on your decision history over time.
+
+        <br><br>
+
+        Small reflections can lead to meaningful insight.
+
+      </p>
+
+    </section>
+
+    <!-- FEATURES -->
+
+    <section class="section">
+
+      <h2 class="section-title">
+        What You Can Do
+      </h2>
+
+      <div class="cards-grid">
+
+        <div class="card">
+
+          <div class="card-icon">📝</div>
+
+          <h3>Track Decisions</h3>
+
+          <p>
+            Record important purchases, commitments,
+            subscriptions, goals, and life decisions
+            before details begin to fade over time.
+          </p>
+
+        </div>
+
+        <div class="card">
+
+          <div class="card-icon">🔍</div>
+
+          <h3>Reflect On Outcomes</h3>
+
+          <p>
+            Revisit decisions later and compare your
+            original expectations with your real-world
+            experiences and satisfaction.
+          </p>
+
+        </div>
+
+        <div class="card">
+
+          <div class="card-icon">💡</div>
+
+          <h3>Receive Insights</h3>
+
+          <p>
+            Gain access to thoughtful observations,
+            coaching-style feedback, and behavioral
+            insights generated from your decision history.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- REFLECTION SECTION -->
+
+    <section class="section">
+
+      <h2 class="section-title">
+        Over time, patterns begin to emerge.
+      </h2>
+
+      <div class="use-cases">
+
+        <div class="use-case">
+          Decisions that genuinely improved your life
+        </div>
+
+        <div class="use-case">
+          Purchases that only felt important temporarily
+        </div>
+
+        <div class="use-case">
+          Choices that quietly shaped your daily routines
+        </div>
+
+        <div class="use-case">
+          Risks that turned out differently than expected
+        </div>
+
+        <div class="use-case">
+          Opportunities you were glad you pursued
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- FINAL POSITIONING -->
+
+    <section class="quote-section">
+
+      <div class="quote">
+        “OutcomeClarity is designed to help you better understand
+        your experiences, your decisions, and the patterns that
+        shape your life over time.”
+      </div>
+
+      <div class="footer-text">
+        A reflective system for decision tracking,
+        personal insight, and thoughtful self-evaluation.
+      </div>
+
+    </section>
+
+    <!-- CONTACT LINK -->
+
+    <div class="footer-contact">
+
+      Interested in exploring OutcomeClarity further?
+
+      <br><br>
+
+      <a href="mailto:adssystemnotifications@gmail.com?subject=OutcomeClarity Early Access Request">
+        Request an early access code
+      </a>
+
+    </div>
+
+  </div>
 
 </div>
 
-<div class="signup-note">
+<script>
 
-Completely free. No subscription. No credit card required.
+function goRegister() {
+  window.location.href = "register.html";
+}
 
-</div>
+function goLogin() {
+  window.location.href = "login.html";
+}
 
-</section>
+</script>
+
+</body>
+</html>
